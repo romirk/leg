@@ -1,19 +1,20 @@
-.section BOOT,"ax"
-        .global entry
-        .type entry, "function"
+.arch  armv8.2-a
 
-entry:
-        MRS  x0, MPIDR_EL1
-        AND  x0, x0, #0xffff 
-        CBZ  x0, boot
+.section BOOT, "ax"
+    .global _start
+    .type   _start, "function"
+
+_start:
+    mrs x0, MPIDR_EL1
+    and x0, x0, #0xffff
+    cbz x0, boot
 
 sleep:
-        WFI
-        B    sleep
+    wfi
+    b   sleep
 
 boot:
-        MSR  CPTR_EL3, xzr
+    msr CPTR_EL3, xzr
 
-        .global __main
-        B       __main
-
+    .global __main
+    b __main
