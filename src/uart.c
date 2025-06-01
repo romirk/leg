@@ -5,7 +5,6 @@
 #include "uart.h"
 #include <stdint.h>
 
-[[gnu::used, clang::no_builtin]]
 void putchar(char c) {
     *(volatile uint32_t *) (UART0_BASE) = c;
 }
