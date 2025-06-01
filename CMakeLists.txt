@@ -1,15 +1,19 @@
 cmake_minimum_required(VERSION 3.17)
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_VERSION 1)
+
 # specify cross compilers and tools
+set(MCPU cortex-a15)
+set(TARGET_ARCH arm-none-eabi)
+
 set(CMAKE_C_COMPILER clang)
 #set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 set(CMAKE_ASM_COMPILER clang)
-set(CMAKE_AR arm-none-eabi-ar)
-set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+set(CMAKE_AR ${TARGET_ARCH}-ar)
+set(CMAKE_OBJCOPY ${TARGET_ARCH}-objcopy)
+set(CMAKE_OBJDUMP ${TARGET_ARCH}-objdump)
 set(CMAKE_CUSTOM_LINKER ld64)
-set(SIZE arm-none-eabi-size)
+set(SIZE ${TARGET_ARCH}-size)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # project settings
@@ -19,10 +23,6 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-
-set(MCPU cortex-a15)
-set(TARGET_ARCH arm-none-eabi)
-
 #Uncomment for hardware floating point
 #add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
 #add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
@@ -31,11 +31,11 @@ set(TARGET_ARCH arm-none-eabi)
 #Uncomment for software floating point
 #add_compile_options(-mfloat-abi=soft)
 
-add_compile_options(-mcpu=${MCPU} -mthumb)
+add_compile_options(-mcpu=${MCPU})
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
-add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH} -mfloat-abi=soft)
+add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH})
 
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument --target=${TARGET_ARCH} -mcpu=${MCPU} -mfloat-abi=soft")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
 
 # uncomment to mitigate c++17 absolute addresses warnings

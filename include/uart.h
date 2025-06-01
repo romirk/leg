@@ -5,9 +5,9 @@
 #ifndef UART_H
 #define UART_H
 
+#define UART0_BASE 0x09000000
 
-
-#define UART0_BASE 0x1c090000
+void putchar(char c);
 
 void print(char *s);
 
