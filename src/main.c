@@ -1,15 +1,17 @@
-#include "../include/uart.h"
+//
+// Created by Romir Kulshrestha on 01/06/2025.
+//
 
-[[gnu::naked]]
-void vtable(void) {
-    asm("b handle_reset");
-}
+#include "main.h"
 
-void start() {
+#include "builtins.h"
+#include "uart.h"
+
+[[noreturn]]
+void kmain() {
     println("Hello World!");
-    // println((char*)0x80000000);
-}
 
-void handle_reset(void) {
-    start();
+    for (;;) {
+        asm("wfi");
+    }
 }
