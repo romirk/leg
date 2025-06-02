@@ -2,7 +2,30 @@
 
 .section .boot_itbl, "ax", %progbits
 vtable:
+    // reset
     b handle_reset
+
+    // undefined instruction
+    ldr pc, =handle_boot_exception
+
+    // software interrupt
+    ldr pc, =handle_boot_exception
+
+    // external/internal prefetch abort
+    ldr pc, =handle_boot_exception
+
+    // external/internal data abort
+    ldr pc, =handle_page_fault_boot
+
+    // no exception
+    nop
+
+    // IRQ
+    ldr pc, =handle_irq_boot
+
+    // FIQ
+    ldr pc, =handle_fiq_boot
+
 .size vtable, . - vtable
 
 .section .startup, "ax", %progbits

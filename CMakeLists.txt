@@ -35,6 +35,9 @@ add_compile_options(-mcpu=${MCPU})
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
 add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH})
 
+# TODO: REMOVE THIS!
+add_compile_options(-Wno-arm-interrupt-vfp-clobber)
+
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
 
