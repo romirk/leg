@@ -4,7 +4,6 @@
 
 #include "main.h"
 
-#include "builtins.h"
 #include "uart.h"
 
 [[noreturn]]

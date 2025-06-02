@@ -15,4 +15,4 @@ typedef int32_t i32;
 typedef int16_t i16;
 typedef int8_t i8;
 
-#endif //TYPES_H
+#endif // TYPES_H

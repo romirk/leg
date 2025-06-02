@@ -9,14 +9,16 @@
 void *memcpy(void *dst, const void *src, size_t len) {
     u8 *dp = dst;
     const u8 *sp = src;
-    while (len--) *dp++ = *sp++;
+    while (len--)
+        *dp++ = *sp++;
     return dst;
 }
 
 [[gnu::used, clang::no_builtin]]
 void *memset(void *dst, int c, size_t len) {
     u8 *dp = dst;
-    while ((u32) dp % 4 && len--) *dp++ = c;
+    while ((u32) dp % 4 && len--)
+        *dp++ = c;
     u64 l = c;
     l |= l << 8;
     l |= l << 16;
@@ -26,7 +28,8 @@ void *memset(void *dst, int c, size_t len) {
         dp += 8;
         len -= 8;
     }
-    while (len--) *dp++ = c;
+    while (len--)
+        *dp++ = c;
     return dst;
 }
 

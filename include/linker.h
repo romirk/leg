@@ -9,4 +9,4 @@ extern unsigned char kernel_main_off[];
 extern unsigned char kernel_main_end[];
 extern unsigned char kernel_load_off[];
 
-#endif //LINKER_H
+#endif // LINKER_H

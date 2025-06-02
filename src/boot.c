@@ -1,9 +1,6 @@
 #include "boot.h"
 
-#include "builtins.h"
 #include "linker.h"
-#include "main.h"
-#include "types.h"
 
 [[clang::no_builtin]]
 [[gnu::section(".startup")]]
@@ -16,5 +13,5 @@ void kboot() {
     }
 
     // jump
-    kmain();
+    asm("ldr pc, =kmain");
 }

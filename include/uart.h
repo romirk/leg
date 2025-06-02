@@ -5,7 +5,7 @@
 #ifndef UART_H
 #define UART_H
 
-#define UART0_BASE 0x09000000
+#define UART0_BASE (volatile u32 *) 0x09000000
 
 void putchar(char c);
 
@@ -13,4 +13,4 @@ void print(char *s);
 
 void println(char *s);
 
-#endif //UART_H
+#endif // UART_H

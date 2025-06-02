@@ -30,4 +30,4 @@ void __aeabi_memcpy4(void *dest, const void *src, size_t n);
 void __aeabi_memclr8(void *dst, size_t n);
 
 
-#endif //STDLIB_H
+#endif // STDLIB_H

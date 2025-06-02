@@ -22,21 +22,9 @@ SECTIONS {
     kernel_main_off = 0x40100000 + .;
     kernel_load_off = LOADADDR(.startup.end);
 
-    /**
-     * The beginning of the primary kernel code.
-     */
     .main.beg kernel_main_off (NOLOAD) : {} >boot
 
-    /**
-     * Set the corrext .text sections
-     */
-    .text   : {
-        *( .text    .text.*  )
-    } >boot AT>bin
-
-    /**
-     * Regular ELF sections doing regular things.
-     */
+    .text   : { *( .text   .text.*   ) } >boot AT>bin
     .rodata : { *( .rodata .rodata.* ) } >boot AT>bin
     .data   : { *( .data   .data.*   ) } >boot AT>bin
     .bss    : { *( .bss    .bss.*    ) } >boot AT>bin

@@ -3,11 +3,9 @@
 //
 
 #include "uart.h"
-#include <stdint.h>
+#include "types.h"
 
-void putchar(char c) {
-    *(volatile uint32_t *) (UART0_BASE) = c;
-}
+void putchar(char c) { *UART0_BASE = c; }
 
 void print(char *s) {
     while (*s) {

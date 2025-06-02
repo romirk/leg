@@ -7,4 +7,4 @@
 
 void kboot();
 
-#endif //BOOT_H
+#endif // BOOT_H
