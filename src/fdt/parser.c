@@ -19,7 +19,7 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
     char *strings = (char *) header + header->off_dt_strings;
 
     bool running = true;
-    struct fdt_parse_result result = {.mem_count = 0, .regs = {0}};
+    struct fdt_parse_result result = {.reg_count = 0, .mem_regs = {0}};
     const char *curr_name = nullptr;
 
     while (running) {
@@ -62,7 +62,7 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
                         reg.size[i] = swap_endianness(*reg_ptr++);
                     }
 
-                    result.regs[result.mem_count++] = reg;
+                    result.mem_regs[result.reg_count++] = reg;
                 }
 
                 ptr = align(ptr + prop.len, 4);

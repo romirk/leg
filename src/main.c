@@ -4,6 +4,7 @@
 
 #include "main.h"
 
+#include "stdio.h"
 #include "uart.h"
 #include "fdt/fdt.h"
 #include "fdt/parser.h"
@@ -20,18 +21,12 @@ void kmain() {
 
     fdt_print_header(header);
     auto result = parse_fdt(header);
-    print_num(result.mem_count);
-    println(" memory reg(s)");
-    for (auto i = 0u; i < result.mem_count; i++) {
-        auto reg = result.regs[i];
-        u32 addr = ((u64) reg.addr[0] << 32 | reg.addr[1]) & 0xffffffff;
-        u32 size = ((u64) reg.size[0] << 32 | reg.size[1]) & 0xffffffff;
-        print("addr: 0x");
-        print_ptr((void *) addr);
-        print(" size: 0x");
-        print_ptr((void *) size);
-        putchar('\n');
-    }
+    auto reg = result.mem_regs[0];
+    auto addr = reg.addr[1];
+    auto size = reg.size[1];
+
+    printf("memory:\n\taddr: 0x%x\n\tsize: 0x%x\n", addr, size);
+
 limbo:
     println("HALT");
     for (;;) {

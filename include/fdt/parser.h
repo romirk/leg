@@ -15,10 +15,10 @@ struct fdt_mem_reg {
 };
 
 struct fdt_parse_result {
-    u8 mem_count;
     u8 addr_cells;
     u8 size_cells;
-    struct fdt_mem_reg regs[FDT_MAX_MEM_REGS];
+    u8 reg_count;
+    struct fdt_mem_reg mem_regs[FDT_MAX_MEM_REGS];
 };
 
 struct fdt_parse_result parse_fdt(struct fdt_header *header);

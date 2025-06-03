@@ -5,28 +5,26 @@
 #include "stdlib.h"
 
 #include "linker.h"
+#include "stdio.h"
 #include "uart.h"
 
-char *itoa(i32 value, char *str) {
+
+char *utoa(u32 value, char *str, u8 base) {
     if (value == 0) {
-        str[0] = '0';
-        str[1] = '\0';
+        str[2] = '0';
+        str[3] = '\0';
         return str;
     }
 
     auto p = str;
-    if (value < 0) {
-        *p++ = '-';
-        value = -value;
-    }
-
-    u8 digits[19]; // INT64_MAX has 19 digits
+    u8 digits[16];
     auto i = 0u;
 
     do {
-        const u8 digit = value % 10;
-        digits[i++] = digit + '0';
-    } while (value /= 10);
+        const auto hex_digits = "0123456789abcdef";
+        const u8 digit = value % base;
+        digits[i++] = hex_digits[digit];
+    } while (value /= base);
 
     while (i > 0) {
         *p++ = digits[--i];
@@ -35,38 +33,13 @@ char *itoa(i32 value, char *str) {
     return str;
 }
 
-char *hex(i64 value, char *str) {
-    if (value == 0) {
-        str[0] = '0';
-        str[1] = 'x';
-        str[2] = '0';
-        str[3] = '\0';
-        return str;
-    }
-
-    auto p = str;
+char *itoa(i32 value, char *p, u8 base) {
     if (value < 0) {
         *p++ = '-';
         value = -value;
     }
-
-    *p++ = '0';
-    *p++ = 'x';
-
-    u8 digits[16];
-    auto i = 0u;
-
-    do {
-        const auto hex_digits = "0123456789abcdef";
-        const u8 digit = value % 16;
-        digits[i++] = hex_digits[digit];
-    } while (value /= 16);
-
-    while (i > 0) {
-        *p++ = digits[--i];
-    }
-    *p = '\0';
-    return str;
+    utoa(value, p, base);
+    return p;
 }
 
 char *hex8(u8 value, char *str) {
