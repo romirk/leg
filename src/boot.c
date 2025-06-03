@@ -23,8 +23,8 @@ void kboot() {
 [[gnu::used]]
 [[gnu::section(".startup")]]
 void handle_boot_exception(void) {
-    *UART0_BASE = '!';
-    *UART0_BASE = '\n';
+    *UARTDR = '!';
+    *UARTDR = '\n';
     asm("b #0"); // reboot
 }
 

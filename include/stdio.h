@@ -17,6 +17,8 @@ void print_i32(i32);
 
 void print_hex(u32);
 
+void print_bin(u32);
+
 void print_ptr(void *ptr);
 
 void print_bool(bool);

@@ -38,6 +38,12 @@ void print_hex(const u32 num) {
     print(res);
 }
 
+void print_bin(const u32 num) {
+    char res[9];
+    utoa(num, res, 2);
+    print(res);
+}
+
 // there's a subtle difference between this and `print_hex`: this one always prints all 4 bytes.
 void print_ptr(void *ptr) {
     char res[9];
@@ -79,6 +85,8 @@ void printf(const char *fmt, ...) {
             case 'x':
                 print_hex(va_arg(args, u32));
                 break;
+            case 'b':
+                print_bin(va_arg(args, u32));
             case 'p':
                 print_ptr(va_arg(args, void *));
                 break;

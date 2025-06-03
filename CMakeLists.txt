@@ -55,7 +55,7 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     add_compile_options(-Os)
 else ()
     message(STATUS "Minimal optimization, debug info included")
-    add_compile_options(-O1 -fno-slp-vectorize -g)
+    add_compile_options(-Og -fno-slp-vectorize -g)
 endif ()
 
 # OS log level
