@@ -5,12 +5,16 @@
 #include "main.h"
 
 #include "stdio.h"
-#include "uart.h"
 #include "fdt/fdt.h"
 #include "fdt/parser.h"
 
 [[noreturn]]
 void kmain() {
+    err("errors enabled");
+    warn("warnings enabled");
+    log("logging enabled");
+    dbg("debugs enabled");
+
     auto header = (struct fdt_header *) FDT_ADDR;
     fdt_endianness_swap(header);
 
@@ -19,13 +23,9 @@ void kmain() {
         goto limbo;
     }
 
-    fdt_print_header(header);
     auto result = parse_fdt(header);
-    auto reg = result.mem_regs[0];
-    auto addr = reg.addr[1];
-    auto size = reg.size[1];
 
-    printf("memory:\n\taddr: 0x%x\n\tsize: 0x%x\n", addr, size);
+    printf("memory:\n\taddr: 0x%x\n\tsize: 0x%x\n", result.addr, result.size);
 
 limbo:
     println("HALT");

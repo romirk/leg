@@ -31,19 +31,26 @@ void print_i32(const i32 num) {
     print(res);
 }
 
-void print_hex(u32 num) {
+void print_hex(const u32 num) {
     char res[9];
     utoa(num, res, 16);
     print(res);
 }
 
-void print_bool(bool value) {
+// there's a subtle difference between this and `print_hex`: this one always prints all 4 bytes.
+void print_ptr(void *ptr) {
+    char res[9];
+    hex32be((u32) ptr, res);
+    print(res);
+}
+
+void print_bool(const bool value) {
     print(value ? "true" : "false");
 }
 
 void printf(const char *fmt, ...) {
     va_list args;
-    va_start(args, fmt);
+    va_start(args);
 
     char c;
     while ((c = *fmt++)) {
@@ -72,18 +79,10 @@ void printf(const char *fmt, ...) {
                 print_ptr(va_arg(args, void *));
                 break;
             default:
-                print("unknown format: %");
-                putchar(c);
-                putchar('\n');
+                printf("unknown format: %c\n", c);
         }
     }
-}
-
-// there's a subtle difference between this and `print_hex`: this one always prints all 4 bytes.
-void print_ptr(void *ptr) {
-    char res[9];
-    hex32be((u32) ptr, res);
-    print(res);
+    va_end(args);
 }
 
 void hexdump(u32 *addr, u32 len) {

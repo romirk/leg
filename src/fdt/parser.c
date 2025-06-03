@@ -4,9 +4,9 @@
 
 #include "fdt/parser.h"
 
+#include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "uart.h"
 #include "fdt/fdt.h"
 
 [[gnu::const]]
@@ -16,10 +16,11 @@ static void *align(void *ptr, const u8 alignment) {
 
 struct fdt_parse_result parse_fdt(struct fdt_header *header) {
     char *ptr = (char *) header + header->off_dt_struct;
-    char *strings = (char *) header + header->off_dt_strings;
+    const char *strings = (char *) header + header->off_dt_strings;
 
     bool running = true;
-    struct fdt_parse_result result = {.reg_count = 0, .mem_regs = {0}};
+    struct fdt_parse_result result = {.addr = 0};
+    u8 addr_cells = 0, size_cells = 0;
     const char *curr_name = nullptr;
 
     while (running) {
@@ -30,6 +31,7 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
             case FDT_BEGIN_NODE: {
                 curr_name = ptr;
                 const auto len = strlen(ptr);
+                dbg("node begin: %s", ptr);
                 ptr += len + 1;
                 ptr = align(ptr, 4);
                 break;
@@ -39,30 +41,27 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
                 prop.name_off = swap_endianness(prop.name_off);
                 prop.len = swap_endianness(prop.len);
                 const auto prop_name = strings + prop.name_off;
+                dbg("\tprop: %s", prop_name);
 
                 ptr = ptr + sizeof(struct fdt_prop);
-
                 if (!*curr_name) {
                     if (!strcmp(prop_name, "#address-cells")) {
-                        result.addr_cells = swap_endianness(*(u32 *) ptr);
+                        addr_cells = swap_endianness(*(u32 *) ptr);
                     }
                     if (!strcmp(prop_name, "#size-cells")) {
-                        result.size_cells = swap_endianness(*(u32 *) ptr);
+                        size_cells = swap_endianness(*(u32 *) ptr);
                     }
                 } else if (!strncmp(curr_name, "memory@", 7) && !strcmp(prop_name, "reg")) {
-                    if (!result.addr_cells || !result.size_cells)
+                    if (!addr_cells || !size_cells)
                         panic("Invalid FDT!");
 
-                    struct fdt_mem_reg reg;
                     const u32* reg_ptr = (void*)ptr;
-                    for (u8 i = 0; i < result.addr_cells; i++) {
-                        reg.addr[i] = swap_endianness(*reg_ptr++);
+                    for (u8 i = 0; i < addr_cells; i++) {
+                        result.addr = swap_endianness(*reg_ptr++);
                     }
-                    for (u8 i = 0; i < result.size_cells; i++) {
-                        reg.size[i] = swap_endianness(*reg_ptr++);
+                    for (u8 i = 0; i < size_cells; i++) {
+                        result.size = swap_endianness(*reg_ptr++);
                     }
-
-                    result.mem_regs[result.reg_count++] = reg;
                 }
 
                 ptr = align(ptr + prop.len, 4);

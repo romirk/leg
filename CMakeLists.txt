@@ -58,6 +58,10 @@ else ()
     add_compile_options(-O1 -fno-slp-vectorize -g)
 endif ()
 
+if (DEFINED ENV{LOG_LEVEL})
+    add_compile_definitions(LOG_$ENV{LOG_LEVEL})
+endif ()
+
 include_directories(
         ${CMAKE_SOURCE_DIR}/include
 )

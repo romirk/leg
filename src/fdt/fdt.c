@@ -8,27 +8,14 @@
 #include "stdlib.h"
 
 void fdt_print_header(struct fdt_header *header) {
-    char res[12];
-
-    println("FDT Header information\n----------------------");
-
-    print("Total size: ");
-    utoa(header->totalsize, res, 10);
-    println(res);
-
-    print("Version: ");
-    utoa(header->version, res, 10);
-    println(res);
-
-    print("Last compatible version: ");
-    utoa(header->last_comp_version, res, 10);
-    println(res);
-
-    print("Strings block bytes: ");
-    utoa(header->size_dt_strings, res, 10);
-    println(res);
-
-    print("Structure block bytes: ");
-    utoa(header->size_dt_struct, res, 10);
-    println(res);
+    printf("FDT Header information\n"
+           "----------------------\n"
+           "Total size: %u\n"
+           "Version: %u\n"
+           "Last compatible version: %u\n"
+           ,
+           header->totalsize,
+           header->version,
+           header->last_comp_version
+    );
 }
