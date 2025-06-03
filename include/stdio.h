@@ -6,7 +6,6 @@
 #define STDIO_H
 
 #include "types.h"
-#include "logs.h"
 
 void print(const char *);
 

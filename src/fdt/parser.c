@@ -4,7 +4,7 @@
 
 #include "fdt/parser.h"
 
-#include "stdio.h"
+#include "logs.h"
 #include "stdlib.h"
 #include "string.h"
 #include "fdt/fdt.h"

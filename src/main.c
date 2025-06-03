@@ -4,6 +4,7 @@
 
 #include "main.h"
 
+#include "logs.h"
 #include "stdio.h"
 #include "fdt/fdt.h"
 #include "fdt/parser.h"
@@ -14,6 +15,7 @@ void kmain() {
     warn("warnings enabled");
     log("logging enabled");
     dbg("debugs enabled");
+    // goto limbo;
 
     auto header = (struct fdt_header *) FDT_ADDR;
     fdt_endianness_swap(header);
