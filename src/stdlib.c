@@ -5,6 +5,7 @@
 #include "stdlib.h"
 
 #include "linker.h"
+#include "logs.h"
 #include "stdio.h"
 #include "uart.h"
 
@@ -69,8 +70,7 @@ char *hex32be(u32 value, char *str) {
 
 [[noreturn]]
 void panic(char *msg) {
-    print("PANIC!: ");
-    println(msg);
+    err("PANIC: %s", msg);
 
     print("debug info:\nstack: *");
     void *p = nullptr;

@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 
+#include "logs.h"
 #include "stdlib.h"
 #include "uart.h"
 
@@ -60,6 +61,9 @@ void printf(const char *fmt, ...) {
         }
         const char t = *fmt++;
         switch (t) {
+            case '%':
+                putchar('%');
+                break;
             case 's':
                 print(va_arg(args, char *));
                 break;
@@ -79,9 +83,12 @@ void printf(const char *fmt, ...) {
                 print_ptr(va_arg(args, void *));
                 break;
             default:
-                printf("unknown format: %c\n", c);
+                putchar('\n');
+                err("printf: unknown format %%%c", t);
+                goto printf_end;
         }
     }
+printf_end:
     va_end(args);
 }
 

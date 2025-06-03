@@ -11,12 +11,6 @@
 
 [[noreturn]]
 void kmain() {
-    err("errors enabled");
-    warn("warnings enabled");
-    log("logging enabled");
-    dbg("debugs enabled");
-    // goto limbo;
-
     auto header = (struct fdt_header *) FDT_ADDR;
     fdt_endianness_swap(header);
 
@@ -27,10 +21,10 @@ void kmain() {
 
     auto result = parse_fdt(header);
 
-    printf("memory:\n\taddr: 0x%x\n\tsize: 0x%x\n", result.addr, result.size);
+    log("memory\n\taddr: 0x%x\n\tsize: 0x%x\n", result.addr, result.size);
 
 limbo:
-    println("HALT");
+    warn("HALT");
     for (;;) {
         asm("wfi");
     }

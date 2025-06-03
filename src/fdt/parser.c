@@ -23,6 +23,7 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
     u8 addr_cells = 0, size_cells = 0;
     const char *curr_name = nullptr;
 
+    dbg("parsing fdt");
     while (running) {
         const enum fdt_token token = swap_endianness(*(u32 *) ptr);
         ptr += sizeof(u32);
@@ -47,15 +48,14 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
                 if (!*curr_name) {
                     if (!strcmp(prop_name, "#address-cells")) {
                         addr_cells = swap_endianness(*(u32 *) ptr);
-                    }
-                    if (!strcmp(prop_name, "#size-cells")) {
+                    } else if (!strcmp(prop_name, "#size-cells")) {
                         size_cells = swap_endianness(*(u32 *) ptr);
                     }
                 } else if (!strncmp(curr_name, "memory@", 7) && !strcmp(prop_name, "reg")) {
                     if (!addr_cells || !size_cells)
                         panic("Invalid FDT!");
 
-                    const u32* reg_ptr = (void*)ptr;
+                    const u32 *reg_ptr = (void *) ptr;
                     for (u8 i = 0; i < addr_cells; i++) {
                         result.addr = swap_endianness(*reg_ptr++);
                     }
@@ -74,9 +74,11 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
                 running = false;
                 break;
             default:
-                panic("unknown token");
+                err("unknown FDT token %x", token);
+                running = false;
         }
     }
 
+    dbg("parsed fdt");
     return result;
 }
