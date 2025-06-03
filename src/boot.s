@@ -37,10 +37,10 @@ handle_reset:
     ldr sp, =0x400f0000
     cps #0b10111            // Abort mode
     ldr sp, =0x400e0000
-    cps #0b10111            // Undefined mode
+    cps #0b11011            // Undefined mode
     ldr sp, =0x400d0000
     cps #0b10011            // Supervisor (kernel) mode
-    ldr sp, =0x30000000
+    ldr sp, =0xc0000000
 
     b kboot
 

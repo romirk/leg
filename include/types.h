@@ -4,6 +4,8 @@
 
 #ifndef TYPES_H
 #define TYPES_H
+
+// ReSharper disable CppUnusedIncludeDirective
 #include <stdint.h>
 
 typedef uint64_t u64;

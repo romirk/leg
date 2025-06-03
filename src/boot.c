@@ -2,6 +2,7 @@
 
 #include "linker.h"
 #include "types.h"
+#include "uart.h"
 
 [[clang::no_builtin]]
 [[gnu::section(".startup")]]
@@ -19,16 +20,11 @@ void kboot() {
 
 // exceptions from delft os ---------------------------------------------------
 
-[[clang::optnone]]
 [[gnu::used]]
-[[gnu::interrupt("ABORT")]]
-[[gnu::interrupt("UNDEF")]]
 [[gnu::section(".startup")]]
 void handle_boot_exception(void) {
-    u32 i = 0xffffff; // just a bad timeout. GCC, please don't optimize.
-    while ((i--) > 0) {
-        asm volatile ("nop");
-    }
+    *UART0_BASE = '!';
+    *UART0_BASE = '\n';
     asm("b #0"); // reboot
 }
 

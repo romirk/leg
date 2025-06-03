@@ -29,11 +29,11 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
 #Uncomment for software floating point
-#add_compile_options(-mfloat-abi=soft)
+add_compile_options(-mfloat-abi=soft)
 
 add_compile_options(-mcpu=${MCPU})
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
-add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH})
+add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding)
 
 # TODO: REMOVE THIS!
 add_compile_options(-Wno-arm-interrupt-vfp-clobber)
@@ -55,7 +55,7 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     add_compile_options(-Os)
 else ()
     message(STATUS "Minimal optimization, debug info included")
-    add_compile_options(-O1 -g)
+    add_compile_options(-O1 -fno-slp-vectorize -g)
 endif ()
 
 include_directories(
