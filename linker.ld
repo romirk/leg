@@ -30,6 +30,7 @@ SECTIONS {
     .bss    : { *( .bss    .bss.*    ) } >boot AT>bin
 
     kernel_main_end = .;
+    STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);
 
     /**
      * C compilers for ARM generate a special section containing exception

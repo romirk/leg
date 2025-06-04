@@ -75,7 +75,7 @@ void panic(char *msg) {
     print("debug info:\nstack: *");
     void *p = nullptr;
     void *sp = &p;
-    const auto stack_height = STACK_BOTTOM - sp;
+    const auto stack_height = (void *) STACK_BOTTOM - sp;
     print_ptr(sp);
     putchar('\n');
 

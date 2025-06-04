@@ -14,17 +14,38 @@ static void *align(void *ptr, const u8 alignment) {
     return (void *) (-alignment & (u32) ptr + alignment - 1);
 }
 
+static void fdt_endianness_swap(struct fdt_header *header) {
+    header->magic = swap_endianness(header->magic);
+    header->totalsize = swap_endianness(header->totalsize);
+    header->off_dt_struct = swap_endianness(header->off_dt_struct);
+    header->off_dt_strings = swap_endianness(header->off_dt_strings);
+    header->off_mem_rsvmap = swap_endianness(header->off_mem_rsvmap);
+    header->version = swap_endianness(header->version);
+    header->last_comp_version = swap_endianness(header->last_comp_version);
+    header->boot_cpuid_phys = swap_endianness(header->boot_cpuid_phys);
+    header->size_dt_strings = swap_endianness(header->size_dt_strings);
+    header->size_dt_struct = swap_endianness(header->size_dt_struct);
+}
+
 struct fdt_parse_result parse_fdt(struct fdt_header *header) {
+    fdt_endianness_swap(header);
+
+    struct fdt_parse_result result = {.success = false};
+
+    if (header->magic != FDT_MAGIC) {
+        println("Not a valid FDT header!");
+        return result;
+    }
+
     char *ptr = (char *) header + header->off_dt_struct;
     const char *strings = (char *) header + header->off_dt_strings;
 
-    bool running = true;
-    struct fdt_parse_result result = {.addr = 0};
     u8 addr_cells = 0, size_cells = 0;
     const char *curr_name = nullptr;
 
     dbg("parsing fdt");
-    while (running) {
+
+    while (true) {
         const enum fdt_token token = swap_endianness(*(u32 *) ptr);
         ptr += sizeof(u32);
 
@@ -51,10 +72,9 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
                     } else if (!strcmp(prop_name, "#size-cells")) {
                         size_cells = swap_endianness(*(u32 *) ptr);
                     }
-                } else if (!strncmp(curr_name, "memory@", 7) && !strcmp(prop_name, "reg")) {
-                    if (!addr_cells || !size_cells)
-                        panic("Invalid FDT!");
-
+                } else if (!addr_cells || !size_cells)
+                    return result;
+                else if (!strncmp(curr_name, "memory@", 7) && !strcmp(prop_name, "reg")) {
                     const u32 *reg_ptr = (void *) ptr;
                     for (u8 i = 0; i < addr_cells; i++) {
                         result.addr = swap_endianness(*reg_ptr++);
@@ -71,14 +91,11 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
             case FDT_END_NODE:
                 break;
             case FDT_END:
-                running = false;
-                break;
+                result.success = true;
+                return result;
             default:
                 err("unknown FDT token %x", token);
-                running = false;
+                return result;
         }
     }
-
-    dbg("parsed fdt");
-    return result;
 }

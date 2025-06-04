@@ -5,7 +5,6 @@
 #ifndef FDT_H
 #define FDT_H
 
-#include "stdlib.h"
 #include "types.h"
 
 #define FDT_ADDR    (void *)    0x40000000
@@ -42,6 +41,5 @@ struct fdt_prop {
     u32 name_off;
 };
 
-void fdt_endianness_swap(struct fdt_header *header);
 
 #endif //FDT_H

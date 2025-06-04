@@ -1,0 +1,27 @@
+PREFIX=arm-none-eabi-
+CC=$(PREFIX)gcc
+AS=$(PREFIX)as
+LD=$(PREFIX)ld
+
+CFLAGS=-ffreestanding -Wall -Wextra -Werror -g
+AFLAGS=-march=armv7-a -mcpu=cortex-a15
+LDFLAGS=
+
+all: kernel.elf
+	
+_start.o: src/start.s
+	$(AS) $(AFLAGS) start.s -o _start.o
+
+start.o: src/start.c
+	$(CC) $(CFLAGS) -c start.c -o start.o
+
+kernel.elf: start.o _start.o
+	$(LD) $(LDFLAGS) -T linker.ld _start.o start.o -o kernel.elf
+
+qemu: kernel.elf
+	qemu-system-arm -M vexpress-a15 -cpu cortex-a15 -kernel kernel.elf -nographic -S -s
+
+clean:
+	rm start.o _start.o kernel.elf
+
+

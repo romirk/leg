@@ -12,6 +12,7 @@
 struct fdt_parse_result {
     u32 addr;
     u32 size;
+    bool success;
 };
 
 struct fdt_parse_result parse_fdt(struct fdt_header *header);
