@@ -6,6 +6,7 @@
 
 #include "logs.h"
 #include "stdio.h"
+#include "uart.h"
 #include "utils.h"
 #include "fdt/fdt.h"
 #include "fdt/parser.h"
@@ -13,8 +14,10 @@
 [[noreturn]]
 void kmain() {
     auto header = (struct fdt_header *) FDT_ADDR;
-
     auto result = parse_fdt(header);
+
+    struct pl011 uart;
+    pl011_setup(&uart, 24000000);
 
     log("memory\n\taddr: 0x%x\n\tsize: 0x%x\n", result.addr, result.size);
 

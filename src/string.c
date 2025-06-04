@@ -4,7 +4,6 @@
 
 #include "string.h"
 
-[[clang::no_builtin]]
 int strlen(const char *s) {
     int len = 0;
     while (*s++) len++;

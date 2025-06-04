@@ -33,7 +33,7 @@ struct fdt_parse_result parse_fdt(struct fdt_header *header) {
     struct fdt_parse_result result = {.success = false};
 
     if (header->magic != FDT_MAGIC) {
-        println("Not a valid FDT header!");
+        puts("Not a valid FDT header!");
         return result;
     }
 

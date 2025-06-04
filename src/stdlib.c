@@ -76,9 +76,8 @@ void panic(char *msg) {
     void *p = nullptr;
     void *sp = &p;
     const auto stack_height = (void *) STACK_BOTTOM - sp;
-    print_ptr(sp);
-    putchar('\n');
 
+    printf("%p\n", sp);
     hexdump(sp, stack_height > 64 ? 64 : stack_height);
 
     for (;;) {

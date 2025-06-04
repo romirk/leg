@@ -10,49 +10,54 @@
 #include "stdlib.h"
 #include "uart.h"
 
-void print(const char *s) {
+int print(const char *p) {
+    auto s = p;
     while (*s)
         putchar(*s++);
+    return s - p;
 }
 
-void println(const char *s) {
-    print(s);
+int puts(const char *s) {
+    const auto n = print(s);
     putchar('\n');
+    return n + 1;
 }
 
-void print_u32(const u32 num) {
+static int print_u32(const u32 num) {
     char res[12];
     utoa(num, res, 10);
-    print(res);
+    return print(res);
 }
 
-void print_i32(const i32 num) {
+static int print_i32(const i32 num) {
     char res[12];
     itoa(num, res, 10);
-    print(res);
+    return print(res);
 }
 
-void print_hex(const u32 num) {
+static int print_hex(const u32 num) {
     char res[9];
     utoa(num, res, 16);
-    print(res);
+    return print(res);
 }
 
-void print_bin(const u32 num) {
-    char res[9];
+static int print_bin(const u32 num) {
+    char res[32];
     utoa(num, res, 2);
-    print(res);
+    return print(res);
+}
+
+static int print_oct(const u32 num) {
+    char res[12];
+    utoa(num, res, 8);
+    return print(res);
 }
 
 // there's a subtle difference between this and `print_hex`: this one always prints all 4 bytes.
-void print_ptr(void *ptr) {
+static int print_ptr(void *ptr) {
     char res[9];
     hex32be((u32) ptr, res);
-    print(res);
-}
-
-void print_bool(const bool value) {
-    print(value ? "true" : "false");
+    return print(res);
 }
 
 void printf(const char *fmt, ...) {
@@ -60,43 +65,59 @@ void printf(const char *fmt, ...) {
     va_start(args);
 
     char c;
+    int n = 0;
     while ((c = *fmt++)) {
         if (c != '%') {
             putchar(c);
+            n++;
             continue;
         }
         const char t = *fmt++;
         switch (t) {
             case '%':
                 putchar('%');
+                n++;
                 break;
             case 's':
-                print(va_arg(args, char *));
+                n += print(va_arg(args, char *));
                 break;
             case 'c':
                 putchar(va_arg(args, int));
+                n++;
                 break;
             case 'd':
-                print_i32(va_arg(args, i32));
+            case 'i':
+                n += print_i32(va_arg(args, i32));
                 break;
             case 'u':
-                print_u32(va_arg(args, u32));
+                n += print_u32(va_arg(args, u32));
                 break;
             case 'x':
-                print_hex(va_arg(args, u32));
+                n += print_hex(va_arg(args, u32));
+                break;
+            case 'o':
+                n += print_oct(va_arg(args, u32));
                 break;
             case 'b':
-                print_bin(va_arg(args, u32));
+                n += print_bin(va_arg(args, u32));
+                break;
+            case 't':
+                n += print(va_arg(args, int) ? "true" : "false");
+                break;
             case 'p':
-                print_ptr(va_arg(args, void *));
+                n += print_ptr(va_arg(args, void *));
+                break;
+            case 'n':
+                const auto ptr = va_arg(args, signed int *);
+                *ptr = n;
                 break;
             default:
                 putchar('\n');
                 err("printf: unknown format %%%c", t);
-                goto printf_end;
+                va_end(args);
+                return;
         }
     }
-printf_end:
     va_end(args);
 }
 
