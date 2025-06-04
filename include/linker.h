@@ -7,8 +7,11 @@
 
 extern unsigned char STACK_BOTTOM[];
 
-extern unsigned char kernel_main_off[];
+extern unsigned char boot_vtbl_beg[];
+extern unsigned char boot_vtbl_end[];
+
+extern unsigned char kernel_main_beg[];
 extern unsigned char kernel_main_end[];
-extern unsigned char kernel_load_off[];
+extern unsigned char kernel_load_beg[];
 
 #endif // LINKER_H

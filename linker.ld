@@ -3,33 +3,29 @@ ENTRY(_start)
 MEMORY {
     low  : o = 0x00000000, l = 0x00040000
     ram  : o = 0x40000000, l = 0x80000000
-    dtbm : o = 0x40000000, l = 0x00100000
-    boot : o = 0x40100000, l = 0x00040000
+    dtbm : o = 0x40000000, l = 0x00004000
+    boot : o = 0x40008000, l = 0x00008000
     bin  : o = 0x00000000, l = 0x00010000
 }
 
 OUTPUT_ARCH(scriptfile)
 SECTIONS {
-    .boot_itbl : {
-        boot_itbl_beg = . ;
-        *( .boot_itbl )
-        boot_itbl_end = . ;
-    } >low AT>bin
+    .boot_vtbl : { *( .boot_vtbl ) } >low AT>bin
 
     .startup : { *( .startup    .startup.* ) } >low AT>bin
     .startup.end : {} >low AT>bin
 
-    kernel_main_off = 0x40100000 + .;
-    kernel_load_off = LOADADDR(.startup.end);
+    kernel_load_beg = LOADADDR(.startup.end);
+    kernel_main_beg = ORIGIN(boot);
 
-    .main.beg kernel_main_off (NOLOAD) : {} >boot
-
+    .vtbl   : { *( .vtbl   .vtbl.*   ) } >boot AT>bin
     .text   : { *( .text   .text.*   ) } >boot AT>bin
     .rodata : { *( .rodata .rodata.* ) } >boot AT>bin
     .data   : { *( .data   .data.*   ) } >boot AT>bin
     .bss    : { *( .bss    .bss.*    ) } >boot AT>bin
 
     kernel_main_end = .;
+
     STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);
 
     /**

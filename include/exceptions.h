@@ -7,9 +7,12 @@
 
 void handle_boot_exception(void);
 
-void handle_page_fault_boot(void);
+void handle_page_fault(void);
 
-void handle_irq_boot(void);
+void handle_irq(void);
 
-void handle_fiq_boot(void);
+void handle_fiq(void);
+
+void handle_svc(void);
+
 #endif //EXCEPTIONS_H

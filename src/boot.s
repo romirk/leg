@@ -1,7 +1,7 @@
 .global _start
 
-.section .boot_itbl, "ax", %progbits
-vtable:
+.section .boot_vtbl, "ax", %progbits
+.L.boot_vtable:
     // reset
     b handle_reset
 
@@ -15,16 +15,42 @@ vtable:
     ldr pc, =handle_boot_exception
 
     // external/internal data abort
-    ldr pc, =handle_page_fault_boot
+    ldr pc, =handle_boot_exception
 
     // no exception
     nop
 
     // IRQ
-    ldr pc, =handle_irq_boot
+    ldr pc, =handle_boot_exception
 
     // FIQ
-    ldr pc, =handle_fiq_boot
+    ldr pc, =handle_boot_exception
+
+.section .vtbl, "ax", %progbits
+vtable:
+    // reset
+    ldr pc, =.L.boot_vtable
+
+    // undefined instruction
+    nop
+
+    // software interrupt
+    nop
+
+    // external/internal prefetch abort
+    nop
+
+    // external/internal data abort
+    nop
+
+    // no exception
+    nop
+
+    // IRQ
+    b handle_irq
+
+    // FIQ
+    b handle_fiq
 
 .size vtable, . - vtable
 
@@ -41,6 +67,9 @@ handle_reset:
     ldr sp, = STACK_BOTTOM - 0x1000
     cps #0b10011            // Supervisor (kernel) mode
     ldr sp, = STACK_BOTTOM - 0x1400
+
+    // disable all extensions
+
 
     b kboot
 

@@ -7,20 +7,32 @@
 
 [[gnu::used]]
 void *memcpy(void *dst, const void *src, size_t len) {
-    if (len < 4) goto c1;
-    u32 *dp32 = dst;
-    const u32 *sp32 = src;
-    while (len >= 4) {
-        *dp32++ = *sp32++;
-        len -= 4;
+    u64 *dp64 = dst;
+    const u64 *sp64 = src;
+    while (len >= 8) {
+        *dp64++ = *sp64++;
+        len -= 8;
     }
-    dst = dp32;
-    src = sp32;
-c1:
-    u8 *dp = dst;
-    const u8 *sp = src;
+    u8 *dp8 = (void *) dp64;
+    const u8 *sp8 = (void *) sp64;
     while (len--)
-        *dp++ = *sp++;
+        *dp8++ = *sp8++;
+
+    return dst;
+}
+
+void *rev_memcpy(void *dst, const void *src, size_t len) {
+    u64 *dp64 = dst + len - 1;
+    const u64 *sp64 = src + len - 1;
+    while (len >= 8) {
+        *dp64-- = *sp64--;
+        len -= 8;
+    }
+    u8 *dp8 = (void *) dp64;
+    const u8 *sp8 = (void *) sp64;
+    while (len--)
+        *dp8-- = *sp8--;
+
     return dst;
 }
 
@@ -28,12 +40,8 @@ c1:
 void *memmove(void *dst, const void *src, size_t len) {
     if (dst < src)
         return memcpy(dst, src, len);
-    if (dst > src) {
-        u8 *dp = dst + len - 1;
-        const u8 *sp = src + len - 1;
-        while (len--)
-            *dp-- = *sp--;
-    }
+    if (dst > src)
+        return rev_memcpy(dst, src, len);
     return dst;
 }
 
