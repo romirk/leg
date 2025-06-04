@@ -6,5 +6,12 @@
 #define UTILS_H
 
 #define limbo() for(;;) asm("wfi")
+#include "types.h"
+
+inline void swap(char *a, char *b) {
+    const auto t = *a;
+    *a = *b;
+    *b = t;
+}
 
 #endif //UTILS_H

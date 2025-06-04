@@ -8,6 +8,7 @@
 #include "logs.h"
 #include "stdio.h"
 #include "uart.h"
+#include "utils.h"
 
 
 char *utoa(u32 value, char *str, const u8 base) {
@@ -17,20 +18,19 @@ char *utoa(u32 value, char *str, const u8 base) {
         return str;
     }
 
-    auto p = str;
-    u8 digits[16];
     auto i = 0u;
-
     do {
         const auto hex_digits = "0123456789abcdef";
         const u8 digit = value % base;
-        digits[i++] = hex_digits[digit];
+        str[i++] = hex_digits[digit];
     } while (value /= base);
 
-    while (i > 0) {
-        *p++ = digits[--i];
+    const auto c = i;
+    while (i > c / 2) {
+        swap(&str[c - i], &str[i - 1]);
+        i--;
     }
-    *p = '\0';
+    str[c] = '\0';
     return str;
 }
 
