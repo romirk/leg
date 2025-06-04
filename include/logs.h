@@ -19,7 +19,7 @@
 
 #ifdef LOG_INFO
 #define LOG_WARN
-#define log(fmt, ...) (print("\033[97m  info \033[0m "), printf(fmt "\n", ##__VA_ARGS__))
+#define info(fmt, ...) (print("\033[97m  info \033[0m "), printf(fmt "\n", ##__VA_ARGS__))
 #else
 #define log(...)
 #endif

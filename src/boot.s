@@ -32,15 +32,15 @@ vtable:
 handle_reset:
     // init stacks
     cps #0b10001            // FIQ mode
-    ldr sp, =0x40100000
+    ldr sp, = STACK_BOTTOM - 0x0000
     cps #0b10010            // IRQ mode
-    ldr sp, =0x400f0000
+    ldr sp, = STACK_BOTTOM - 0x0400
     cps #0b10111            // Abort mode
-    ldr sp, =0x400e0000
+    ldr sp, = STACK_BOTTOM - 0x0c00
     cps #0b11011            // Undefined mode
-    ldr sp, =0x400d0000
+    ldr sp, = STACK_BOTTOM - 0x1000
     cps #0b10011            // Supervisor (kernel) mode
-    ldr sp, =STACK_BOTTOM
+    ldr sp, = STACK_BOTTOM - 0x1400
 
     b kboot
 
