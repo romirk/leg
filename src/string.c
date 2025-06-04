@@ -23,3 +23,8 @@ int strncmp(const char *s1, const char *s2, size_t n) {
         return *s1 - *s2;
     return 0;
 }
+
+char *strcpy(char *dest, const char *src) {
+    while ((*dest++ = *src++));
+    return dest;
+}

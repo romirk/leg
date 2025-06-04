@@ -27,7 +27,8 @@ static void fdt_endianness_swap(struct fdt_header *header) {
     header->size_dt_struct = swap_endianness(header->size_dt_struct);
 }
 
-struct fdt_parse_result parse_fdt(struct fdt_header *header) {
+struct fdt_parse_result parse_fdt() {
+    auto header = (struct fdt_header *) FDT_ADDR;
     fdt_endianness_swap(header);
 
     struct fdt_parse_result result = {.success = false};

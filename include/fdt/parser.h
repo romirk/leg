@@ -15,6 +15,6 @@ struct fdt_parse_result {
     bool success;
 };
 
-struct fdt_parse_result parse_fdt(struct fdt_header *header);
+struct fdt_parse_result parse_fdt(void);
 
 #endif //FDT_PARSER_H

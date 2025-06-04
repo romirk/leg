@@ -6,10 +6,10 @@
 
 #include "linker.h"
 #include "logs.h"
+#include "math.h"
 #include "stdio.h"
 #include "uart.h"
 #include "utils.h"
-
 
 char *utoa(u32 value, char *str, const u8 base) {
     if (value == 0) {
@@ -18,19 +18,15 @@ char *utoa(u32 value, char *str, const u8 base) {
         return str;
     }
 
+    const auto digit_count = log(value, base);
     auto i = 0u;
     do {
-        const auto hex_digits = "0123456789abcdef";
+        const auto hex_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
         const u8 digit = value % base;
-        str[i++] = hex_digits[digit];
+        str[digit_count - i++] = hex_digits[digit];
     } while (value /= base);
 
-    const auto c = i;
-    while (i > c / 2) {
-        swap(&str[c - i], &str[i - 1]);
-        i--;
-    }
-    str[c] = '\0';
+    str[i] = '\0';
     return str;
 }
 
