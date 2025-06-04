@@ -49,7 +49,7 @@ struct pl011 {
 
 void pl011_setup(struct pl011 *dev, uint64_t base_clock);
 
-void pl011_reset(struct pl011 *dev);
+void pl011_reset(const struct pl011 *dev);
 
 void putchar(char c);
 

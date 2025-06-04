@@ -51,17 +51,17 @@ void __aeabi_memcpy4(void *dst, const void *src, size_t n) {
 }
 
 [[gnu::used, clang::no_builtin]]
-void __aeabi_memset(void *dst, size_t n, int c) {
+void __aeabi_memset(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
     memset(dst, c, n);
 }
 
 [[gnu::used, clang::no_builtin]]
-void __aeabi_memset8(void *dst, size_t n, int c) {
+void __aeabi_memset8(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
     __aeabi_memset(dst, n, c);
 }
 
 [[gnu::used, clang::no_builtin]]
-void __aeabi_memclr(void *dst, size_t n) {
+void __aeabi_memclr(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
     memclr(dst, n);
 }
 
@@ -71,6 +71,6 @@ void __aeabi_memclr8(void *dst, size_t n) {
 }
 
 [[gnu::used, clang::no_builtin]]
-void __aeabi_memclr4(void *dst, size_t n) {
+void __aeabi_memclr4(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
     __aeabi_memclr(dst, n);
 }

@@ -121,7 +121,7 @@ void printf(const char *fmt, ...) {
     va_end(args);
 }
 
-void hexdump(u32 *addr, u32 len) {
+void hexdump(const u32 *addr, const u32 len) {
     for (u32 i = 1; i <= len; i++) {
         char res[9];
         hex32le(*addr++, res);

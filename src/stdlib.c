@@ -10,7 +10,7 @@
 #include "uart.h"
 
 
-char *utoa(u32 value, char *str, u8 base) {
+char *utoa(u32 value, char *str, const u8 base) {
     if (value == 0) {
         str[2] = '0';
         str[3] = '\0';
@@ -34,23 +34,23 @@ char *utoa(u32 value, char *str, u8 base) {
     return str;
 }
 
-char *itoa(i32 value, char *p, u8 base) {
+char *itoa(i32 value, char *str, const u8 base) {
     if (value < 0) {
-        *p++ = '-';
+        *str++ = '-';
         value = -value;
     }
-    utoa(value, p, base);
-    return p;
+    utoa(value, str, base);
+    return str;
 }
 
-char *hex8(u8 value, char *str) {
+char *hex8(const u8 value, char *str) {
     const auto hex_digits = "0123456789abcdef";
     str[1] = hex_digits[value % 16];
     str[0] = hex_digits[value / 16];
     return str;
 }
 
-char *hex32le(u32 value, char *str) {
+char *hex32le(const u32 value, char *str) {
     hex8(value & 0xff, str);
     hex8(value >> 8 & 0xff, str + 2);
     hex8(value >> 16 & 0xff, str + 4);
@@ -59,7 +59,7 @@ char *hex32le(u32 value, char *str) {
     return str;
 }
 
-char *hex32be(u32 value, char *str) {
+char *hex32be(const u32 value, char *str) {
     hex8(value & 0xff, str + 6);
     hex8(value >> 8 & 0xff, str + 4);
     hex8(value >> 16 & 0xff, str + 2);

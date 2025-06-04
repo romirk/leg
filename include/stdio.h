@@ -13,6 +13,6 @@ int puts(const char *s);
 
 void printf(const char *, ...);
 
-void hexdump(u32 *addr, u32 len);
+void hexdump(const u32 *addr, u32 len);
 
 #endif //STDIO_H

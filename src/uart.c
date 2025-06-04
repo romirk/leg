@@ -9,15 +9,16 @@ static void wait_tx_complete() {
     while (*UARTFR & FR_BUSY);
 }
 
-static void calculate_divisors(uint32_t *integer, uint32_t *fractional, uint32_t base_clock, uint32_t baudrate) {
+static void calculate_divisors(uint32_t *integer, uint32_t *fractional, const uint32_t base_clock,
+                               const uint32_t baudrate) {
     // 64 * F_UARTCLK / (16 * B) = 4 * F_UARTCLK / B
     const uint32_t div = 4 * base_clock / baudrate;
 
     *fractional = div & 0x3f;
-    *integer = (div >> 6) & 0xffff;
+    *integer = div >> 6 & 0xffff;
 }
 
-void pl011_setup(struct pl011 *dev, uint64_t base_clock) {
+void pl011_setup(struct pl011 *dev, const uint64_t base_clock) {
     dev->base_address = UART0_BASE;
     dev->base_clock = base_clock;
 
@@ -29,8 +30,8 @@ void pl011_setup(struct pl011 *dev, uint64_t base_clock) {
     pl011_reset(dev);
 }
 
-void pl011_reset(struct pl011 *dev) {
-    auto cr = *UARTCR;
+void pl011_reset(const struct pl011 *dev) {
+    const auto cr = *UARTCR;
     auto lcr = *UARTLCR_H;
     u32 ibrd, fbrd;
 
@@ -51,7 +52,7 @@ void pl011_reset(struct pl011 *dev) {
     // data frame format
     lcr = 0x0;
     // get WLEN
-    lcr |= ((dev->data_bits - 1) & 0x3) << 5;
+    lcr |= (dev->data_bits - 1 & 0x3) << 5;
     // Configure the number of stop bits
     if (dev->stop_bits == 2)
         lcr |= LCR_STP2;
@@ -69,4 +70,4 @@ void pl011_reset(struct pl011 *dev) {
     *UARTCR = CR_TXEN | CR_UARTEN;
 }
 
-void putchar(char c) { *UARTDR = c; }
+void putchar(const char c) { *UARTDR = c; }
