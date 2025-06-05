@@ -18,7 +18,7 @@
     ldr pc, =handle_boot_exception
 
     // no exception
-    nop
+    b .
 
     // IRQ
     ldr pc, =handle_boot_exception
@@ -32,19 +32,19 @@ vtable:
     ldr pc, =.L.boot_vtable
 
     // undefined instruction
-    nop
+    b .
 
     // supervisor call
     b handle_svc
 
     // external/internal prefetch abort
-    nop
+    b .
 
     // external/internal data abort
-    nop
+    b .
 
     // no exception
-    nop
+    b .
 
     // IRQ
     b handle_irq

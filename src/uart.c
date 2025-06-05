@@ -57,17 +57,14 @@ void pl011_reset(const struct pl011 *dev) {
     if (dev->stop_bits == 2)
         lcr |= LCR_STP2;
 
-    // Mask all interrupts by setting corresponding bits to 1
-    *UARTIMSC = 0x7ff;
 
     // Disable DMA by setting all bits to 0
     *UARTDMACR = 0x0;
-
-    // I only need transmission, so that's the only thing I enabled.
-    *UARTCR = CR_TXEN;
+    *UARTICR = 0x000;
+    *UARTIMSC = 0x7ef;
 
     // Finally enable UART
-    *UARTCR = CR_TXEN | CR_UARTEN;
+    *UARTCR = CR_TXEN | CR_RXEN | CR_UARTEN;
 }
 
 void putchar(const char c) { *UARTDR = c; }

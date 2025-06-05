@@ -9,28 +9,23 @@
 #include "linker.h"
 #include "logs.h"
 #include "stdio.h"
+#include "uart.h"
 #include "utils.h"
 #include "fdt/parser.h"
 
 [[noreturn]]
 void kmain() {
-    // auto cpsr = read_cpsr();
-    // printf("Interrupts masked: %t\n"
-    //        "Fast interrupts masked: %t\n"
-    //        "Aborts masked: %t\n",
-    //        cpsr.I, cpsr.F, cpsr.A);
-
-    // write vtable address to vbar
-    struct vbar vbar = {.addr = (u32) kernel_main_beg >> 5};
-    write_vbar(vbar);
-
-    info("svc: %x", svc_called);
-    asm ("svc #0x42");
-    info("svc: %x", svc_called);
-
-    auto result = parse_fdt();
-
-    info("memory\n\taddr: 0x%x\n\tsize: 0x%x\n", result.addr, result.size);
+    disable_interrupts();
+    setup_exceptions();
+    auto cpsr = read_cpsr();
+    info("Interrupts masked: %t\n"
+           "Fast interrupts masked: %t\n"
+           "Aborts masked: %t",
+           cpsr.I, cpsr.F, cpsr.A);
+    auto sctlr = read_sctlr();
+    info("VE: %t", sctlr.VE);
+    auto periphbase = read_periphbase_39_15();
+    info("Periphbase: %x", periphbase);
 
     warn("HALT");
     limbo();

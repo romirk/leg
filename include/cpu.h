@@ -56,12 +56,61 @@ struct [[gnu::packed]] vbar {
     u32 addr: 27;
 };
 
+struct [[gnu::packed]] cbar {
+    u8 PERIPHBASE_39_32;
+    u8 : 7;
+    u32 PERIPHBASE_31_15: 17;
+};
+
+struct [[gnu::packed]] sctlr {
+    bool M: 1;
+    bool A: 1;
+    bool C: 1;
+    u8 : 2;
+    bool CP15BEN: 1;
+    bool : 1;
+    bool B: 1;
+    u8 : 2;
+    bool SW: 1;
+    bool Z: 1;
+    bool I: 1;
+    bool V: 1;
+    bool RR: 1;
+    bool : 1;
+    bool : 1;
+    bool HA: 1;
+    bool : 1;
+    bool WXN: 1;
+    bool UWXN: 1;
+    bool FI: 1;
+    bool U: 1;
+    bool : 1;
+    bool VE: 1;
+    bool EE: 1;
+    bool: 1;
+    bool NMFI: 1;
+    bool TRE: 1;
+    bool AFE: 1;
+    bool TE: 1;
+    bool: 1;
+};
+
 struct cpsr read_cpsr(void);
+
 struct scr read_scr(void);
+
 struct vbar read_vbar(void);
 
+struct sctlr read_sctlr(void);
+
+u32 read_periphbase_39_15(void);
+
 void write_cpsr(struct cpsr);
+
 void write_scr(struct scr);
+
 void write_vbar(struct vbar);
+
+void write_sctlr(struct sctlr);
 
 #endif //CPU_H

@@ -15,6 +15,9 @@ void handle_fiq(void);
 
 void handle_svc(void);
 
-extern int svc_called;
+void setup_exceptions(void);
+
+void enable_interrupts(void);
+void disable_interrupts(void);
 
 #endif //EXCEPTIONS_H

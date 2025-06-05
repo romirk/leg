@@ -9,6 +9,9 @@
 #define UART0_BASE 0x09000000
 #define UART_REG(off) (volatile uint32_t *)(UART0_BASE + (off))
 
+// GIC interrupt
+#define UART_GIC   0x01
+
 // UART registers
 
 /// data register
@@ -25,6 +28,8 @@
 #define UARTCR      UART_REG(0x030)
 // Interrupt Mask Set/Clear Register
 #define UARTIMSC    UART_REG(0x038)
+// Interrupt Clear Register
+#define UARTICR     UART_REG(0x044)
 /// DMA Control Register
 #define UARTDMACR   UART_REG(0x048)
 
@@ -32,10 +37,13 @@
 #define FR_BUSY     (u32)(1 << 3)
 
 #define CR_TXEN     (u32)(1 << 8)
+#define CR_RXEN     (u32)(1 << 9)
 #define CR_UARTEN   (u32)(1 << 0)
 
 #define LCR_FEN     (u32)(1 << 4)
 #define LCR_STP2    (u32)(1 << 3)
+
+#define MSC_RXIM    (u32)(1 << 4)
 
 #include "types.h"
 

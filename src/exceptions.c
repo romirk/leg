@@ -4,12 +4,10 @@
 
 #include "exceptions.h"
 
+#include "cpu.h"
+#include "linker.h"
 #include "uart.h"
 #include "types.h"
-
-int svc_called = -1;
-
-// exceptions from delft os ---------------------------------------------------
 
 [[gnu::used]]
 [[gnu::section(".startup.c")]]
@@ -26,26 +24,40 @@ void handle_page_fault(void) {
     // We handled the page fault
 }
 
-/**
- * IRQ handler during the boot process
- */
 [[gnu::interrupt("IRQ")]]
 void handle_irq(void) {
-    // No idea how to handle an IRQ during boot. Probably just ignore it.
-    // TODO: figure out how to clear IRQ and continue booting.
+    *UARTDR = '!';
 }
 
 [[gnu::interrupt("FIQ")]]
 void handle_fiq(void) {
-    // TODO: figure out if we need this during boot
-    // You can select exactly one interrupt to be a fast-interrupt.
-    // To do this, set the FIQ register according to the manual
-    // (BCM2835 ARM Peripherals, 7.5 Interrupts, FIQ Register).
 }
 
 [[gnu::interrupt("SWI")]]
 void handle_svc(void) {
-    u32 svc;
-    asm("ldr %0, [lr, #-4]" : "=r"(svc));
-    svc_called = (int) svc & 0xff;
+    u32 svc_instruction;
+    asm("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
+    // const auto svc = svc_instruction & 0xffffff;
+}
+
+void setup_exceptions(void) {
+    // write vtable address to vbar
+    struct vbar vbar = {.addr = (u32) kernel_main_beg >> 5};
+    write_vbar(vbar);
+}
+
+void enable_interrupts(void) {
+    auto cpsr = read_cpsr();
+    cpsr.I = false;
+    cpsr.A = false;
+    cpsr.F = false;
+    write_cpsr(cpsr);
+}
+
+void disable_interrupts(void) {
+    auto cpsr = read_cpsr();
+    cpsr.I = true;
+    cpsr.A = true;
+    cpsr.F = true;
+    write_cpsr(cpsr);
 }
