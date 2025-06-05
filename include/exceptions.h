@@ -15,4 +15,6 @@ void handle_fiq(void);
 
 void handle_svc(void);
 
+extern int svc_called;
+
 #endif //EXCEPTIONS_H

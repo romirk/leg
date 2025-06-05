@@ -7,6 +7,8 @@
 #include "uart.h"
 #include "types.h"
 
+int svc_called = -1;
+
 // exceptions from delft os ---------------------------------------------------
 
 [[gnu::used]]
@@ -43,4 +45,7 @@ void handle_fiq(void) {
 
 [[gnu::interrupt("SWI")]]
 void handle_svc(void) {
+    u32 svc;
+    asm("ldr %0, [lr, #-4]" : "=r"(svc));
+    svc_called = (int) svc & 0xff;
 }

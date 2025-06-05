@@ -34,8 +34,8 @@ vtable:
     // undefined instruction
     nop
 
-    // software interrupt
-    nop
+    // supervisor call
+    b handle_svc
 
     // external/internal prefetch abort
     nop
@@ -67,9 +67,6 @@ handle_reset:
     ldr sp, = STACK_BOTTOM - 0x1000
     cps #0b10011            // Supervisor (kernel) mode
     ldr sp, = STACK_BOTTOM - 0x1400
-
-    // disable all extensions
-
 
     b kboot
 

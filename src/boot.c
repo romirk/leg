@@ -2,6 +2,7 @@
 
 #include "linker.h"
 #include "types.h"
+#include "main.h"
 
 [[clang::no_builtin]]
 [[gnu::section(".startup.c")]]

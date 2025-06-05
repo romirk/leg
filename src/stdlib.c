@@ -13,8 +13,8 @@
 
 char *utoa(u32 value, char *str, const u8 base) {
     if (value == 0) {
-        str[2] = '0';
-        str[3] = '\0';
+        str[0] = '0';
+        str[1] = '\0';
         return str;
     }
 

@@ -27,7 +27,7 @@ struct [[gnu::packed]] cpsr {
     bool E: 1;
     u8 ITl: 6;
     u8 GE: 4;
-    u8 _reserved: 4;
+    u8 : 4;
     bool J: 1;
     u8 ITh: 2;
     bool Q: 1;
@@ -37,8 +37,31 @@ struct [[gnu::packed]] cpsr {
     bool N: 1;
 };
 
-struct cpsr get_cpsr();
+struct [[gnu::packed]] scr {
+    bool NS: 1;
+    bool IRQ: 1;
+    bool FIQ: 1;
+    bool EA: 1;
+    bool FW: 1;
+    bool AW: 1;
+    bool nET: 1;
+    bool SCD: 1;
+    bool HCE: 1;
+    bool SIF: 1;
+    u32 : 22;
+};
 
-enum processor_mode get_processor_mode();
+struct [[gnu::packed]] vbar {
+    u8 : 5;
+    u32 addr: 27;
+};
+
+struct cpsr read_cpsr(void);
+struct scr read_scr(void);
+struct vbar read_vbar(void);
+
+void write_cpsr(struct cpsr);
+void write_scr(struct scr);
+void write_vbar(struct vbar);
 
 #endif //CPU_H

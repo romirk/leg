@@ -4,11 +4,9 @@
 
 #include "main.h"
 
-
-#include "builtins.h"
-#include "linker.h"
-
 #include "cpu.h"
+#include "exceptions.h"
+#include "linker.h"
 #include "logs.h"
 #include "stdio.h"
 #include "utils.h"
@@ -16,12 +14,19 @@
 
 [[noreturn]]
 void kmain() {
-    auto cpsr = get_cpsr();
-    printf("Interrupts masked: %t\n"
-           "Fast interrupts masked: %t\n"
-           "Aborts masked: %t\n"
-           "",
-           cpsr.I, cpsr.F, cpsr.A);
+    // auto cpsr = read_cpsr();
+    // printf("Interrupts masked: %t\n"
+    //        "Fast interrupts masked: %t\n"
+    //        "Aborts masked: %t\n",
+    //        cpsr.I, cpsr.F, cpsr.A);
+
+    // write vtable address to vbar
+    struct vbar vbar = {.addr = (u32) kernel_main_beg >> 5};
+    write_vbar(vbar);
+
+    info("svc: %x", svc_called);
+    asm ("svc #0x42");
+    info("svc: %x", svc_called);
 
     auto result = parse_fdt();
 

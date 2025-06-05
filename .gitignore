@@ -1,1 +1,2 @@
-/cmake-build-debug-arm32/
+cmake-build-*/
+*.dtb
