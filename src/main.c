@@ -6,12 +6,10 @@
 
 #include "cpu.h"
 #include "exceptions.h"
-#include "linker.h"
 #include "logs.h"
 #include "stdio.h"
 #include "uart.h"
 #include "utils.h"
-#include "fdt/parser.h"
 
 [[noreturn]]
 void kmain() {
@@ -24,6 +22,7 @@ void kmain() {
            cpsr.I, cpsr.F, cpsr.A);
     auto sctlr = read_sctlr();
     info("VE: %t", sctlr.VE);
+
     auto periphbase = read_periphbase_39_15();
     info("Periphbase: %x", periphbase);
 

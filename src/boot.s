@@ -1,6 +1,7 @@
 .global _start
 
 .section .boot_vtbl, "ax", %progbits
+_start:
 .L.boot_vtable:
     // reset
     b handle_reset
