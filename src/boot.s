@@ -7,25 +7,25 @@ _start:
     b handle_reset
 
     // undefined instruction
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
     // software interrupt
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
     // external/internal prefetch abort
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
     // external/internal data abort
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
     // no exception
     b .
 
     // IRQ
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
     // FIQ
-    ldr pc, =handle_boot_exception
+    b handle_boot_exception
 
 .section .vtbl, "ax", %progbits
 vtable:
@@ -39,10 +39,10 @@ vtable:
     b handle_svc
 
     // external/internal prefetch abort
-    b .
+    b =handle_page_fault
 
     // external/internal data abort
-    b .
+    b =handle_page_fault
 
     // no exception
     b .
@@ -57,25 +57,27 @@ vtable:
 
 .section .startup, "ax", %progbits
 handle_reset:
+    // set vtable addresses
+    ldr r2, =vtable
+    mcr p15, 0, r2, c12, c0, 0
+
     // init stacks
     cps #0b10001            // FIQ mode
     ldr sp, = STACK_BOTTOM - 0x0000
     cps #0b10010            // IRQ mode
     ldr sp, = STACK_BOTTOM - 0x0400
     cps #0b10111            // Abort mode
-    ldr sp, = STACK_BOTTOM - 0x0c00
+    ldr sp, = STACK_BOTTOM - 0x0800
     cps #0b11011            // Undefined mode
-    ldr sp, = STACK_BOTTOM - 0x1000
+    ldr sp, = STACK_BOTTOM - 0x0c00
     cps #0b10011            // Supervisor (kernel) mode
-    ldr sp, = STACK_BOTTOM - 0x1400
+    ldr sp, = STACK_BOTTOM - 0x1000
 
     b kboot
 
-
-
-/*
-enable_mmu:
-    mrc p15, 0, r1, c1, c0, 0   // Read control register
-    orr r1, #0x01               // set M bit
-    mcr p15, 0, r1, c1, c0, 0   // Write control register and enable MMU
-*/
+// .section .tt, "aw", %progbits
+// .align 4
+// .global tt_l1_base
+//
+// tt_l1_base:
+// .fill 4096 , 1 , 0

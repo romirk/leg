@@ -21,7 +21,7 @@ void *memcpy(void *dst, const void *src, size_t len) {
     return dst;
 }
 
-void *rev_memcpy(void *dst, const void *src, size_t len) {
+static void *rev_memcpy(void *dst, const void *src, size_t len) {
     u64 *dp64 = dst + len - 1;
     const u64 *sp64 = src + len - 1;
     while (len >= 8) {
@@ -37,7 +37,7 @@ void *rev_memcpy(void *dst, const void *src, size_t len) {
 }
 
 [[gnu::used]]
-void *memmove(void *dst, const void *src, size_t len) {
+void *memmove(void *dst, const void *src, const size_t len) {
     if (dst < src)
         return memcpy(dst, src, len);
     if (dst > src)
@@ -46,7 +46,7 @@ void *memmove(void *dst, const void *src, size_t len) {
 }
 
 [[gnu::used]]
-void *memset(void *dst, int c, size_t len) {
+void *memset(void *dst, const int c, size_t len) {
     u8 *dp = dst;
     while ((u32) dp % 4 && len--)
         *dp++ = c;
@@ -65,7 +65,7 @@ void *memset(void *dst, int c, size_t len) {
 }
 
 [[gnu::used]]
-void *memclr(void *dst, size_t len) {
+void *memclr(void *dst, const size_t len) {
     return memset(dst, 0, len);
 }
 

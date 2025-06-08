@@ -2,11 +2,11 @@
 
 #include "linker.h"
 #include "types.h"
-#include "main.h"
 
 [[clang::no_builtin]]
 [[gnu::section(".startup.c")]]
 void kboot() {
+    // init_translation_table();
     // copy binary to RAM
     auto len = kernel_main_end - kernel_main_beg;
     u64 *dp64 = (void *) kernel_main_beg;

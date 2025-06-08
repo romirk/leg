@@ -7,12 +7,8 @@
 #include "logs.h"
 #include "stdlib.h"
 #include "string.h"
+#include "utils.h"
 #include "fdt/fdt.h"
-
-[[gnu::const]]
-static void *align(void *ptr, const u8 alignment) {
-    return (void *) (-alignment & (u32) ptr + alignment - 1);
-}
 
 static void fdt_endianness_swap(struct fdt_header *header) {
     header->magic = swap_endianness(header->magic);

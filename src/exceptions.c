@@ -5,7 +5,7 @@
 #include "exceptions.h"
 
 #include "cpu.h"
-#include "linker.h"
+#include "logs.h"
 #include "uart.h"
 #include "types.h"
 
@@ -20,7 +20,7 @@ void handle_boot_exception(void) {
 [[gnu::interrupt("ABORT")]]
 void handle_page_fault(void) {
     // We got a page fault...
-    asm volatile ("nop");
+    *UARTDR = 'A';
     // We handled the page fault
 }
 
@@ -34,16 +34,17 @@ void handle_fiq(void) {
 }
 
 [[gnu::interrupt("SWI")]]
-void handle_svc(void) {
+void handle_svc(int svc_num) {
     u32 svc_instruction;
-    asm("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
-    // const auto svc = svc_instruction & 0xffffff;
+
+    // NOTE: `VOLATILE` PREVENTS THIS INSTRUCTION FROM BEING RENDERED USELESS
+    asm volatile ("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
+
+    warn("SVC %x (%x)", svc_instruction & 0xff, svc_num);
 }
 
 void setup_exceptions(void) {
-    // write vtable address to vbar
-    struct vbar vbar = {.addr = (u32) kernel_main_beg >> 5};
-    write_vbar(vbar);
+    // no longer needed?
 }
 
 void enable_interrupts(void) {

@@ -13,7 +13,7 @@ void handle_irq(void);
 
 void handle_fiq(void);
 
-void handle_svc(void);
+void handle_svc(int);
 
 void setup_exceptions(void);
 
