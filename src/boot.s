@@ -1,4 +1,5 @@
 .global _start
+.global vtable
 
 .section .boot_vtbl, "ax", %progbits
 _start:
@@ -39,10 +40,10 @@ vtable:
     b handle_svc
 
     // external/internal prefetch abort
-    b =handle_page_fault
+    b handle_page_fault
 
     // external/internal data abort
-    b =handle_page_fault
+    b handle_page_fault
 
     // no exception
     b .
@@ -57,10 +58,6 @@ vtable:
 
 .section .startup, "ax", %progbits
 handle_reset:
-    // set vtable addresses
-    ldr r2, =vtable
-    mcr p15, 0, r2, c12, c0, 0
-
     // init stacks
     cps #0b10001            // FIQ mode
     ldr sp, = STACK_BOTTOM - 0x0000
@@ -75,9 +72,9 @@ handle_reset:
 
     b kboot
 
-// .section .tt, "aw", %progbits
-// .align 4
-// .global tt_l1_base
-//
-// tt_l1_base:
-// .fill 4096 , 1 , 0
+.section .tt, "aw", %progbits
+.align 8
+.global tt_l1_base
+
+tt_l1_base:
+.fill 1024 , 8 , 0

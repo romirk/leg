@@ -29,17 +29,19 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
 #Uncomment for software floating point
-add_compile_options(-mfloat-abi=soft)
 
-add_compile_options(-mcpu=${MCPU})
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
+
+add_compile_options(-mfloat-abi=soft)
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
-add_compile_options(-Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding)
+add_compile_options(-mcpu=${MCPU} -Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding -flto)
 
 # TODO: REMOVE THIS!
 add_compile_options(-Wno-arm-interrupt-vfp-clobber)
 
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
+add_link_options(-flto --target=${TARGET_ARCH} -mcpu=${MCPU} -Wl,-T,${LINKER_SCRIPT} -nostdlib)
 
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
 # uncomment to mitigate c++17 absolute addresses warnings
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
@@ -71,11 +73,7 @@ file(GLOB_RECURSE SOURCES
         "src/*.*"
 )
 
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
-
 #add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
-#add_link_options(-mcpu=${MCPU} -mthumb)
-add_link_options(-flto --target=${TARGET_ARCH} -mcpu=${MCPU} -Wl,-T,${LINKER_SCRIPT} -nostdlib)
 #set(CMAKE_EXE_LINKER_FLAGS "--target=${TARGET_ARCH} -flto -mcpu=${MCPU} -Wl,-T,\"${LINKER_SCRIPT}\" -nostdlib")
 
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})

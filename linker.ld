@@ -22,10 +22,10 @@ SECTIONS {
     .text   : { *( .text   .text.*   ) } >boot AT>bin
     .rodata : { *( .rodata .rodata.* ) } >boot AT>bin
     .data   : { *( .data   .data.*   ) } >boot AT>bin
-    .bss    : { *( .bss    .bss.*    ) } >boot AT>bin
 
     kernel_main_end = .;
 
+    .bss    : { *( .bss    .bss.*    ) } >boot AT>bin
     .tt (NOLOAD): { *( .tt .tt.* ) } >boot
 
     STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);

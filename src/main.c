@@ -8,10 +8,12 @@
 #include "logs.h"
 #include "memory.h"
 #include "stdio.h"
+#include "stdlib.h"
 #include "utils.h"
 #include "fdt/parser.h"
 
 [[noreturn]]
+[[gnu::used]]
 void kmain() {
     disable_interrupts();
 

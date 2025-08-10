@@ -29,16 +29,16 @@ typedef union {
         u8 type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
-        bool XN: 1;
+        bool execute_never: 1;
         u8 domain: 4;
         bool : 1;
-        u8 AP10: 2;
-        u8 TEX: 3;
-        bool AP2: 1;
-        bool S: 1;
-        bool nG: 1;
+        u8 access_perms: 2;
+        u8 type_ext: 3;
+        bool access_ext: 1;
+        bool shareable: 1;
+        bool not_global: 1;
         bool: 1;
-        bool NS: 1;
+        bool non_secure: 1;
 
         // section base address [31:20]
         u32 address: 12;
@@ -46,9 +46,9 @@ typedef union {
 
     struct [[gnu::packed]] {
         u8 type: 2;
-        bool B: 1;
-        bool C: 1;
-        bool XN: 1;
+        bool bufferable: 1;
+        bool cacheable: 1;
+        bool execute_never: 1;
 
         // extended address [39:36]
         u8 xaddr_39_36: 4;
@@ -57,10 +57,10 @@ typedef union {
         u8 AP10: 2;
         u8 TEX: 3;
         bool AP2: 1;
-        bool S: 1;
-        bool nG: 1;
+        bool shareable: 1;
+        bool not_global: 1;
         bool: 1;
-        bool NS: 1;
+        bool non_secure: 1;
 
         // extended address [35:32]
         u8 xaddr_35_32: 4;
@@ -109,6 +109,8 @@ typedef union {
     } small_page;
 } l2_table_entry;
 
-void init_translation_table(void);
+void init_mmu(void);
+
+void init_l1_translation_table(l1_table_entry *);
 
 #endif //MEMORY_H

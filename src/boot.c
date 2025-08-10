@@ -1,12 +1,15 @@
 #include "boot.h"
 
 #include "linker.h"
+#include "main.h"
+#include "memory.h"
 #include "types.h"
 
-[[clang::no_builtin]]
+// [[clang::no_builtin]]
 [[gnu::section(".startup.c")]]
 void kboot() {
-    // init_translation_table();
+    init_mmu();
+
     // copy binary to RAM
     auto len = kernel_main_end - kernel_main_beg;
     u64 *dp64 = (void *) kernel_main_beg;
@@ -23,6 +26,10 @@ void kboot() {
     while (len--) {
         *dp8++ = *sp8++;
     }
+
+    // set vtable address
+    extern unsigned char vtable[];
+    asm("mcr p15, 0, %0, c12, c0, 0" :: "r"(vtable));
 
     // jump
     asm("ldr pc, =kmain");
