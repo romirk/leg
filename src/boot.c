@@ -1,8 +1,6 @@
 #include "boot.h"
 
 #include "linker.h"
-#include "main.h"
-#include "memory.h"
 #include "types.h"
 
 // [[clang::no_builtin]]
@@ -21,9 +19,9 @@ void kboot() {
 
     u8 *dp8 = (void *) dp64;
     const u8 *sp8 = (void *) sp64;
-    while (len--) {
+    while (len--)
         *dp8++ = *sp8++;
-    }
+
 
     // set vtable address
     extern unsigned char vtable[];

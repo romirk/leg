@@ -31,7 +31,7 @@ _start:
 .section .vtbl, "ax", %progbits
 vtable:
     // reset
-    ldr pc, =.L.boot_vtable
+    mov pc, #0
 
     // undefined instruction
     b .
@@ -69,5 +69,15 @@ handle_reset:
     ldr sp, = STACK_BOTTOM - 0x0c00
     cps #0b10011            // Supervisor (kernel) mode
     ldr sp, = STACK_BOTTOM - 0x1000
+
+    // from arm docs
+    // Enable access to CP10 and CP11 and clear the ASEDIS bit in the CPACR
+    // mov r0, 0x00f00000
+    // mcr p15, 0, r0, c1, c0, 2
+    // isb
+
+    // Set the FPEXC.EN bit to enable Advanced SIMD and VFP
+    // mov  r1, #0x40000000
+    // vmsr FPEXC, r1
 
     b kboot

@@ -7,7 +7,7 @@
 
 #include "types.h"
 
-#define limbo() for(;;) asm("wfi")
+#define limbo for(;;) asm("wfi")
 
 inline void swap(char *a, char *b) {
     const auto t = *a;
