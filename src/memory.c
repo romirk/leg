@@ -29,8 +29,8 @@ void init_mmu(void) {
     l1_translation_table[0x090] = (l1_table_entry){
         .section = {
             .address = 0x090,
-            .access_perms = 0b11,
-            .type_ext = 0b001,
+            .access_perms = 0b10,
+            .type_ext = 0b000,
             .bufferable = false,
             .cacheable = false,
             .type = 0b10,

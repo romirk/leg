@@ -3,7 +3,6 @@
 #include "linker.h"
 #include "types.h"
 
-// [[clang::no_builtin]]
 [[gnu::section(".startup.c")]]
 void kboot() {
     // copy binary to RAM
@@ -21,7 +20,6 @@ void kboot() {
     const u8 *sp8 = (void *) sp64;
     while (len--)
         *dp8++ = *sp8++;
-
 
     // set vtable address
     extern unsigned char vtable[];

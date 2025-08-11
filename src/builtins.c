@@ -5,7 +5,6 @@
 #include "builtins.h"
 #include "types.h"
 
-[[gnu::used]]
 void *memcpy(void *dst, const void *src, size_t len) {
     u64 *dp64 = dst;
     const u64 *sp64 = src;
@@ -36,7 +35,6 @@ static void *rev_memcpy(void *dst, const void *src, size_t len) {
     return dst;
 }
 
-[[gnu::used]]
 void *memmove(void *dst, const void *src, const size_t len) {
     if (dst < src)
         return memcpy(dst, src, len);
@@ -45,7 +43,6 @@ void *memmove(void *dst, const void *src, const size_t len) {
     return dst;
 }
 
-[[gnu::used]]
 void *memset(void *dst, const int c, size_t len) {
     u8 *dp = dst;
     while ((u32) dp % 4 && len--)
@@ -64,44 +61,36 @@ void *memset(void *dst, const int c, size_t len) {
     return dst;
 }
 
-[[gnu::used]]
 void *memclr(void *dst, const size_t len) {
     return memset(dst, 0, len);
 }
 
 // EABI functions
-//
-// [[gnu::used]]
-// void __aeabi_memcpy(void *dst, const void *src, size_t n) {
-//     memcpy(dst, src, n);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memcpy4(void *dst, const void *src, size_t n) {
-//     __aeabi_memcpy(dst, src, n);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memset(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
-//     memset(dst, c, n);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memset8(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
-//     __aeabi_memset(dst, n, c);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memclr(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
-//     memclr(dst, n);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memclr8(void *dst, size_t n) {
-//     __aeabi_memclr(dst, n);
-// }
-//
-// [[gnu::used]]
-// void __aeabi_memclr4(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
-//     __aeabi_memclr(dst, n);
-// }
+
+void __aeabi_memcpy(void *dst, const void *src, size_t n) {
+    memcpy(dst, src, n);
+}
+
+void __aeabi_memcpy4(void *dst, const void *src, size_t n) {
+    __aeabi_memcpy(dst, src, n);
+}
+
+void __aeabi_memset(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
+    memset(dst, c, n);
+}
+
+void __aeabi_memset8(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
+    __aeabi_memset(dst, n, c);
+}
+
+void __aeabi_memclr(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
+    memclr(dst, n);
+}
+
+void __aeabi_memclr8(void *dst, size_t n) {
+    __aeabi_memclr(dst, n);
+}
+
+void __aeabi_memclr4(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
+    __aeabi_memclr(dst, n);
+}

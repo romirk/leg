@@ -6,15 +6,17 @@
 #define STDLIB_H
 #include "types.h"
 
+extern const char * const ALPHANUM;
+
 char *utoa(u32 value, char *str, u8 base);
 
 char *itoa(i32 value, char *str, u8 base);
 
 char *hex8(u8 value, char *str);
 
-char *hex32le(u32 value, char *str);
+char *hex32le(u32 value, char str[9]);
 
-char *hex32be(u32 value, char *str);
+char *hex32be(u32 value, char str[9]);
 
 [[gnu::const]]
 inline u32 swap_endianness(const u32 num) {

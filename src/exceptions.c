@@ -9,8 +9,7 @@
 #include "uart.h"
 #include "types.h"
 
-[[gnu::used]]
-[[gnu::section(".startup.c")]]
+[[gnu::section(".startup.exceptions")]]
 void handle_boot_exception(void) {
     *UARTDR = '!';
     *UARTDR = '\n';
@@ -41,10 +40,6 @@ void handle_svc(int svc_num) {
     asm volatile ("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
 
     warn("SVC %x (%x)", svc_instruction & 0xff, svc_num);
-}
-
-void setup_exceptions(void) {
-    // no longer needed?
 }
 
 void enable_interrupts(void) {

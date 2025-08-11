@@ -37,7 +37,7 @@ typedef union {
         bool access_ext: 1;
         bool shareable: 1;
         bool not_global: 1;
-        bool: 1;
+        bool supersection: 1;
         bool non_secure: 1;
 
         // section base address [31:20]
@@ -54,12 +54,12 @@ typedef union {
         u8 xaddr_39_36: 4;
 
         bool : 1;
-        u8 AP10: 2;
-        u8 TEX: 3;
-        bool AP2: 1;
+        u8 access_perms: 2;
+        u8 type_ext: 3;
+        bool access_ext: 1;
         bool shareable: 1;
         bool not_global: 1;
-        bool: 1;
+        bool supersection: 1;
         bool non_secure: 1;
 
         // extended address [35:32]

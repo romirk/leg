@@ -15,8 +15,6 @@ void handle_fiq(void);
 
 void handle_svc(int);
 
-void setup_exceptions(void);
-
 void enable_interrupts(void);
 
 void disable_interrupts(void);

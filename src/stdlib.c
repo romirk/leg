@@ -8,8 +8,8 @@
 #include "logs.h"
 #include "math.h"
 #include "stdio.h"
-#include "uart.h"
-#include "utils.h"
+
+const char * const ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 char *utoa(u32 value, char *str, const u8 base) {
     if (value == 0) {
@@ -21,9 +21,8 @@ char *utoa(u32 value, char *str, const u8 base) {
     const auto digit_count = log(value, base);
     auto i = 0u;
     do {
-        const auto hex_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
         const u8 digit = value % base;
-        str[digit_count - i++] = hex_digits[digit];
+        str[digit_count - i++] = ALPHANUM[digit];
     } while (value /= base);
 
     str[i] = '\0';
@@ -40,13 +39,12 @@ char *itoa(i32 value, char *str, const u8 base) {
 }
 
 char *hex8(const u8 value, char *str) {
-    const auto hex_digits = "0123456789abcdef";
-    str[1] = hex_digits[value % 16];
-    str[0] = hex_digits[value / 16];
+    str[1] = ALPHANUM[value % 16];
+    str[0] = ALPHANUM[value / 16];
     return str;
 }
 
-char *hex32le(const u32 value, char *str) {
+char *hex32le(const u32 value, char str[9]) {
     hex8(value & 0xff, str);
     hex8(value >> 8 & 0xff, str + 2);
     hex8(value >> 16 & 0xff, str + 4);
@@ -55,7 +53,7 @@ char *hex32le(const u32 value, char *str) {
     return str;
 }
 
-char *hex32be(const u32 value, char *str) {
+char *hex32be(const u32 value, char str[9]) {
     hex8(value & 0xff, str + 6);
     hex8(value >> 8 & 0xff, str + 4);
     hex8(value >> 16 & 0xff, str + 2);
