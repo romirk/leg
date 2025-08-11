@@ -26,7 +26,7 @@ SECTIONS {
     kernel_main_end = .;
 
     .bss    : { *( .bss    .bss.*    ) } >boot AT>bin
-    .tt (NOLOAD): { *( .tt .tt.* ) } >boot
+    .tt     : { *( .tt .tt.* ) } >boot
 
     STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);
 

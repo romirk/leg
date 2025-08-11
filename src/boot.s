@@ -71,10 +71,3 @@ handle_reset:
     ldr sp, = STACK_BOTTOM - 0x1000
 
     b kboot
-
-.section .tt, "aw", %progbits
-.align 8
-.global tt_l1_base
-
-tt_l1_base:
-.fill 1024 , 8 , 0
