@@ -23,10 +23,12 @@ static void fdt_endianness_swap(struct fdt_header *header) {
     header->size_dt_struct = swap_endianness(header->size_dt_struct);
 }
 
-static const char* indent(u8 depth) {
-    static const char indent_buffer[] = "\t\t\t\t\t\t\t\t\t\t";
+#ifdef LOG_DEBUG
+static const char *indent(u8 depth) {
+    static const auto indent_buffer = "\t\t\t\t\t\t\t\t\t\t";
     return indent_buffer + (10 - depth);
 }
+#endif
 
 struct fdt_parse_result parse_fdt() {
     auto header = (struct fdt_header *) FDT_ADDR;
@@ -42,7 +44,10 @@ struct fdt_parse_result parse_fdt() {
     char *ptr = (char *) header + header->off_dt_struct;
     const char *strings = (char *) header + header->off_dt_strings;
 
-    u8 addr_cells = 0, size_cells = 0, depth = 0;
+    u8 addr_cells = 0, size_cells = 0;
+#ifdef LOG_DEBUG
+    u8 depth = 0;
+#endif
     const char *curr_name = nullptr;
 
     dbg("parsing fdt");
@@ -58,7 +63,9 @@ struct fdt_parse_result parse_fdt() {
                 dbg("%s= %s", indent(depth), ptr);
                 ptr += len + 1;
                 ptr = align(ptr, 4);
+#ifdef LOG_DEBUG
                 depth++;
+#endif
                 break;
             }
             case FDT_PROP: {
@@ -91,7 +98,9 @@ struct fdt_parse_result parse_fdt() {
                 break;
             }
             case FDT_END_NODE:
+#ifdef LOG_DEBUG
                 depth--;
+#endif
             case FDT_NOP:
                 break;
             case FDT_END:

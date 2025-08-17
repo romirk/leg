@@ -10,10 +10,9 @@ MEMORY {
 
 OUTPUT_ARCH(scriptfile)
 SECTIONS {
-    .boot_vtbl : { *( .boot_vtbl ) } >low AT>bin
-
-    .startup : { *( .startup    .startup.* ) } >low AT>bin
-    .startup.end : {} >low AT>bin
+    .boot_vtbl : { *( .boot_vtbl             ) } >low AT>bin
+    .startup   : { *( .startup    .startup.* ) } >low AT>bin
+    .startup.end : ALIGN(0x10) {} >low AT>bin
 
     kernel_load_beg = LOADADDR(.startup.end);
     kernel_main_beg = ORIGIN(boot);
@@ -25,8 +24,8 @@ SECTIONS {
 
     kernel_main_end = .;
 
-    .bss         : { *( .bss    .bss.*    ) } >boot AT>bin
-    .tt (NOLOAD) : { *( .tt .tt.* ) } >boot
+    .bss         : { *( .bss  .bss.* ) } >boot AT>bin
+    .tt (NOLOAD) : { *( .tt   .tt.*  ) } >boot
 
     STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);
 

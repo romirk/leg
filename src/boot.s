@@ -72,12 +72,12 @@ handle_reset:
 
     // from arm docs
     // Enable access to CP10 and CP11 and clear the ASEDIS bit in the CPACR
-    // mov r0, 0x00f00000
-    // mcr p15, 0, r0, c1, c0, 2
-    // isb
+    mov r0, 0x00f00000
+    mcr p15, 0, r0, c1, c0, 2
+    isb
 
     // Set the FPEXC.EN bit to enable Advanced SIMD and VFP
-    // mov  r1, #0x40000000
-    // vmsr FPEXC, r1
+    mov  r1, #0x40000000
+    vmsr FPEXC, r1
 
     b kboot

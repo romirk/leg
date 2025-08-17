@@ -21,7 +21,7 @@
 #define LOG_WARN
 #define info(fmt, ...) (print("\033[97m  info \033[0m "), printf(fmt "\n", ##__VA_ARGS__))
 #else
-#define log(...)
+#define info(...)
 #endif
 
 #ifdef LOG_WARN

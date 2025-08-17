@@ -29,13 +29,13 @@ set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
 #add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
 #add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 #add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
-add_compile_options(-mfloat-abi=soft)
+#add_compile_options(-mfloat-abi=soft)
 
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
 add_compile_options(-mcpu=${MCPU} -Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding -flto)
 
 # TODO: REMOVE THIS!
-#add_compile_options(-Wno-arm-interrupt-vfp-clobber)
+add_compile_options(-Wno-arm-interrupt-vfp-clobber)
 
 add_link_options(-flto --target=${TARGET_ARCH} -mcpu=${MCPU} -Wl,-T,${LINKER_SCRIPT} -nostdlib)
 
@@ -43,7 +43,7 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     message(STATUS "Maximum optimization for speed")
-    add_compile_definitions(LOG_ERROR)
+    add_compile_definitions(LOG_WARN)
 elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     message(STATUS "Maximum optimization for speed, debug info included")
     add_compile_definitions(LOG_DEBUG)
