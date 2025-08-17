@@ -30,6 +30,7 @@ void handle_irq(void) {
 
 [[gnu::interrupt("FIQ")]]
 void handle_fiq(void) {
+    *UARTDR = '?';
 }
 
 [[gnu::interrupt("SWI")]]

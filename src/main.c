@@ -7,6 +7,7 @@
 #include "exceptions.h"
 #include "logs.h"
 #include "memory.h"
+#include "rtc.h"
 #include "stdio.h"
 #include "utils.h"
 #include "fdt/parser.h"
@@ -14,15 +15,19 @@
 [[noreturn]]
 [[gnu::used]]
 void kmain() {
-    disable_interrupts();
-
     init_mmu();
 
-    auto result = parse_fdt();
-    if (!result.success) {
-        info("Failed to parse fdt");
-    } else
-        info("memory start: 0x%p | memory size: 0x%x", result.addr, result.size);
+    info("RTC enabled: %t | RTC masked: %t", *(bool *) (RTC_BASE + 0x00c), *(bool *) (RTC_BASE + 0x010));
+    info("RTC ID: %x", *(u32 *) (RTC_BASE + 0xfe0));
+    // u32 clk = *(volatile u32 *) RTC_BASE;
+    // for (int i = 0; i < 10; ++i) {
+    //     u32 nxt = clk;
+    //     while (nxt == clk) {
+    //         nxt = *(volatile u32 *) RTC_BASE;
+    //     }
+    //     clk = nxt;
+    //     dbg("RTC clk: %p", clk);
+    // }
 
     warn("HALT");
     limbo;

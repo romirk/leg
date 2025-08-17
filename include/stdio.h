@@ -9,10 +9,10 @@
 
 int print(const char *);
 
-int puts(const char *s);
+int puts(const char *);
 
 void printf(const char *, ...);
 
-void hexdump(const u32 *addr, u32 len);
+void hexdump(const void *, u32);
 
 #endif //STDIO_H

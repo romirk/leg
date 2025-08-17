@@ -111,6 +111,6 @@ typedef union {
 
 void init_mmu(void);
 
-void init_l1_translation_table(l1_table_entry *);
+extern l1_table_entry l1_translation_table[0x1000];
 
 #endif //MEMORY_H

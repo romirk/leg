@@ -43,17 +43,17 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     message(STATUS "Maximum optimization for speed")
+    add_compile_definitions(LOG_ERROR)
 elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     message(STATUS "Maximum optimization for speed, debug info included")
+    add_compile_definitions(LOG_DEBUG)
 elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     message(STATUS "Maximum optimization for size")
 else ()
     message(STATUS "Minimal optimization, debug info included")
     add_compile_options(-Og -fno-slp-vectorize)
+    add_compile_definitions(LOG_DEBUG)
 endif ()
-
-# OS log level
-add_compile_definitions(LOG_INFO)
 
 include_directories(
         ${CMAKE_SOURCE_DIR}/include

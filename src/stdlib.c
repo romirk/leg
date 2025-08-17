@@ -9,55 +9,61 @@
 #include "math.h"
 #include "stdio.h"
 
-const char * const ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz";
+[[gnu::const]]
+static int get_symbol(const u8 digit) {
+    return digit < 0xA ? '0' + digit : 'a' + digit - 0xA;
+}
 
-char *utoa(u32 value, char *str, const u8 base) {
+char *utoa(u32 value, char *buffer, const u8 radix) {
     if (value == 0) {
-        str[0] = '0';
-        str[1] = '\0';
-        return str;
+        buffer[0] = '0';
+        buffer[1] = '\0';
+        return buffer;
     }
 
-    const auto digit_count = log(value, base);
+    const auto digit_count = log(value, radix);
     auto i = 0u;
     do {
-        const u8 digit = value % base;
-        str[digit_count - i++] = ALPHANUM[digit];
-    } while (value /= base);
+        const u8 digit = value % radix;
+        buffer[digit_count - i++] = get_symbol(digit);
+    } while (value /= radix);
 
-    str[i] = '\0';
-    return str;
+    buffer[i] = '\0';
+    return buffer;
 }
 
-char *itoa(i32 value, char *str, const u8 base) {
+char *itoa(i32 value, char *buffer, const u8 radix) {
     if (value < 0) {
-        *str++ = '-';
+        *buffer++ = '-';
         value = -value;
     }
-    utoa(value, str, base);
-    return str;
+    utoa(value, buffer, radix);
+    return buffer;
 }
 
-char *hex8(const u8 value, char *str) {
-    str[1] = ALPHANUM[value % 16];
-    str[0] = ALPHANUM[value / 16];
-    return str;
+[[gnu::pure]]
+u16 hex8(const u8 digit) {
+    int div = digit / 16;
+    int mod = digit % 16;
+    return get_symbol(div) | get_symbol(mod) << 8;
 }
 
 char *hex32le(const u32 value, char str[9]) {
-    hex8(value & 0xff, str);
-    hex8(value >> 8 & 0xff, str + 2);
-    hex8(value >> 16 & 0xff, str + 4);
-    hex8(value >> 24 & 0xff, str + 6);
+    u16 *alias = (u16 *) str;
+    alias[0] = hex8(value & 0xff);
+    alias[1] = hex8(value >> 8 & 0xff);
+    alias[2] = hex8(value >> 16 & 0xff);
+    alias[3] = hex8(value >> 24 & 0xff);
     str[8] = '\0';
     return str;
 }
 
 char *hex32be(const u32 value, char str[9]) {
-    hex8(value & 0xff, str + 6);
-    hex8(value >> 8 & 0xff, str + 4);
-    hex8(value >> 16 & 0xff, str + 2);
-    hex8(value >> 24 & 0xff, str);
+    u16 *alias = (u16 *) str;
+    alias[3] = hex8(value & 0xff);
+    alias[2] = hex8(value >> 8 & 0xff);
+    alias[1] = hex8(value >> 16 & 0xff);
+    alias[0] = hex8(value >> 24 & 0xff);
     str[8] = '\0';
     return str;
 }
