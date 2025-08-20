@@ -5,11 +5,12 @@
 #include "types.h"
 
 [[gnu::section(".startup.c")]]
+[[noreturn]]
 void kboot() {
     init_mmu();
     // copy binary to RAM
     auto len = kernel_main_end - kernel_main_beg;
-    u8 *dp8 = (void *) kernel_main_beg;
+    u8 *dp8 = 0x40000000 + (void *) kernel_main_beg;
     const u8 *sp8 = (void *) kernel_load_beg;
     while (len--)
         *dp8++ = *sp8++;
@@ -23,4 +24,7 @@ void kboot() {
 
     // jump
     asm("ldr pc, =kmain");
+
+    // prevent the compiler from believing we can return from here
+    __builtin_unreachable();
 }

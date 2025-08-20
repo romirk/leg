@@ -5,7 +5,6 @@
 #include "kmain.h"
 
 #include "logs.h"
-#include "stdio.h"
 #include "utils.h"
 
 #include "main.h"
@@ -19,7 +18,7 @@ void kmain() {
     info("Jumping to main@0x%p", main_ptr);
 
     // TODO give main_ptr to a scheduler
-    auto ret = (*main_ptr)();
+    auto ret = main();
     if (ret) {
         err("Main process exited with code %d", ret);
     }
