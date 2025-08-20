@@ -13,6 +13,14 @@ typedef enum {
     L1_PXN_SECTION = 0b11
 } l1_entry_type;
 
+typedef enum {
+    L2_INVALID = 0b00,
+    L2_LARGE_PAGE = 0b01,
+    L2_SMALL_PAGE = 0b10,
+    // small page with XN set
+    L2_XN_PAGE = 0b11
+} l2_entry_type;
+
 typedef union {
     // representation of entry in memory
     u32 raw;
@@ -22,8 +30,8 @@ typedef union {
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
         l1_entry_type type: 2;
-        bool PXN: 1;
-        bool NS: 1;
+        bool privileged_execute_never: 1;
+        bool non_secure: 1;
         bool : 1;
         u8 domain: 4;
         bool : 1;
@@ -82,10 +90,10 @@ typedef union {
     u32 raw;
 
     // bits [0:1] specifying entry type
-    u8 type: 2;
+    l2_entry_type type: 2;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        u8 type: 2;
+        l2_entry_type type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         u8 access_perms: 2;
@@ -101,26 +109,30 @@ typedef union {
     } large_page;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        bool XN: 1;
-        bool : 1;
-        bool B: 1;
-        bool C: 1;
-        u8 AP10: 2;
-        u8 : 3;
-        bool AP2: 1;
-        bool S: 1;
-        bool nG: 1;
+        l2_entry_type type: 2;
+        bool bufferable: 1;
+        bool cacheable: 1;
+        u8 access_perms: 2;
+        u8 type_ext: 3;
+        bool access_ext: 1;
+        bool shareable: 1;
+        bool not_global: 1;
 
         // small page base address [31:12]
         u32 address: 20;
     } small_page;
 } l2_table_entry;
 
+/// L1 translation table
+typedef l1_table_entry translation_table[0x1000];
+/// L2 translation table
+typedef l2_table_entry page_table[256];
+
 /**
  * Configures the MMU and L1 translation table, ID-mapping the first mib of flash, RAM, and the UART address spaces.
  */
 void init_mmu(void);
 
-extern l1_table_entry l1_translation_table[0x1000];
+extern translation_table kernel_translation_table;
 
 #endif //MEMORY_H

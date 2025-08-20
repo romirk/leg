@@ -1,6 +1,8 @@
 .global _start
 .global vtable
 
+.equ STACK_BOTTOM, 0x00100000
+
 .section .boot_vtbl, "ax", %progbits
 _start:
 .L.boot_vtable:
@@ -68,7 +70,7 @@ handle_reset:
     cps #0b11011            // Undefined mode
     ldr sp, = STACK_BOTTOM - 0x0c00
     cps #0b10011            // Supervisor (kernel) mode
-    ldr sp, = STACK_BOTTOM - 0x1000
+    ldr sp, = 0x40100000 - 0x1000
 
     // from arm docs
     // Enable access to CP10 and CP11 and clear the ASEDIS bit in the CPACR

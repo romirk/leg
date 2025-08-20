@@ -19,11 +19,16 @@ void kboot() {
     extern unsigned char vtable[];
     asm("mcr p15, 0, %0, c12, c0, 0" :: "r"(vtable));
 
+    // move the stack pointer
+    asm volatile ("ldr sp, =0x00100000 - 0x1000");
+
     // remap address space 0x000 back to ram
-    l1_translation_table[0x000] = l1_translation_table[0x400];
+    auto t = kernel_translation_table[0x400];
+    kernel_translation_table[0x400].raw = 0;
+    kernel_translation_table[0x000] = t;
 
     // jump
-    asm("ldr pc, =kmain");
+    asm ("ldr pc, =kmain");
 
     // prevent the compiler from believing we can return from here
     __builtin_unreachable();
