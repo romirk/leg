@@ -6,9 +6,9 @@
 #define LOGS_H
 
 // stringify macros
-#define __STR_HELPER(X) #X
-#define STR(X) __STR_HELPER(X)
-#define __LOC__ __FILE_NAME__ ":" STR(__LINE__)
+// #define __STR_HELPER(X) #X
+// #define STR(X) __STR_HELPER(X)
+// #define __LOC__ __FILE_NAME__ ":" STR(__LINE__)
 
 #ifdef LOG_DEBUG
 #define LOG_INFO

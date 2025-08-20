@@ -42,10 +42,10 @@ vtable:
     b handle_svc
 
     // external/internal prefetch abort
-    b handle_page_fault
+    b handle_data_abort
 
     // external/internal data abort
-    b handle_page_fault
+    b handle_data_abort
 
     // no exception
     b .

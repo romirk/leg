@@ -5,8 +5,9 @@
 #ifndef UART_H
 #define UART_H
 
+#define UART0_PHYSICAL 0x09000000
 /// UART base address
-#define UART0_BASE 0x09000000
+#define UART0_BASE UART0_PHYSICAL
 #define UART_REG(off) (volatile uint32_t *)(UART0_BASE + (off))
 
 // GIC interrupt

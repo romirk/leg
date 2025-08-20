@@ -12,6 +12,7 @@ int print(const char *);
 int puts(const char *);
 
 void printf(const char *, ...);
+void pprintf(const char *, ...);
 
 void hexdump(const void *, u32);
 

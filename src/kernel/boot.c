@@ -7,7 +7,9 @@
 [[gnu::section(".startup.c")]]
 [[noreturn]]
 void kboot() {
+    // Init MMU
     init_mmu();
+
     // copy binary to RAM
     auto len = kernel_main_end - kernel_main_beg;
     u8 *dp8 = 0x40000000 + (void *) kernel_main_beg;
@@ -15,7 +17,7 @@ void kboot() {
     while (len--)
         *dp8++ = *sp8++;
 
-    // set vtable address
+    // set vtable base address
     extern unsigned char vtable[];
     asm("mcr p15, 0, %0, c12, c0, 0" :: "r"(vtable));
 

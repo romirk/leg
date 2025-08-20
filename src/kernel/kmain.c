@@ -15,7 +15,7 @@
 void kmain() {
     main_fn *main_ptr = &main;
 
-    info("Jumping to main@0x%p", main_ptr);
+    dbg("Jumping to main@0x%p", main_ptr);
 
     // TODO give main_ptr to a scheduler
     auto ret = main();

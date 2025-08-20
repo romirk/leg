@@ -43,13 +43,12 @@ char *itoa(i32 value, char *buffer, const u8 radix) {
 
 [[gnu::pure]]
 u16 hex8(const u8 digit) {
-    int div = digit / 16;
-    int mod = digit % 16;
+    const int div = digit / 16, mod = digit % 16;
     return get_symbol(div) | get_symbol(mod) << 8;
 }
 
 char *hex32le(const u32 value, char str[9]) {
-    u16 *alias = (u16 *) str;
+    const auto alias = (u16 *) str;
     alias[0] = hex8(value & 0xff);
     alias[1] = hex8(value >> 8 & 0xff);
     alias[2] = hex8(value >> 16 & 0xff);
@@ -59,7 +58,7 @@ char *hex32le(const u32 value, char str[9]) {
 }
 
 char *hex32be(const u32 value, char str[9]) {
-    u16 *alias = (u16 *) str;
+    const auto alias = (u16 *) str;
     alias[3] = hex8(value & 0xff);
     alias[2] = hex8(value >> 8 & 0xff);
     alias[1] = hex8(value >> 16 & 0xff);

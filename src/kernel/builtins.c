@@ -64,33 +64,3 @@ void *memset(void *dst, const int c, size_t len) {
 void *memclr(void *dst, const size_t len) {
     return memset(dst, 0, len);
 }
-
-// EABI functions
-
-void __aeabi_memcpy(void *dst, const void *src, size_t n) {
-    memcpy(dst, src, n);
-}
-
-void __aeabi_memcpy4(void *dst, const void *src, size_t n) {
-    __aeabi_memcpy(dst, src, n);
-}
-
-void __aeabi_memset(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
-    memset(dst, c, n);
-}
-
-void __aeabi_memset8(void *dst, size_t n, int c) { // NOLINT(*-reserved-identifier)
-    __aeabi_memset(dst, n, c);
-}
-
-void __aeabi_memclr(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
-    memclr(dst, n);
-}
-
-void __aeabi_memclr8(void *dst, size_t n) {
-    __aeabi_memclr(dst, n);
-}
-
-void __aeabi_memclr4(void *dst, size_t n) { // NOLINT(*-reserved-identifier)
-    __aeabi_memclr(dst, n);
-}

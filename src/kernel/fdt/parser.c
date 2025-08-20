@@ -24,14 +24,14 @@ static void fdt_endianness_swap(struct fdt_header *header) {
 }
 
 #ifdef LOG_DEBUG
-static const char *indent(u8 depth) {
+static const char *indent(const u8 depth) {
     static const auto indent_buffer = "\t\t\t\t\t\t\t\t\t\t";
     return indent_buffer + (10 - depth);
 }
 #endif
 
 struct fdt_parse_result parse_fdt() {
-    auto header = (struct fdt_header *) FDT_ADDR;
+    const auto header = (struct fdt_header *) FDT_ADDR;
     fdt_endianness_swap(header);
 
     struct fdt_parse_result result = {.success = false};

@@ -108,32 +108,109 @@ void printf(const char *fmt, ...) {
     va_end(args);
 }
 
-void hexdump(const void *ptr, const u32 len) {
-    u32 *addr = (u32 *) ptr;
-    for (u32 i = 1; i <= len; i++) {
-        if (i % 4 == 1) {
-            print_ptr((void *) addr);
-            putchar('\t');
+void pprintf(const char *fmt, ...) {
+    va_list args;
+    va_start(args);
+
+    char c;
+    int n = 0;
+    while ((c = *fmt++)) {
+        if (c != '%') {
+            putchar(c);
+            n++;
+            continue;
         }
+        const char t = *fmt++;
+        switch (t) {
+            case '%':
+                putchar('%');
+                n++;
+                break;
+            case 's':
+                n += print(va_arg(args, char *));
+                break;
+            case 'c':
+                putchar(va_arg(args, int));
+                n++;
+                break;
+            case 'd':
+            case 'i':
+                n += print("\033[97m");
+                n += print_i32(va_arg(args, i32));
+                n += print("\033[0m");
+                break;
+            case 'u':
+                n += print("\033[97m");
+                n += print_base(va_arg(args, u32), 10);
+                n += print("\033[0m");
+                break;
+            case 'x':
+                n += print("\033[97m");
+                n += print_base(va_arg(args, u32), 16);
+                n += print("\033[0m");
+                break;
+            case 'o':
+                n += print("\033[97m");
+                n += print_base(va_arg(args, u32), 8);
+                n += print("\033[0m");
+                break;
+            case 'b':
+                n += print("\033[97m");
+                n += print_base(va_arg(args, u32), 2);
+                n += print("\033[0m");
+                break;
+            case 't':
+                n += print("\033[97m");
+                n += print(va_arg(args, int) ? "true" : "false");
+                n += print("\033[0m");
+                break;
+            case 'p':
+                n += print("\033[31;49m");
+                n += print_ptr(va_arg(args, void *));
+                n += print("\033[0m");
+                break;
+            case 'n':
+                const auto ptr = va_arg(args, signed int *);
+                *ptr = n;
+                break;
+            default:
+                putchar('\n');
+                err("printf: unknown format %%%c", t);
+                va_end(args);
+                return;
+        }
+    }
+    va_end(args);
+}
+
+void hexdump(const void *ptr, const u32 len) {
+    auto addr = (u32 *) ptr;
+    for (u32 i = 0; i < len; i++) {
+        if (i % 4 == 0) {
+            print("\n\033[2;37m");
+            print_ptr(addr);
+            print("\033[36C\t|\033[18C|\033[0m");
+        }
+
+        const auto data = *addr++;
+
+        printf("\033[%uG", 12 + 9 * (i % 4));
+
         char res[9];
-        hex32le(*addr++, res);
+        hex32le(data, res);
         print(res);
 
-        if (i % 4)
-            putchar(' ');
-        else {
-            print("\t│ ");
+        printf("\033[%uG", 51 + 4 * (i % 4));
 
-            auto start = (u8 *) (addr - 4);
-            for (int j = 0; j < 16; j++) {
-                if (!is_printable(start[j]))
-                    putchar('.');
-                else
-                    putchar(start[j]);
-            }
+        const u8 b1 = (data & 0x000000FF) >> 0;
+        const u8 b2 = (data & 0x0000FF00) >> 8;
+        const u8 b3 = (data & 0x00FF0000) >> 16;
+        const u8 b4 = (data & 0xFF000000) >> 24;
 
-            print(" │\n");
-        }
+        putchar(is_printable(b1) ? b1 : '.');
+        putchar(is_printable(b2) ? b2 : '.');
+        putchar(is_printable(b3) ? b3 : '.');
+        putchar(is_printable(b4) ? b4 : '.');
     }
     putchar('\n');
 }

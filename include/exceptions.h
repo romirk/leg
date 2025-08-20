@@ -7,7 +7,7 @@
 
 void handle_boot_exception(void);
 
-void handle_page_fault(void);
+void handle_data_abort(void);
 
 void handle_irq(void);
 
