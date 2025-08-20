@@ -1,10 +1,10 @@
 //
-// Created by Romir Kulshrestha on 01/06/2025.
+// Created by Romir Kulshrestha on 20/08/2025.
 //
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef LEG_MAIN_H
+#define LEG_MAIN_H
 
-void kmain();
+int main();
 
-#endif // MAIN_H
+#endif //LEG_MAIN_H
