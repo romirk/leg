@@ -4,19 +4,16 @@
 
 #include "main.h"
 
-#include "exceptions.h"
+#include "linker.h"
 #include "logs.h"
 #include "memory.h"
 #include "rtc.h"
 #include "stdio.h"
 #include "utils.h"
-#include "fdt/parser.h"
 
 [[noreturn]]
 [[gnu::used]]
 void kmain() {
-    init_mmu();
-
     info("RTC enabled: %t | RTC masked: %t", *(bool *) (RTC_BASE + 0x00c), *(bool *) (RTC_BASE + 0x010));
     info("RTC ID: %x", *(u32 *) (RTC_BASE + 0xfe0));
     // u32 clk = *(volatile u32 *) RTC_BASE;

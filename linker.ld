@@ -2,8 +2,7 @@ ENTRY(_start)
 
 MEMORY {
     low  : o = 0x00000000, l = 0x00040000
-    ram  : o = 0x40000000, l = 0x80000000
-    dtbm : o = 0x40000000, l = 0x00004000
+    tt   : o = 0x4000c000, l = 0x80000000
     boot : o = 0x40008000, l = 0x00010000
     bin  : o = 0x00000000, l = 0x00010000
 }
@@ -25,9 +24,11 @@ SECTIONS {
     kernel_main_end = .;
 
     .bss         : { *( .bss  .bss.* ) } >boot AT>bin
-    .tt (NOLOAD) : { *( .tt   .tt.*  ) } >boot
+    .tt (NOLOAD) : { *( .tt   .tt.*  ) } >tt
 
-    STACK_BOTTOM = LENGTH(ram) + ORIGIN(ram);
+    /* align stacks to end of 1mb kernel section */
+    . = ALIGN(0x100000);
+    STACK_BOTTOM = .;
 
     /**
      * C compilers for ARM generate a special section containing exception

@@ -11,29 +11,41 @@
 [[gnu::aligned(0x4000)]]
 l1_table_entry l1_translation_table[0x1000];
 
+[[gnu::section(".startup.mmu")]]
 void init_mmu(void) {
-    // identity map ram
-    for (int i = 0x400; i < 0xc00; i++)
-        l1_translation_table[i] = (l1_table_entry){
-            .section = {
-                .address = i,
-                .access_perms = 0b10,
-                .type_ext = 0b001,
-                .bufferable = true,
-                .cacheable = true,
-                .type = 0b10,
-            }
-        };
+    // kernel section (flash)
+    l1_translation_table[0x000] = (l1_table_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = 0x000,
+            .access_perms = 0b10,
+            .type_ext = 0b001,
+            .bufferable = true,
+            .cacheable = true,
+        }
+    };
+
+    // kernel section (RAM)
+    l1_translation_table[0x400] = (l1_table_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = 0x400,
+            .access_perms = 0b10,
+            .type_ext = 0b001,
+            .bufferable = true,
+            .cacheable = true,
+        }
+    };
 
     // UART
     l1_translation_table[0x090] = (l1_table_entry){
         .section = {
+            .type = L1_SECTION,
             .address = 0x090,
             .access_perms = 0b10,
             .type_ext = 0b000,
             .bufferable = false,
             .cacheable = false,
-            .type = 0b10,
         }
     };
 

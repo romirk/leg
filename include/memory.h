@@ -6,15 +6,22 @@
 #define MEMORY_H
 #include "types.h"
 
+typedef enum {
+    L1_INVALID = 0b00,
+    L1_PAGE_TABLE = 0b01,
+    L1_SECTION = 0b10,
+    L1_PXN_SECTION = 0b11
+} l1_entry_type;
+
 typedef union {
     // representation of entry in memory
     u32 raw;
 
     // bits [0:1] specifying entry type
-    u8 type: 2;
+    l1_entry_type type: 2;
 
-    struct [[gnu::packed]] {
-        u8 type: 2;
+    struct [[gnu::packed]] [[gnu::aligned(4)]] {
+        l1_entry_type type: 2;
         bool PXN: 1;
         bool NS: 1;
         bool : 1;
@@ -25,8 +32,8 @@ typedef union {
         u32 address: 22;
     } page_table;
 
-    struct [[gnu::packed]] {
-        u8 type: 2;
+    struct [[gnu::packed]] [[gnu::aligned(4)]] {
+        l1_entry_type type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         bool execute_never: 1;
@@ -44,8 +51,8 @@ typedef union {
         u32 address: 12;
     } section;
 
-    struct [[gnu::packed]] {
-        u8 type: 2;
+    struct [[gnu::packed]] [[gnu::aligned(4)]] {
+        l1_entry_type type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         bool execute_never: 1;
@@ -77,23 +84,23 @@ typedef union {
     // bits [0:1] specifying entry type
     u8 type: 2;
 
-    struct [[gnu::packed]] {
+    struct [[gnu::packed]] [[gnu::aligned(4)]] {
         u8 type: 2;
-        bool B: 1;
-        bool C: 1;
-        u8 AP10: 2;
+        bool bufferable: 1;
+        bool cacheable: 1;
+        u8 access_perms: 2;
         u8 : 3;
-        bool AP2: 1;
-        bool S: 1;
-        bool nG: 1;
-        u8 TEX: 3;
-        bool XN: 1;
+        bool access_ext: 1;
+        bool shareable: 1;
+        bool not_global: 1;
+        u8 type_ext: 3;
+        bool execute_never: 1;
 
         // large page base address [31:16]
         u16 address;
     } large_page;
 
-    struct [[gnu::packed]] {
+    struct [[gnu::packed]] [[gnu::aligned(4)]] {
         bool XN: 1;
         bool : 1;
         bool B: 1;
@@ -109,6 +116,9 @@ typedef union {
     } small_page;
 } l2_table_entry;
 
+/**
+ * Configures the MMU and L1 translation table, ID-mapping the first mib of flash, RAM, and the UART address spaces.
+ */
 void init_mmu(void);
 
 extern l1_table_entry l1_translation_table[0x1000];
