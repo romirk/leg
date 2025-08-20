@@ -7,6 +7,12 @@
 
 #include "types.h"
 
+#ifdef NO_ANSI
+#define hexdump hexdump_buffer
+#else
+#define hexdump hexdump_ansi
+#endif
+
 int print(const char *);
 
 int puts(const char *);

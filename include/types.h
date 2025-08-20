@@ -17,4 +17,6 @@ typedef int32_t i32;
 typedef int16_t i16;
 typedef int8_t i8;
 
+typedef unsigned int size_t;
+
 #endif // TYPES_H

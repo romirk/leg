@@ -2,9 +2,10 @@
 // Created by Romir Kulshrestha on 01/06/2025.
 //
 
-#ifndef STDLIB_H
-#define STDLIB_H
-#include <stddef.h>
+#ifndef BUILTINS_H
+#define BUILTINS_H
+
+#include "types.h"
 
 /**
  * Copy len bytes from src to dst.
@@ -26,4 +27,4 @@ void *memset(void *dst, int c, size_t len);
  */
 void *memclr(void *dst, size_t len);
 
-#endif // STDLIB_H
+#endif // BUILTINS_H

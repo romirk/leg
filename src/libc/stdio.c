@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 
+#include "builtins.h"
 #include "logs.h"
 #include "stdlib.h"
 #include "uart.h"
@@ -183,7 +184,7 @@ void pprintf(const char *fmt, ...) {
     va_end(args);
 }
 
-void hexdump(const void *ptr, const u32 len) {
+void hexdump_ansi(const void *ptr, const u32 len) {
     auto addr = (u32 *) ptr;
     for (u32 i = 0; i < len; i++) {
         if (i % 4 == 0) {
@@ -211,6 +212,49 @@ void hexdump(const void *ptr, const u32 len) {
         putchar(is_printable(b2) ? b2 : '.');
         putchar(is_printable(b3) ? b3 : '.');
         putchar(is_printable(b4) ? b4 : '.');
+    }
+    putchar('\n');
+}
+
+void hexdump_buffer(const void *ptr, const u32 len) {
+    auto addr = (u32 *) ptr;
+
+    char buffer[8 + 4 + (8 + 1) * 4 + 3 + 16 + 3 + 1];
+    memset(buffer, ' ', sizeof(buffer));
+    buffer[sizeof(buffer) - 1] = '\0';
+    buffer[sizeof(buffer) - 2] = '|';
+    buffer[sizeof(buffer) - 21] = '|';
+
+    for (u32 i = 0; i < len; i++) {
+        if (i % 4 == 0) {
+            // print("\n\033[2;37m");
+            if (i) puts(buffer);
+            hex32be((u32) addr, buffer);
+            buffer[8] = ' ';
+            // print("\033[36C\t|\033[18C|\033[0m");
+        }
+
+        const auto data = *addr++;
+
+        // printf("\033[%uG", );
+        hex32le(data, buffer + 12 + 9 * (i % 4));
+        buffer[20 + 9 * (i % 4)] = ' ';
+        // print(res);
+
+        // printf("\033[%uG", 51 + 4 * (i % 4));
+        const auto start = 52 + 4 * (i % 4);
+
+        const u8 b1 = (data & 0x000000FF) >> 0;
+        const u8 b2 = (data & 0x0000FF00) >> 8;
+        const u8 b3 = (data & 0x00FF0000) >> 16;
+        const u8 b4 = (data & 0xFF000000) >> 24;
+
+
+        buffer[start] = is_printable(b1) ? b1 : '.';
+        buffer[start + 1] = is_printable(b2) ? b2 : '.';
+        buffer[start + 2] = is_printable(b3) ? b3 : '.';
+        buffer[start + 3] = is_printable(b4) ? b4 : '.';
+
     }
     putchar('\n');
 }
