@@ -1,8 +1,6 @@
 .global _start
 .global vtable
 
-.equ STACK_BOTTOM, 0x00100000
-
 .section .boot_vtbl, "ax", %progbits
 _start:
 .L.boot_vtable:

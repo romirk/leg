@@ -55,6 +55,10 @@ else ()
     add_compile_definitions(LOG_DEBUG)
 endif ()
 
+if(DEFINED NO_ANSI)
+    add_compile_definitions(NO_ANSI)
+endif ()
+
 include_directories(
         ${CMAKE_SOURCE_DIR}/include
 )

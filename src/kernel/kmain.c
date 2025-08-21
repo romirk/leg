@@ -14,7 +14,6 @@
 [[gnu::used]]
 void kmain() {
     dbg("Jumping to main@0x%p", &main);
-    info("%b", get_bits(0x00ff0000, 19, 12));
 
     // TODO give main_ptr to a scheduler
     auto ret = main();

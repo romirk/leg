@@ -6,6 +6,8 @@
 #define MEMORY_H
 #include "types.h"
 
+#define VIRTUAL_OFFSET 0x40000000
+
 typedef enum {
     L1_INVALID = 0b00,
     L1_PAGE_TABLE = 0b01,

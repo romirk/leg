@@ -1,10 +1,10 @@
 ENTRY(_start)
 
 MEMORY {
-    low  : o = 0x00000000, l = 0x00040000
-    tt   : o = 0xffff0000, l = 0x00008000
-    boot : o = 0x00004000, l = 0x00010000
-    bin  : o = 0x00000000, l = 0x00010000
+    low  (rx) : o = 0x00000000, l = 0x00100000
+    ram       : o = 0x80000000, l = 0x40000000
+    krn       : o = 0xbff00000, l = 0x00100000
+    bin       : o = 0x00000000, l = 0x00100000
 }
 
 OUTPUT_ARCH(scriptfile)
@@ -14,17 +14,19 @@ SECTIONS {
     .startup.end : ALIGN(0x10) {} >low AT>bin
 
     kernel_load_beg = LOADADDR(.startup.end);
-    kernel_main_beg = ORIGIN(boot);
+    kernel_main_beg = ORIGIN(krn);
 
-    .vtbl   : { *( .vtbl   .vtbl.*   ) } >boot AT>bin
-    .text   : { *( .text   .text.*   ) } >boot AT>bin
-    .rodata : { *( .rodata .rodata.* ) } >boot AT>bin
-    .data   : { *( .data   .data.*   ) } >boot AT>bin
+    .vtbl   : { *( .vtbl   .vtbl.*   ) } >krn AT>bin
+    .text   : { *( .text   .text.*   ) } >krn AT>bin
+    .rodata : { *( .rodata .rodata.* ) } >krn AT>bin
+    .data   : { *( .data   .data.*   ) } >krn AT>bin
 
     kernel_main_end = .;
 
-    .bss         : { *( .bss  .bss.* ) } >boot AT>bin
-    .tt (NOLOAD) : { *( .tt   .tt.*  ) } >tt
+    .tt (NOLOAD) : { *( .tt   .tt.*  ) } >krn
+    .bss         : { *( .bss  .bss.* ) } >krn AT>bin
+
+    STACK_BOTTOM = ORIGIN(krn) + LENGTH(krn);
 
     /**
      * C compilers for ARM generate a special section containing exception
