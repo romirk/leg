@@ -9,6 +9,9 @@
 
 #define limbo for(;;) asm("wfi")
 
+#define get_bits(data, high, low)       (((u32)(data) & ~(0xffffffffu << ((high) + 1))) >> (low))
+#define get_high_bits(data, n_bits)     ((u32)(data) >> (32 - (n_bits)))
+
 inline void swap(char *a, char *b) {
     const auto t = *a;
     *a = *b;

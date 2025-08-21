@@ -5,10 +5,10 @@
 #ifndef UART_H
 #define UART_H
 
-#define UART0_PHYSICAL 0x09000000
+#define UART0_PHYSICAL  0x09000000
 /// UART base address
-#define UART0_BASE UART0_PHYSICAL
-#define UART_REG(off) (volatile uint32_t *)(UART0_BASE + (off))
+#define UART0_BASE      UART0_PHYSICAL
+#define UART_REG(off)   (volatile u32 *)(UART0_BASE + (off))
 
 // GIC interrupt
 #define UART_GIC   0x01
@@ -56,7 +56,7 @@ struct pl011 {
     u32 stop_bits;
 };
 
-void pl011_setup(struct pl011 *dev, uint64_t base_clock);
+void pl011_setup(struct pl011 *dev, u64 base_clock);
 
 void pl011_reset(const struct pl011 *dev);
 

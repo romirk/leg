@@ -49,8 +49,8 @@ u16 hex8(const u8 digit) {
 
 char *hex32le(const u32 value, char str[9]) {
     const auto alias = (u16 *) str;
-    alias[0] = hex8(value & 0xff);
-    alias[1] = hex8(value >> 8 & 0xff);
+    alias[0] = hex8(value >> 0u & 0xff);
+    alias[1] = hex8(value >> 8u & 0xff);
     alias[2] = hex8(value >> 16 & 0xff);
     alias[3] = hex8(value >> 24 & 0xff);
     str[8] = '\0';
@@ -59,8 +59,8 @@ char *hex32le(const u32 value, char str[9]) {
 
 char *hex32be(const u32 value, char str[9]) {
     const auto alias = (u16 *) str;
-    alias[3] = hex8(value & 0xff);
-    alias[2] = hex8(value >> 8 & 0xff);
+    alias[3] = hex8(value >> 0u & 0xff);
+    alias[2] = hex8(value >> 8u & 0xff);
     alias[1] = hex8(value >> 16 & 0xff);
     alias[0] = hex8(value >> 24 & 0xff);
     str[8] = '\0';
@@ -71,7 +71,7 @@ char *hex32be(const u32 value, char str[9]) {
 void panic(char *msg) {
     err("PANIC: %s", msg);
 
-    print("debug info:\nstack: *");
+    err("debug info:\nstack: *");
     void *p = nullptr;
     void *sp = &p;
     const auto stack_height = (void *) STACK_BOTTOM - sp;

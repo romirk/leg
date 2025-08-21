@@ -9,16 +9,16 @@ static void wait_tx_complete() {
     while (*UARTFR & FR_BUSY);
 }
 
-static void calculate_divisors(uint32_t *integer, uint32_t *fractional, const uint32_t base_clock,
-                               const uint32_t baudrate) {
+static void calculate_divisors(u32 *integer, u32 *fractional, const u32 base_clock,
+                               const u32 baudrate) {
     // 64 * F_UARTCLK / (16 * B) = 4 * F_UARTCLK / B
-    const uint32_t div = 4 * base_clock / baudrate;
+    const u32 div = 4 * base_clock / baudrate;
 
     *fractional = div & 0x3f;
     *integer = div >> 6 & 0xffff;
 }
 
-void pl011_setup(struct pl011 *dev, const uint64_t base_clock) {
+void pl011_setup(struct pl011 *dev, const u64 base_clock) {
     dev->base_address = UART0_BASE;
     dev->base_clock = base_clock;
 

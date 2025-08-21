@@ -184,7 +184,8 @@ void pprintf(const char *fmt, ...) {
     va_end(args);
 }
 
-void hexdump_ansi(const void *ptr, const u32 len) {
+[[maybe_unused]]
+static void hexdump_ansi(const void *ptr, const u32 len) {
     auto addr = (u32 *) ptr;
     for (u32 i = 0; i < len; i++) {
         if (i % 4 == 0) {
@@ -216,7 +217,8 @@ void hexdump_ansi(const void *ptr, const u32 len) {
     putchar('\n');
 }
 
-void hexdump_buffer(const void *ptr, const u32 len) {
+[[maybe_unused]]
+static void hexdump_buffer(const void *ptr, const u32 len) {
     auto addr = (u32 *) ptr;
 
     char buffer[8 + 4 + (8 + 1) * 4 + 3 + 16 + 3 + 1];
@@ -244,8 +246,8 @@ void hexdump_buffer(const void *ptr, const u32 len) {
         // printf("\033[%uG", 51 + 4 * (i % 4));
         const auto start = 52 + 4 * (i % 4);
 
-        const u8 b1 = (data & 0x000000FF) >> 0;
-        const u8 b2 = (data & 0x0000FF00) >> 8;
+        const u8 b1 = (data & 0x000000FF) >> 0u;
+        const u8 b2 = (data & 0x0000FF00) >> 8u;
         const u8 b3 = (data & 0x00FF0000) >> 16;
         const u8 b4 = (data & 0xFF000000) >> 24;
 
@@ -254,7 +256,14 @@ void hexdump_buffer(const void *ptr, const u32 len) {
         buffer[start + 1] = is_printable(b2) ? b2 : '.';
         buffer[start + 2] = is_printable(b3) ? b3 : '.';
         buffer[start + 3] = is_printable(b4) ? b4 : '.';
-
     }
     putchar('\n');
+}
+
+void hexdump(const void *ptr, const u32 len) {
+#ifdef NO_ANSI
+    hexdump_buffer(ptr, len);
+#else
+    hexdump_ansi(ptr, len);
+#endif
 }
