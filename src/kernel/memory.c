@@ -5,7 +5,6 @@
 #include "memory.h"
 #include "cpu.h"
 #include "linker.h"
-#include "uart.h"
 #include "utils.h"
 
 #define MB_SHIFT 20
@@ -26,17 +25,16 @@ page_table dtb_page_table;
 [[gnu::section(".tt")]]
 page_table process_page_tables[8];
 
-
 [[gnu::section(".startup.mmu")]]
 static void map_sections() {
     // device tree
-    kernel_translation_table[0x400] = (l1_table_entry){
+    kernel_translation_table[0x400] = (l1_entry){
         .page_table = {
             .type = L1_PAGE_TABLE,
             .address = get_high_bits(dtb_page_table, 22),
         }
     };
-    dtb_page_table[0] = (l2_table_entry){
+    dtb_page_table[0x000] = (l2_entry){
         .small_page = {
             .type = L2_SMALL_PAGE,
             .bufferable = true,
@@ -47,8 +45,32 @@ static void map_sections() {
         }
     };
 
+    // kernel_translation_table[0x400] = (l1_entry){
+    //     .section = {
+    //         .type = L1_SECTION,
+    //         .address = 0x400,
+    //         .access_perms = 0b10,
+    //         .type_ext = 0b001,
+    //         .bufferable = true,
+    //         .cacheable = true,
+    //     }
+    // };
+
+    // for (int i = 0; i < 16; i++) {
+    //     dtb_page_table[i] = (l2_entry){
+    //         .large_page = {
+    //             .type = L2_LARGE_PAGE,
+    //             .bufferable = true,
+    //             .cacheable = true,
+    //             .access_perms = 0b10,
+    //             .type_ext = 0b001,
+    //             .address = get_high_bits(0x40000000, 16),
+    //         }
+    //     };
+    // }
+
     // UART
-    kernel_translation_table[0x090] = (l1_table_entry){
+    kernel_translation_table[0x090] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = 0x090,
@@ -60,7 +82,7 @@ static void map_sections() {
     };
 
     // peripherals
-    kernel_translation_table[0xfff] = (l1_table_entry){
+    kernel_translation_table[0xfff] = (l1_entry){
         .page_table = {
             .type = L1_PAGE_TABLE,
             .address = get_high_bits(peripheral_page_table, 22),
@@ -68,7 +90,7 @@ static void map_sections() {
     };
 
     // UART
-    peripheral_page_table[0x00] = (l2_table_entry){
+    peripheral_page_table[0x00] = (l2_entry){
         .small_page = {
             .type = L2_SMALL_PAGE,
             .address = get_high_bits(0x09000000, 20),
@@ -83,11 +105,11 @@ static void map_sections() {
 [[gnu::section(".startup.mmu")]]
 void init_mmu(void) {
     // manually map sections before mmu starts
-    auto l1_table = (l1_table_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
-    // l2_table_entry *l2_table = kernel_page_table - 0x10000000;
+    auto l1_table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
+    // l2_entry *l2_table = kernel_page_table - 0x10000000;
 
     // kernel section (flash)
-    l1_table[0x000] = (l1_table_entry){
+    l1_table[0x000] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = 0x000,
@@ -99,7 +121,7 @@ void init_mmu(void) {
     };
 
     // kernel section (virtual)
-    l1_table[get_high_bits(kernel_main_beg, 12)] = (l1_table_entry){
+    l1_table[get_high_bits(kernel_main_beg, 12)] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = get_high_bits((u32) kernel_main_beg - VIRTUAL_OFFSET, 12),

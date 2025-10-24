@@ -10,13 +10,13 @@
 #include "utils.h"
 
 int main() {
-    const auto addr = (void *) 0x40000000;
+    const auto addr = (void *) 0x40000070;
     const auto l1_idx = get_high_bits(addr, 12);
     const auto l2_idx = get_bits(addr, 19, 12);
-    // const auto pg_idx = get_bits(addr, 11, 0);
+    const auto pg_idx = get_bits(addr, 11, 0);
 
     const auto l1 = kernel_translation_table[l1_idx];
-    const auto l2_addr = (l2_table_entry *) (l1.page_table.address << 10);
+    const auto l2_addr = (l2_entry *) (l1.page_table.address << 10);
     info("L1 lookup\n"
          "\ttype:\t%c\n"
          "\taddr:\t%p",
@@ -28,5 +28,12 @@ int main() {
         "\ttype:\t%c\n"
         "\taddr:\t%p",
         "-LSX"[l2.type], pa);
+
+    auto out = (u32) pa | pg_idx;
+
+    info("output addr: %p", out);
+
+    auto x = *(u8*) 0x40000070;
+    printf("%x\n", x);
     return 0;
 }

@@ -13,7 +13,7 @@ typedef enum {
     L1_PAGE_TABLE = 0b01,
     L1_SECTION = 0b10,
     L1_PXN_SECTION = 0b11
-} l1_entry_type;
+} l1_descriptor;
 
 typedef enum {
     L2_INVALID = 0b00,
@@ -21,17 +21,17 @@ typedef enum {
     L2_SMALL_PAGE = 0b10,
     // small page with XN set
     L2_XN_PAGE = 0b11
-} l2_entry_type;
+} l2_descriptor;
 
 typedef union {
     // representation of entry in memory
     u32 raw;
 
     // bits [0:1] specifying entry type
-    l1_entry_type type: 2;
+    l1_descriptor type: 2;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l1_entry_type type: 2;
+        l1_descriptor type: 2;
         bool privileged_execute_never: 1;
         bool non_secure: 1;
         bool : 1;
@@ -43,7 +43,7 @@ typedef union {
     } page_table;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l1_entry_type type: 2;
+        l1_descriptor type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         bool execute_never: 1;
@@ -62,7 +62,7 @@ typedef union {
     } section;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l1_entry_type type: 2;
+        l1_descriptor type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         bool execute_never: 1;
@@ -85,17 +85,17 @@ typedef union {
         // supersection base address [31:24]
         u8 address;
     } supersection;
-} l1_table_entry;
+} l1_entry;
 
 typedef union {
     // representation of entry in memory
     u32 raw;
 
     // bits [0:1] specifying entry type
-    l2_entry_type type: 2;
+    l2_descriptor type: 2;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l2_entry_type type: 2;
+        l2_descriptor type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         u8 access_perms: 2;
@@ -111,7 +111,7 @@ typedef union {
     } large_page;
 
     struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l2_entry_type type: 2;
+        l2_descriptor type: 2;
         bool bufferable: 1;
         bool cacheable: 1;
         u8 access_perms: 2;
@@ -123,12 +123,12 @@ typedef union {
         // small page base address [31:12]
         u32 address: 20;
     } small_page;
-} l2_table_entry;
+} l2_entry;
 
 /// L1 translation table
-typedef l1_table_entry translation_table[0x1000];
+typedef l1_entry translation_table[0x1000];
 /// L2 translation table
-typedef l2_table_entry page_table[256];
+typedef l2_entry page_table[0x100];
 
 /**
  * Configures the MMU and L1 translation table, ID-mapping the first mib of flash, RAM, and the UART address spaces.
