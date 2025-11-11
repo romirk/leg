@@ -28,51 +28,11 @@ page_table process_page_tables[8];
 
 [[gnu::section(".startup.mmu")]]
 static void map_sections() {
-    const auto dtb_idx = 0x400;
-
-    // DTB section
-    kernel_translation_table[dtb_idx] = (l1_entry){
-        .page_table = {
-            .type = L1_PAGE_TABLE,
-            .address = get_high_bits((u32)dtb_page_table - VIRTUAL_OFFSET, 22),
-        }
-    };
-
-    dtb_page_table[0x000] = (l2_entry){
-        .small_page = {
-            .type = L2_SMALL_PAGE,
-            .bufferable = false,
-            .cacheable = false,
-            .access_perms = 0b11,
-            .type_ext = 0b000,
-            .access_ext = false,
-            .shareable = false,
-            .not_global = false,
-            .address = get_high_bits(FDT_ADDR, 12),
-        }
-    };
-
-    // UART
-    kernel_translation_table[0x090] = (l1_entry){
-        .section = {
-            .type = L1_SECTION,
-            .address = 0x090,
-            .access_perms = 0b10,
-            .type_ext = 0b000,
-            .bufferable = true,
-            .cacheable = false,
-        }
-    };
-}
-
-[[gnu::section(".startup.mmu")]]
-void init_mmu(void) {
-    // manually map sections before mmu starts
-    auto l1_table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
-    // l2_entry *l2_table = kernel_page_table - 0x10000000;
+    auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
+    auto dtb_table = (l2_entry *) ((u32) dtb_page_table - VIRTUAL_OFFSET);
 
     // kernel section (flash)
-    l1_table[0x000] = (l1_entry){
+    table[0x000] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = 0x000,
@@ -84,7 +44,7 @@ void init_mmu(void) {
     };
 
     // kernel section (virtual)
-    l1_table[get_high_bits(kernel_main_beg, 12)] = (l1_entry){
+    table[get_high_bits(kernel_main_beg, 12)] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = get_high_bits((u32) kernel_main_beg - VIRTUAL_OFFSET, 12),
@@ -95,10 +55,50 @@ void init_mmu(void) {
         }
     };
 
+    // UART
+    table[0x090] = (l1_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = 0x090,
+            .access_perms = 0b10,
+            .type_ext = 0b000,
+            .bufferable = true,
+            .cacheable = false,
+        }
+    };
+
+    // DTB section
+    table[0x400] = (l1_entry){
+        .page_table = {
+            .type = L1_PAGE_TABLE,
+            .address = get_high_bits(dtb_table, 22),
+        }
+    };
+
+    for (int i = 0; i < 16; ++i) {
+        dtb_table[i] = (l2_entry){
+            .large_page = {
+                .type = L2_LARGE_PAGE,
+                .bufferable = true,
+                .cacheable = true,
+                .access_perms = 0b10,
+                .type_ext = 0b001,
+                .address = get_high_bits(FDT_ADDR, 16),
+            }
+        };
+    }
+}
+
+[[gnu::section(".startup.mmu")]]
+void init_mmu(void) {
+    // manually map sections before mmu starts
+    map_sections();
+
+    auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
     asm (
         "mcr p15, 0, %0, c2, c0, 0;" // TTBR0
         "mcr p15, 0, %0, c2, c0, 1" // TTBR1
-        :: "r" ((void *) l1_table));
+        :: "r" ((void *) table));
 
     // Prep MMU
     asm ("mcr p15, 0, %0, c3, c0, 0" :: "r" (1)); // Domain Access Control Register
@@ -120,6 +120,4 @@ void init_mmu(void) {
     asm ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr) : "memory");
 
     // we are now in virtual address space
-
-    map_sections();
 }
