@@ -8,11 +8,15 @@
 #include "utils.h"
 
 #include "main.h"
+#include "fdt/parser.h"
 
 
 [[noreturn]]
 [[gnu::used]]
 void kmain() {
+    // parse fdt
+    parse_fdt();
+    dbg("Parsed dtb");
     dbg("Jumping to main@0x%p", &main);
 
     // TODO give main_ptr to a scheduler

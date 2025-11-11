@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "linker.h"
 #include "utils.h"
+#include "fdt/fdt.h"
 
 #define MB_SHIFT 20
 
@@ -27,47 +28,29 @@ page_table process_page_tables[8];
 
 [[gnu::section(".startup.mmu")]]
 static void map_sections() {
-    // device tree
-    kernel_translation_table[0x400] = (l1_entry){
+    const auto dtb_idx = 0x400;
+
+    // DTB section
+    kernel_translation_table[dtb_idx] = (l1_entry){
         .page_table = {
             .type = L1_PAGE_TABLE,
-            .address = get_high_bits(dtb_page_table, 22),
+            .address = get_high_bits((u32)dtb_page_table - VIRTUAL_OFFSET, 22),
         }
     };
+
     dtb_page_table[0x000] = (l2_entry){
         .small_page = {
             .type = L2_SMALL_PAGE,
-            .bufferable = true,
-            .cacheable = true,
-            .access_perms = 0b10,
-            .type_ext = 0b001,
-            .address = get_high_bits(0x40000000, 20),
+            .bufferable = false,
+            .cacheable = false,
+            .access_perms = 0b11,
+            .type_ext = 0b000,
+            .access_ext = false,
+            .shareable = false,
+            .not_global = false,
+            .address = get_high_bits(FDT_ADDR, 12),
         }
     };
-
-    // kernel_translation_table[0x400] = (l1_entry){
-    //     .section = {
-    //         .type = L1_SECTION,
-    //         .address = 0x400,
-    //         .access_perms = 0b10,
-    //         .type_ext = 0b001,
-    //         .bufferable = true,
-    //         .cacheable = true,
-    //     }
-    // };
-
-    // for (int i = 0; i < 16; i++) {
-    //     dtb_page_table[i] = (l2_entry){
-    //         .large_page = {
-    //             .type = L2_LARGE_PAGE,
-    //             .bufferable = true,
-    //             .cacheable = true,
-    //             .access_perms = 0b10,
-    //             .type_ext = 0b001,
-    //             .address = get_high_bits(0x40000000, 16),
-    //         }
-    //     };
-    // }
 
     // UART
     kernel_translation_table[0x090] = (l1_entry){
@@ -78,26 +61,6 @@ static void map_sections() {
             .type_ext = 0b000,
             .bufferable = true,
             .cacheable = false,
-        }
-    };
-
-    // peripherals
-    kernel_translation_table[0xfff] = (l1_entry){
-        .page_table = {
-            .type = L1_PAGE_TABLE,
-            .address = get_high_bits(peripheral_page_table, 22),
-        }
-    };
-
-    // UART
-    peripheral_page_table[0x00] = (l2_entry){
-        .small_page = {
-            .type = L2_SMALL_PAGE,
-            .address = get_high_bits(0x09000000, 20),
-            .bufferable = true,
-            .cacheable = false,
-            .access_perms = 0b10,
-            .type_ext = 0b000,
         }
     };
 }
