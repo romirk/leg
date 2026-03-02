@@ -2,7 +2,7 @@
 // Created by Romir Kulshrestha on 08/06/2025.
 //
 
-#include "memory.h"
+#include "mmu.h"
 #include "cpu.h"
 #include "linker.h"
 #include "utils.h"
@@ -21,15 +21,12 @@ page_table kernel_page_table;
 page_table peripheral_page_table;
 
 [[gnu::section(".tt")]]
-page_table dtb_page_table;
-
-[[gnu::section(".tt")]]
 page_table process_page_tables[8];
 
 [[gnu::section(".startup.mmu")]]
 static void map_sections() {
-    auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
-    auto dtb_table = (l2_entry *) ((u32) dtb_page_table - VIRTUAL_OFFSET);
+    const auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
+    const auto peripheral_pages = (l2_entry *) ((u32) peripheral_page_table - VIRTUAL_OFFSET);
 
     // kernel section (flash)
     table[0x000] = (l1_entry){
@@ -67,16 +64,28 @@ static void map_sections() {
         }
     };
 
+    // GIC
+    table[0x080] = (l1_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = 0x080,
+            .access_perms = 0b10,
+            .type_ext = 0b000,
+            .bufferable = true,
+            .cacheable = false,
+        }
+    };
+
     // DTB section
     table[0x400] = (l1_entry){
         .page_table = {
             .type = L1_PAGE_TABLE,
-            .address = get_high_bits(dtb_table, 22),
+            .address = get_high_bits(peripheral_pages, 22),
         }
     };
 
     for (int i = 0; i < 16; ++i) {
-        dtb_table[i] = (l2_entry){
+        peripheral_pages[i] = (l2_entry){
             .large_page = {
                 .type = L2_LARGE_PAGE,
                 .bufferable = true,

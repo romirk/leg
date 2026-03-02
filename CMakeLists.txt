@@ -32,7 +32,7 @@ set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
 #add_compile_options(-mfloat-abi=soft)
 
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
-add_compile_options(-mcpu=${MCPU} -Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding -flto)
+add_compile_options(-mcpu=${MCPU} -Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding -fbuiltin -flto)
 
 # TODO: REMOVE THIS!
 add_compile_options(-Wno-arm-interrupt-vfp-clobber)

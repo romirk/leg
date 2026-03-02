@@ -5,6 +5,7 @@
 #include "exceptions.h"
 
 #include "cpu.h"
+#include "gic.h"
 #include "logs.h"
 #include "uart.h"
 #include "types.h"
@@ -26,6 +27,15 @@ void handle_data_abort(void) {
 [[gnu::interrupt("IRQ")]]
 void handle_irq(void) {
     *UARTDR = '!';
+    const u32 id = GICC_IAR & 0x3FFu; /* ACK the interrupt and get ID */
+
+    if (id == TIMER_IRQ) {
+        /* handle timer interrupt: clear/re-arm timer as needed */
+        /* for oneshot re-arm: write_cntp_tval(new_ticks); */
+    }
+
+    /* signal end of interrupt */
+    GICC_EOIR = id;
 }
 
 [[gnu::interrupt("FIQ")]]

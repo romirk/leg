@@ -1,7 +1,7 @@
 #include "boot.h"
 
 #include "linker.h"
-#include "memory.h"
+#include "mmu.h"
 #include "types.h"
 
 [[gnu::section(".startup.boot")]]
@@ -28,7 +28,7 @@ void kboot() {
     kernel_translation_table[0x000].raw = 0x00000000;
 
     // jump
-    asm ("ldr pc, =kmain");
+    asm ("ldr pc, =kmain" ::: "pc");
 
     // prevent the compiler from believing we can return from here
     __builtin_unreachable();
