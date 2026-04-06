@@ -37,17 +37,8 @@
 // Board / build-time knobs
 // ---------------------------------------------------------------------------
 
-// Physical RAM base address (adjust per board; QEMU virt = 0x40000000)
-#ifndef RAM_BASE
-#  define RAM_BASE UINT32_C(0x40000000)
-#endif
-
-// Physical RAM size in bytes (default 256 MiB)
-#ifndef RAM_SIZE
-#  define RAM_SIZE (256u * 1024u * 1024u)
-#endif
-
-#define RAM_END  (RAM_BASE + RAM_SIZE)
+// RAM base and size are discovered at runtime from DTB.
+// mm_init() must be called with the values from the DTB /memory node.
 
 // Page size (ARMv7 small page)
 #define PAGE_SIZE  4096u

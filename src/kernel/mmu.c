@@ -8,6 +8,9 @@
 #include "utils.h"
 
 #define MB_SHIFT 20
+#define KPHYS_OFFSET 0x200000  // kernel placed 2MB past DTB section base
+
+u32 kernel_phys_base;
 
 [[gnu::section(".tt")]]
 [[gnu::aligned(0x4000)]]
@@ -22,11 +25,15 @@ page_table peripheral_page_table;
 [[gnu::section(".tt")]]
 page_table process_page_tables[8];
 
+// offset of a kernel virtual symbol within the kernel image
+#define KRN_OFFSET(sym) ((u32)(sym) - (u32)kernel_main_beg)
+
 [[gnu::section(".startup.mmu")]]
 static void map_sections(void *dtb) {
-    const auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
+    const u32 kphys = ((u32)dtb & ~0xFFFFF) + KPHYS_OFFSET;
+    const auto table = (l1_entry *)(kphys + KRN_OFFSET(kernel_translation_table));
 
-    // kernel section (flash)
+    // kernel section (flash) — identity map ROM so kboot can continue
     table[0x000] = (l1_entry){
         .section = {
             .type = L1_SECTION,
@@ -38,11 +45,11 @@ static void map_sections(void *dtb) {
         }
     };
 
-    // kernel section (virtual)
-    table[get_high_bits(kernel_main_beg, 12)] = (l1_entry){
+    // kernel section (virtual 0xC00 → physical kphys)
+    table[(u32)kernel_main_beg >> MB_SHIFT] = (l1_entry){
         .section = {
             .type = L1_SECTION,
-            .address = get_high_bits((u32) kernel_main_beg - VIRTUAL_OFFSET, 12),
+            .address = kphys >> MB_SHIFT,
             .access_perms = 0b10,
             .type_ext = 0b001,
             .bufferable = true,
@@ -92,10 +99,10 @@ static void map_sections(void *dtb) {
 
 [[gnu::section(".startup.mmu")]]
 void init_mmu(void *dtb) {
-    // manually map sections before mmu starts
     map_sections(dtb);
 
-    auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
+    const u32 kphys = ((u32)dtb & ~0xFFFFF) + KPHYS_OFFSET;
+    auto table = (l1_entry *)(kphys + KRN_OFFSET(kernel_translation_table));
     asm (
         "mcr p15, 0, %0, c2, c0, 0;" // TTBR0
         "mcr p15, 0, %0, c2, c0, 1" // TTBR1

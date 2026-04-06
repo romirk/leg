@@ -14,6 +14,9 @@ extern unsigned char kernel_main_beg[];
 extern unsigned char kernel_main_end[];
 extern unsigned char kernel_load_beg[];
 
+extern unsigned char bss_beg[];
+extern unsigned char bss_end[];
+
 extern unsigned char tt_l1_base[];
 
 #endif // LINKER_H

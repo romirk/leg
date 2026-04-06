@@ -6,7 +6,10 @@
 #define MEMORY_H
 #include "types.h"
 
-#define VIRTUAL_OFFSET 0x40000000
+#define KERNEL_VA 0xC0000000
+
+// Set during early boot by kboot; physical base where kernel image lives in RAM.
+extern u32 kernel_phys_base;
 
 typedef enum {
     L1_INVALID = 0b00,

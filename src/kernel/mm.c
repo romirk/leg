@@ -168,8 +168,7 @@ void mm_init(uintptr_t dtb_mem_base, uint64_t dtb_mem_size,
         ram_end = (end64 > UINT32_MAX) ? UINT32_MAX & PAGE_MASK
                                        : (uintptr_t)end64;
     } else {
-        ram_base = RAM_BASE;
-        ram_end  = RAM_END;
+        panic("mm_init: no RAM info from DTB");
     }
     ram_base = align_up(ram_base,   PAGE_SIZE);
     ram_end  = align_down(ram_end,  PAGE_SIZE);

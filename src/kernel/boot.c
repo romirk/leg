@@ -10,12 +10,20 @@ void kboot(void *dtb) {
     // Init MMU
     init_mmu(dtb);
 
-    // copy binary to RAM
+    // copy kernel code/data from ROM to virtual address
     auto len = kernel_main_end - kernel_main_beg;
     u8 *dp8 = (void *) kernel_main_beg;
     const u8 *sp8 = (void *) kernel_load_beg;
     while (len--)
         *dp8++ = *sp8++;
+
+    // zero BSS (tt section is NOLOAD and already written by map_sections)
+    extern unsigned char bss_beg[], bss_end[];
+    for (u8 *p = bss_beg; p < bss_end; p++)
+        *p = 0;
+
+    // set kernel_phys_base now that kernel is mapped
+    kernel_phys_base = ((u32)dtb & ~0xFFFFF) + 0x200000;
 
     // set vtable base address
     extern unsigned char vtable[];
