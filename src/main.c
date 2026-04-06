@@ -4,6 +4,7 @@
 
 #include "kernel/main.h"
 
+#include "utils.h"
 #include "libc/stdio.h"
 
 // cat: read lines and echo them back
@@ -35,5 +36,5 @@ void cat(void) {
 
 [[gnu::noinline]]
 int main() {
-    return 0;
+    limbo;
 }

@@ -54,12 +54,12 @@
 // Error codes
 // ---------------------------------------------------------------------------
 typedef enum : int {
-    MM_OK          =  0,
-    MM_ERR_OOM     = -1,   // out of physical pages
-    MM_ERR_ALIGN   = -2,   // address not page-aligned
-    MM_ERR_RANGE   = -3,   // address outside managed RAM
-    MM_ERR_INUSE   = -4,   // page already allocated
-    MM_ERR_FREE    = -5,   // page already free (double-free)
+    MM_OK = 0,
+    MM_ERR_OOM = -1, // out of physical pages
+    MM_ERR_ALIGN = -2, // address not page-aligned
+    MM_ERR_RANGE = -3, // address outside managed RAM
+    MM_ERR_INUSE = -4, // page already allocated
+    MM_ERR_FREE = -5, // page already free (double-free)
 } mm_err_t;
 
 // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ typedef enum : int {
 typedef struct {
     uint32_t total_pages;
     uint32_t free_pages;
-    uint32_t reserved_pages;   // kernel image + page tables + bitmap
+    uint32_t reserved_pages; // kernel image + page tables + bitmap
     uintptr_t heap_base;
     uintptr_t heap_end;
     uintptr_t heap_used;
@@ -130,7 +130,7 @@ void *kmalloc(size_t size);
 void *kzalloc(size_t size);
 
 // Free a pointer returned by kmalloc / kzalloc.
-void  kfree(void *ptr);
+void kfree(void *ptr);
 
 // Reallocate.  If ptr is NULL, equivalent to kmalloc(size).
 void *krealloc(void *ptr, size_t size);

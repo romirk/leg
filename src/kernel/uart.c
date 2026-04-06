@@ -80,13 +80,13 @@ void putchar(const char c) { *UARTDR = c; }
 char getchar(void) {
     // wait for data available (RXFE = bit 4 in FR: 1 = FIFO empty)
     while (*UARTFR & (1 << 4));
-    return (char)(*UARTDR & 0xFF);
+    return (char) (*UARTDR & 0xFF);
 }
 
 void uart_irq_handler(void) {
     // read all available characters
     while (!(*UARTFR & (1 << 4))) {
-        char c = (char)(*UARTDR & 0xFF);
+        char c = (char) (*UARTDR & 0xFF);
         putchar(c); // echo
     }
     // clear RX interrupt

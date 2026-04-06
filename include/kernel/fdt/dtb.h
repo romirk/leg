@@ -5,6 +5,7 @@
 // Spec: https://devicetree-specification.readthedocs.io/en/stable/
 
 #include "types.h"
+#include "bswap.h"
 
 // ---------------------------------------------------------------------------
 // Allocator interface
@@ -138,15 +139,3 @@ dtb_node_t *dtb_child_next(const dtb_node_t *child);
 // Print the entire parsed tree to UART (via printf)
 void dtb_dump(const dtb_tree_t *tree);
 
-// ---------------------------------------------------------------------------
-// Utility: big-endian reads (no unaligned UB on ARMv7)
-// ---------------------------------------------------------------------------
-static inline u32 fdt_r32(const void *p) {
-    const u8 *b = (const u8 *) p;
-    return ((u32) b[0] << 24) | ((u32) b[1] << 16) |
-           ((u32) b[2] << 8) | (u32) b[3];
-}
-
-static inline u64 fdt_r64(const void *p) {
-    return ((u64) fdt_r32(p) << 32) | fdt_r32((const u8 *) p + 4);
-}

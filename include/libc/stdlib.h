@@ -37,14 +37,4 @@ char *hex32le(u32 value, char str[9]);
 
 char *hex32be(u32 value, char str[9]);
 
-[[gnu::const]]
-inline u32 swap_endianness(const u32 num) {
-    // Compiler will optimize this to the single instruction `rev`
-    const u32 b0 = (num & 0x000000ff) << 24u;
-    const u32 b1 = (num & 0x0000ff00) << 8u;
-    const u32 b2 = (num & 0x00ff0000) >> 8u;
-    const u32 b3 = (num & 0xff000000) >> 24u;
-    return b0 | b1 | b2 | b3;
-}
-
 #endif //STDLIB_H

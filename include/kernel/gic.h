@@ -39,6 +39,7 @@ inline void gic_dist_init(void) {
 }
 
 void gic_enable_irq(u32 irq);
+
 void timer_set_oneshot_us(u32 usec);
 
 #endif //GIC_H

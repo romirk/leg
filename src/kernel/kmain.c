@@ -8,9 +8,12 @@
 #include "kernel/logs.h"
 #include "kernel/mm.h"
 #include "utils.h"
-#include "libc/stdlib.h"
+#include "bswap.h"
+#include "string_data.h"
 
 #include "kernel/exceptions.h"
+#include "kernel/fb.h"
+#include "kernel/fwcfg.h"
 #include "kernel/gic.h"
 #include "kernel/main.h"
 #include "kernel/uart.h"
@@ -24,13 +27,13 @@
 void kmain(void *dtb) {
     // set up bump allocator after DTB blob
     auto header = (struct fdt_header *) dtb;
-    u32 dtb_size = swap_endianness(header->totalsize);
+    u32 dtb_size = bswap32(header->totalsize);
     void *heap_base = align((u8 *) dtb + dtb_size, 16);
     early_malloc_init(heap_base, EARLY_HEAP_SIZE);
 
     // parse full device tree
     dtb_tree_t tree;
-    auto dtb_err = dtb_parse(dtb, dtb_size, &tree, early_malloc);
+    const auto dtb_err = dtb_parse(dtb, dtb_size, &tree, early_malloc);
     if (dtb_err != DTB_OK) {
         err("Failed to parse DTB: %d", dtb_err);
         goto halt;
@@ -43,13 +46,18 @@ void kmain(void *dtb) {
     info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
 
     // init full page allocator + kernel heap
-    u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
+    const u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
     mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
     early_malloc_reset();
 
     // init UART with RX interrupts
     struct pl011 uart;
     pl011_setup(&uart, 24000000u);
+
+    // init framebuffer (ramfb via fw-cfg)
+    fwcfg_init();
+    fb_init();
+    fb_print(src_kernel_boot_s, FB_WHITE, FB_BLACK);
 
     // init GIC
     gic_dist_init();

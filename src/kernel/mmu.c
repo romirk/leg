@@ -30,8 +30,8 @@ page_table process_page_tables[8];
 
 [[gnu::section(".startup.mmu")]]
 static void map_sections(void *dtb) {
-    const u32 kphys = ((u32)dtb & ~0xFFFFF) + KPHYS_OFFSET;
-    const auto table = (l1_entry *)(kphys + KRN_OFFSET(kernel_translation_table));
+    const u32 kphys = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
+    const auto table = (l1_entry *) (kphys + KRN_OFFSET(kernel_translation_table));
 
     // kernel section (flash) — identity map ROM so kboot can continue
     table[0x000] = (l1_entry){
@@ -46,7 +46,7 @@ static void map_sections(void *dtb) {
     };
 
     // kernel section (virtual 0xC00 → physical kphys)
-    table[(u32)kernel_main_beg >> MB_SHIFT] = (l1_entry){
+    table[(u32) kernel_main_beg >> MB_SHIFT] = (l1_entry){
         .section = {
             .type = L1_SECTION,
             .address = kphys >> MB_SHIFT,
@@ -81,9 +81,10 @@ static void map_sections(void *dtb) {
         }
     };
 
-    // DTB / early RAM — identity-map 2MB from DTB base (DTB can be up to 1MB + early heap)
+    // DTB / early RAM — identity-map 4MB from DTB base
+    // (DTB up to 1MB + early heap 128KB + bitmap 32KB + kernel heap 2MB)
     const u32 dtb_section = (u32) dtb >> MB_SHIFT;
-    for (u32 i = 0; i < 2; ++i) {
+    for (u32 i = 0; i < 4; ++i) {
         table[dtb_section + i] = (l1_entry){
             .section = {
                 .type = L1_SECTION,
@@ -95,14 +96,43 @@ static void map_sections(void *dtb) {
             }
         };
     }
+
+    // VirtIO MMIO (0x0a000000–0x0a0FFFFF)
+    table[0x0a0] = (l1_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = 0x0a0,
+            .access_perms = 0b10,
+            .type_ext = 0b000,
+            .bufferable = true,
+            .cacheable = false,
+        }
+    };
+}
+
+void mmu_map_identity(u32 phys_mb, bool device) {
+    kernel_translation_table[phys_mb] = (l1_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = phys_mb,
+            .access_perms = 0b10,
+            .type_ext = device ? 0b000 : 0b001,
+            .bufferable = true,
+            .cacheable = !device,
+        }
+    };
+    asm volatile(
+        "mcr p15, 0, %0, c8, c7, 0\n\t" // invalidate TLB
+        "dsb\n\tisb" :: "r"(0)
+    );
 }
 
 [[gnu::section(".startup.mmu")]]
 void init_mmu(void *dtb) {
     map_sections(dtb);
 
-    const u32 kphys = ((u32)dtb & ~0xFFFFF) + KPHYS_OFFSET;
-    auto table = (l1_entry *)(kphys + KRN_OFFSET(kernel_translation_table));
+    const u32 kphys = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
+    auto table = (l1_entry *) (kphys + KRN_OFFSET(kernel_translation_table));
     asm (
         "mcr p15, 0, %0, c2, c0, 0;" // TTBR0
         "mcr p15, 0, %0, c2, c0, 1" // TTBR1

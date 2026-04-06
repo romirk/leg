@@ -18,12 +18,11 @@ void kboot(void *dtb) {
         *dp8++ = *sp8++;
 
     // zero BSS (tt section is NOLOAD and already written by map_sections)
-    extern unsigned char bss_beg[], bss_end[];
     for (u8 *p = bss_beg; p < bss_end; p++)
         *p = 0;
 
     // set kernel_phys_base now that kernel is mapped
-    kernel_phys_base = ((u32)dtb & ~0xFFFFF) + 0x200000;
+    kernel_phys_base = ((u32) dtb & ~0xFFFFF) + 0x200000;
 
     // set vtable base address
     extern unsigned char vtable[];

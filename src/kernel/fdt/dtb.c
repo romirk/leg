@@ -11,17 +11,17 @@
 // Internal parser state
 // ---------------------------------------------------------------------------
 typedef struct {
-    const u8       *blob;
-    u32             blob_len;
-    const u8       *struct_block;
-    const char     *string_block;
-    u32             struct_size;
-    u32             string_size;
-    dtb_alloc_fn    alloc;
-    dtb_node_t     *node_pool;
-    u32             node_used;
-    dtb_prop_t     *prop_pool;
-    u32             prop_used;
+    const u8 *blob;
+    u32 blob_len;
+    const u8 *struct_block;
+    const char *string_block;
+    u32 struct_size;
+    u32 string_size;
+    dtb_alloc_fn alloc;
+    dtb_node_t *node_pool;
+    u32 node_used;
+    dtb_prop_t *prop_pool;
+    u32 prop_used;
 } parser_t;
 
 static dtb_node_t *alloc_node(parser_t *p) {
@@ -29,7 +29,7 @@ static dtb_node_t *alloc_node(parser_t *p) {
     dtb_node_t *n = &p->node_pool[p->node_used++];
     memset(n, 0, sizeof(*n));
     n->address_cells = 2;
-    n->size_cells    = 1;
+    n->size_cells = 1;
     return n;
 }
 
@@ -43,10 +43,10 @@ static dtb_prop_t *alloc_props(parser_t *p, u32 count) {
 // ---------------------------------------------------------------------------
 // Bounds-checked access
 // ---------------------------------------------------------------------------
-static inline bool in_struct(const parser_t *p, const u8 *ptr, u32 len) {
-    u32 base = (u32)p->struct_block;
-    u32 end  = base + p->struct_size;
-    u32 addr = (u32)ptr;
+static bool in_struct(const parser_t *p, const u8 *ptr, u32 len) {
+    const u32 base = (u32) p->struct_block;
+    const u32 end = base + p->struct_size;
+    const u32 addr = (u32) ptr;
     return addr >= base && addr + len <= end && addr + len >= addr;
 }
 
@@ -72,8 +72,11 @@ static dtb_val_type_t guess_type(const char *name, const u8 *data, u32 len) {
     // Detect string / stringlist
     bool all_str = true;
     for (u32 i = 0; i < len; ++i) {
-        u8 c = data[i];
-        if (c != 0 && (c < 0x20 || c > 0x7e)) { all_str = false; break; }
+        const u8 c = data[i];
+        if (c != 0 && (c < 0x20 || c > 0x7e)) {
+            all_str = false;
+            break;
+        }
     }
     if (all_str && data[len - 1] == 0) {
         u32 nulls = 0;
@@ -89,49 +92,53 @@ static dtb_val_type_t guess_type(const char *name, const u8 *data, u32 len) {
 // Recursive descent parser
 // ---------------------------------------------------------------------------
 static const u8 *parse_node(parser_t *p, const u8 *cur,
-                             dtb_node_t *parent, dtb_node_t **out_node) {
+                            dtb_node_t *parent, dtb_node_t **out_node) {
     // cur points past FDT_BEGIN_NODE token — read NUL-terminated name
-    const char *name = (const char *)cur;
-    u32 name_offset = (u32)cur - (u32)p->struct_block;
+    const auto name = (const char *) cur;
+    const u32 name_offset = (u32) cur - (u32) p->struct_block;
     u32 name_len = 0;
     while (in_struct(p, cur + name_len, 1) && cur[name_len] != 0) ++name_len;
-    u32 padded = (name_offset + name_len + 1 + 3) & ~(u32)3;
+    const u32 padded = (name_offset + name_len + 1 + 3) & ~(u32) 3;
     cur = p->struct_block + padded;
 
     dtb_node_t *node = alloc_node(p);
     if (!node) return nullptr;
 
-    node->name   = name;
+    node->name = name;
     node->parent = parent;
     if (parent) {
         node->address_cells = parent->address_cells;
-        node->size_cells    = parent->size_cells;
+        node->size_cells = parent->size_cells;
     }
 
     // Count props (look-ahead) to batch-allocate
-    u32 prop_count = 0;
-    {
+    u32 prop_count = 0; {
         const u8 *scan = cur;
         u32 depth = 0;
         while (true) {
             if (!in_struct(p, scan, 4)) break;
-            u32 tok = fdt_r32(scan); scan += 4;
-            if (tok == FDT_NOP)       continue;
-            if (tok == FDT_END_NODE)  { if (depth == 0) break; --depth; continue; }
+            const u32 tok = be32_read(scan);
+            scan += 4;
+            if (tok == FDT_NOP) continue;
+            if (tok == FDT_END_NODE) {
+                if (depth == 0) break;
+                --depth;
+                continue;
+            }
             if (tok == FDT_BEGIN_NODE) {
                 ++depth;
                 while (in_struct(p, scan, 1) && *scan != 0) ++scan;
                 ++scan;
-                u32 off = (u32)scan - (u32)p->struct_block;
-                scan = p->struct_block + ((off + 3) & ~(u32)3);
+                const u32 off = (u32) scan - (u32) p->struct_block;
+                scan = p->struct_block + ((off + 3) & ~(u32) 3);
                 continue;
             }
             if (tok == FDT_PROP) {
                 if (!in_struct(p, scan, 8)) break;
-                u32 plen = fdt_r32(scan);
+                u32 plen = be32_read(scan);
                 scan += 8;
-                u32 off = (u32)scan - (u32)p->struct_block;
-                scan = p->struct_block + ((off + plen + 3) & ~(u32)3);
+                u32 off = (u32) scan - (u32) p->struct_block;
+                scan = p->struct_block + ((off + plen + 3) & ~(u32) 3);
                 if (depth == 0) ++prop_count;
                 continue;
             }
@@ -144,45 +151,47 @@ static const u8 *parse_node(parser_t *p, const u8 *cur,
         props = alloc_props(p, prop_count);
         if (!props) return nullptr;
     }
-    node->props      = props;
+    node->props = props;
     node->prop_count = 0;
 
     // Main parse loop
     while (true) {
         if (!in_struct(p, cur, 4)) return nullptr;
-        u32 tok = fdt_r32(cur); cur += 4;
+        const u32 tok = be32_read(cur);
+        cur += 4;
 
         if (tok == FDT_NOP) {
             continue;
-        } else if (tok == FDT_END_NODE) {
+        }
+        if (tok == FDT_END_NODE) {
             break;
-        } else if (tok == FDT_PROP) {
+        }
+        if (tok == FDT_PROP) {
             if (!in_struct(p, cur, 8)) return nullptr;
-            u32 plen    = fdt_r32(cur);
-            u32 nameoff = fdt_r32(cur + 4);
+            const u32 plen = be32_read(cur);
+            const u32 nameoff = be32_read(cur + 4);
             cur += 8;
 
             if (nameoff >= p->string_size) return nullptr;
             const char *pname = p->string_block + nameoff;
             const u8 *pdata = cur;
-            u32 off = (u32)cur - (u32)p->struct_block;
-            cur = p->struct_block + ((off + plen + 3) & ~(u32)3);
+            u32 off = (u32) cur - (u32) p->struct_block;
+            cur = p->struct_block + ((off + plen + 3) & ~(u32) 3);
 
             if (node->prop_count >= prop_count) return nullptr;
             dtb_prop_t *pr = &props[node->prop_count++];
             pr->name = pname;
             pr->data = pdata;
-            pr->len  = plen;
+            pr->len = plen;
             pr->type = guess_type(pname, pdata, plen);
 
             if (strcmp(pname, "#address-cells") == 0 && plen == 4)
-                node->address_cells = fdt_r32(pdata);
+                node->address_cells = be32_read(pdata);
             else if (strcmp(pname, "#size-cells") == 0 && plen == 4)
-                node->size_cells = fdt_r32(pdata);
+                node->size_cells = be32_read(pdata);
             else if ((strcmp(pname, "phandle") == 0 ||
                       strcmp(pname, "linux,phandle") == 0) && plen == 4)
-                node->phandle = fdt_r32(pdata);
-
+                node->phandle = be32_read(pdata);
         } else if (tok == FDT_BEGIN_NODE) {
             dtb_node_t *child = nullptr;
             cur = parse_node(p, cur, node, &child);
@@ -211,7 +220,7 @@ static void extract_memory(dtb_tree_t *tree, dtb_node_t *root) {
         if (strncmp(n->name, "memory", 6) != 0) continue;
         const dtb_prop_t *dt = dtb_get_prop(n, "device_type");
         if (!dt) dt = dtb_get_prop(n, "device-type");
-        if (dt && (dt->len == 0 || strcmp((const char *)dt->data, "memory") != 0))
+        if (dt && (dt->len == 0 || strcmp((const char *) dt->data, "memory") != 0))
             continue;
         const dtb_prop_t *reg = dtb_get_prop(n, "reg");
         if (!reg) continue;
@@ -223,9 +232,9 @@ static void extract_memory(dtb_tree_t *tree, dtb_node_t *root) {
             const u8 *p = reg->data + i * entry_bytes;
             u64 base = 0, size = 0;
             for (u32 c = 0; c < ac; ++c)
-                base = (base << 32) | fdt_r32(p + c * 4);
+                base = (base << 32) | be32_read(p + c * 4);
             for (u32 c = 0; c < sc; ++c)
-                size = (size << 32) | fdt_r32(p + (ac + c) * 4);
+                size = (size << 32) | be32_read(p + (ac + c) * 4);
             tree->memory[tree->memory_count].base = base;
             tree->memory[tree->memory_count].size = size;
             ++tree->memory_count;
@@ -242,22 +251,22 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len,
 
     memset(tree, 0, sizeof(*tree));
 
-    const u8 *raw = (const u8 *)blob;
+    const u8 *raw = blob;
 
     if (blob_len < sizeof(struct fdt_header)) return DTB_ERR_TRUNCATED;
 
-    if (fdt_r32(raw) != FDT_MAGIC) return DTB_ERR_MAGIC;
+    if (be32_read(raw) != FDT_MAGIC) return DTB_ERR_MAGIC;
 
-    u32 totalsize    = fdt_r32(raw + 4);
-    u32 off_struct   = fdt_r32(raw + 8);
-    u32 off_strings  = fdt_r32(raw + 12);
-    u32 boot_cpuid   = fdt_r32(raw + 28);
-    u32 size_strings = fdt_r32(raw + 32);
-    u32 size_struct  = fdt_r32(raw + 36);
+    u32 totalsize = be32_read(raw + 4);
+    u32 off_struct = be32_read(raw + 8);
+    u32 off_strings = be32_read(raw + 12);
+    u32 boot_cpuid = be32_read(raw + 28);
+    u32 size_strings = be32_read(raw + 32);
+    u32 size_struct = be32_read(raw + 36);
 
-    if (totalsize > blob_len)                    return DTB_ERR_TRUNCATED;
-    if (off_struct  + size_struct  > totalsize)  return DTB_ERR_TRUNCATED;
-    if (off_strings + size_strings > totalsize)  return DTB_ERR_TRUNCATED;
+    if (totalsize > blob_len) return DTB_ERR_TRUNCATED;
+    if (off_struct + size_struct > totalsize) return DTB_ERR_TRUNCATED;
+    if (off_strings + size_strings > totalsize) return DTB_ERR_TRUNCATED;
 
     tree->boot_cpuid = boot_cpuid;
 
@@ -266,26 +275,32 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len,
     if (!node_pool || !prop_pool) return DTB_ERR_NOMEM;
 
     parser_t p = {
-        .blob         = raw,
-        .blob_len     = blob_len,
+        .blob = raw,
+        .blob_len = blob_len,
         .struct_block = raw + off_struct,
-        .string_block = (const char *)(raw + off_strings),
-        .struct_size  = size_struct,
-        .string_size  = size_strings,
-        .alloc        = alloc,
-        .node_pool    = node_pool,
-        .node_used    = 0,
-        .prop_pool    = prop_pool,
-        .prop_used    = 0,
+        .string_block = (const char *) (raw + off_strings),
+        .struct_size = size_struct,
+        .string_size = size_strings,
+        .alloc = alloc,
+        .node_pool = node_pool,
+        .node_used = 0,
+        .prop_pool = prop_pool,
+        .prop_used = 0,
     };
 
     // Find first BEGIN_NODE
     const u8 *cur = p.struct_block;
     while (true) {
         if (!in_struct(&p, cur, 4)) return DTB_ERR_CORRUPT;
-        u32 tok = fdt_r32(cur);
-        if (tok == FDT_NOP) { cur += 4; continue; }
-        if (tok == FDT_BEGIN_NODE) { cur += 4; break; }
+        u32 tok = be32_read(cur);
+        if (tok == FDT_NOP) {
+            cur += 4;
+            continue;
+        }
+        if (tok == FDT_BEGIN_NODE) {
+            cur += 4;
+            break;
+        }
         return DTB_ERR_CORRUPT;
     }
 
@@ -297,7 +312,7 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len,
 
     const dtb_prop_t *compat = dtb_get_prop(root, "compatible");
     if (compat && compat->len > 0)
-        tree->compatible = (const char *)compat->data;
+        tree->compatible = (const char *) compat->data;
 
     extract_memory(tree, root);
 
@@ -332,8 +347,11 @@ dtb_node_t *dtb_find_node(const dtb_tree_t *tree, const char *path) {
     while (*path && cur) {
         const char *sep = path;
         while (*sep && *sep != '/') ++sep;
-        u32 seg_len = (u32)(sep - path);
-        if (seg_len == 0) { path = sep + 1; continue; }
+        u32 seg_len = (u32) (sep - path);
+        if (seg_len == 0) {
+            path = sep + 1;
+            continue;
+        }
         cur = find_in_children(cur, path, seg_len);
         path = *sep ? sep + 1 : sep;
     }
@@ -352,6 +370,7 @@ static dtb_node_t *phandle_scan(dtb_node_t *node, u32 ph) {
     }
     return nullptr;
 }
+
 dtb_node_t *dtb_find_phandle(const dtb_tree_t *tree, u32 phandle) {
     if (!tree || phandle == 0) return nullptr;
     return phandle_scan(tree->root, phandle);
@@ -363,7 +382,7 @@ dtb_node_t *dtb_find_phandle(const dtb_tree_t *tree, u32 phandle) {
 static bool node_has_compat(const dtb_node_t *node, const char *compat) {
     const dtb_prop_t *p = dtb_get_prop(node, "compatible");
     if (!p || p->len == 0) return false;
-    const char *cur = (const char *)p->data;
+    auto cur = (const char *) p->data;
     const char *end = cur + p->len;
     while (cur < end) {
         if (strcmp(cur, compat) == 0) return true;
@@ -371,6 +390,7 @@ static bool node_has_compat(const dtb_node_t *node, const char *compat) {
     }
     return false;
 }
+
 static dtb_node_t *compat_scan(dtb_node_t *node, const char *compat) {
     if (!node) return nullptr;
     if (node_has_compat(node, compat)) return node;
@@ -380,6 +400,7 @@ static dtb_node_t *compat_scan(dtb_node_t *node, const char *compat) {
     }
     return nullptr;
 }
+
 dtb_node_t *dtb_find_compatible(const dtb_tree_t *tree, const char *compat) {
     if (!tree || !compat) return nullptr;
     return compat_scan(tree->root, compat);
@@ -401,20 +422,26 @@ const dtb_prop_t *dtb_get_prop(const dtb_node_t *node, const char *name) {
 // ---------------------------------------------------------------------------
 bool dtb_prop_u32(const dtb_prop_t *prop, u32 *out) {
     if (!prop || !out || prop->len < 4) return false;
-    *out = fdt_r32(prop->data);
+    *out = be32_read(prop->data);
     return true;
 }
 
 bool dtb_prop_u64(const dtb_prop_t *prop, u64 *out) {
     if (!prop || !out) return false;
-    if (prop->len == 4) { *out = fdt_r32(prop->data); return true; }
-    if (prop->len == 8) { *out = fdt_r64(prop->data); return true; }
+    if (prop->len == 4) {
+        *out = be32_read(prop->data);
+        return true;
+    }
+    if (prop->len == 8) {
+        *out = be64_read(prop->data);
+        return true;
+    }
     return false;
 }
 
 bool dtb_prop_string(const dtb_prop_t *prop, const char **out) {
     if (!prop || !out || prop->len == 0) return false;
-    *out = (const char *)prop->data;
+    *out = (const char *) prop->data;
     return true;
 }
 
@@ -428,15 +455,16 @@ bool dtb_reg_entry(const dtb_node_t *node, u32 index,
     if (!reg) return false;
 
     u32 ac = node->parent ? node->parent->address_cells : 2;
-    u32 sc = node->parent ? node->parent->size_cells    : 1;
+    u32 sc = node->parent ? node->parent->size_cells : 1;
     u32 entry_bytes = (ac + sc) * 4;
     if (entry_bytes == 0 || (index + 1) * entry_bytes > reg->len) return false;
 
     const u8 *p = reg->data + index * entry_bytes;
     u64 b = 0, s = 0;
-    for (u32 c = 0; c < ac; ++c) b = (b << 32) | fdt_r32(p + c * 4);
-    for (u32 c = 0; c < sc; ++c) s = (s << 32) | fdt_r32(p + (ac + c) * 4);
-    *base = b; *size = s;
+    for (u32 c = 0; c < ac; ++c) b = (b << 32) | be32_read(p + c * 4);
+    for (u32 c = 0; c < sc; ++c) s = (s << 32) | be32_read(p + (ac + c) * 4);
+    *base = b;
+    *size = s;
     return true;
 }
 
@@ -446,6 +474,7 @@ bool dtb_reg_entry(const dtb_node_t *node, u32 index,
 dtb_node_t *dtb_child_first(const dtb_node_t *node) {
     return node ? node->children : nullptr;
 }
+
 dtb_node_t *dtb_child_next(const dtb_node_t *child) {
     return child ? child->next_sibling : nullptr;
 }
@@ -466,45 +495,45 @@ static void dump_prop(const dtb_prop_t *p, u32 depth) {
     }
     printf(" = ");
     switch (p->type) {
-    case DTB_VAL_STRING:
-        printf("\"%s\"", (const char *)p->data);
-        break;
-    case DTB_VAL_STRINGS: {
-        const char *s = (const char *)p->data;
-        const char *end = s + p->len;
-        bool first = true;
-        while (s < end) {
-            if (!first) printf(", ");
-            printf("\"%s\"", s);
-            s += strlen(s) + 1;
-            first = false;
+        case DTB_VAL_STRING:
+            printf("\"%s\"", (const char *) p->data);
+            break;
+        case DTB_VAL_STRINGS: {
+            auto s = (const char *) p->data;
+            const char *end = s + p->len;
+            bool first = true;
+            while (s < end) {
+                if (!first) printf(", ");
+                printf("\"%s\"", s);
+                s += strlen(s) + 1;
+                first = false;
+            }
+            break;
         }
-        break;
-    }
-    case DTB_VAL_U32:
-        printf("<0x%p>", fdt_r32(p->data));
-        break;
-    case DTB_VAL_U64:
-        printf("<0x%p 0x%p>", (u32)(fdt_r64(p->data) >> 32), (u32)fdt_r64(p->data));
-        break;
-    case DTB_VAL_CELLS: {
-        printf("<");
-        for (u32 i = 0; i < p->len / 4; ++i) {
-            if (i) printf(" ");
-            printf("0x%p", fdt_r32(p->data + i * 4));
+        case DTB_VAL_U32:
+            printf("<0x%p>", be32_read(p->data));
+            break;
+        case DTB_VAL_U64:
+            printf("<0x%p 0x%p>", (u32) (be64_read(p->data) >> 32), (u32) be64_read(p->data));
+            break;
+        case DTB_VAL_CELLS: {
+            printf("<");
+            for (u32 i = 0; i < p->len / 4; ++i) {
+                if (i) printf(" ");
+                printf("0x%p", be32_read(p->data + i * 4));
+            }
+            printf(">");
+            break;
         }
-        printf(">");
-        break;
-    }
-    default: {
-        printf("[");
-        for (u32 i = 0; i < p->len; ++i) {
-            if (i) printf(" ");
-            printf("%x", p->data[i]);
+        default: {
+            printf("[");
+            for (u32 i = 0; i < p->len; ++i) {
+                if (i) printf(" ");
+                printf("%x", p->data[i]);
+            }
+            printf("]");
+            break;
         }
-        printf("]");
-        break;
-    }
     }
     printf(";\n");
 }

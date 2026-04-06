@@ -20,7 +20,5 @@ void panic(char *msg) {
     printf("%p\n", sp);
     hexdump(sp, stack_height > 64 ? 64 : stack_height);
 
-    for (;;) {
-        asm ("wfi");
-    }
+    poweroff();
 }
