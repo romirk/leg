@@ -7,7 +7,6 @@
 
 #include "types.h"
 
-#define FDT_ADDR    (void *)    0x40000000
 #define FDT_MAGIC               0xd00dfeed
 
 struct fdt_header {
@@ -40,6 +39,5 @@ struct fdt_prop {
     u32 len;
     u32 name_off;
 };
-
 
 #endif //FDT_H

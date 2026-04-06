@@ -1,20 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_VERSION 1)
 
-# specify cross compilers and tools
 set(MCPU cortex-a15)
-set(TARGET_ARCH arm-none-eabi)
-
-set(CMAKE_C_COMPILER clang)
-#set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-set(CMAKE_ASM_COMPILER clang)
-set(CMAKE_AR ${TARGET_ARCH}-ar)
-set(CMAKE_OBJCOPY ${TARGET_ARCH}-objcopy)
-set(CMAKE_OBJDUMP ${TARGET_ARCH}-objdump)
-set(CMAKE_CUSTOM_LINKER ld64)
-set(SIZE ${TARGET_ARCH}-size)
-set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # project settings
 project(leg C ASM)
@@ -32,12 +18,12 @@ set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
 #add_compile_options(-mfloat-abi=soft)
 
 #add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
-add_compile_options(-mcpu=${MCPU} -Wall -Wextra -Werror --target=${TARGET_ARCH} -ffreestanding -fbuiltin -flto)
+add_compile_options(-mcpu=${MCPU} -Wall -Wextra --target=${TARGET_ARCH} -ffreestanding -fbuiltin -flto)
 
 # TODO: REMOVE THIS!
 add_compile_options(-Wno-arm-interrupt-vfp-clobber)
 
-add_link_options(-flto --target=${TARGET_ARCH} -mcpu=${MCPU} -Wl,-T,${LINKER_SCRIPT} -nostdlib)
+add_link_options(-flto -fuse-ld=lld --target=${TARGET_ARCH} -mcpu=${MCPU} -Wl,-T,${LINKER_SCRIPT} -nostdlib)
 
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
@@ -55,7 +41,8 @@ else ()
     add_compile_definitions(LOG_DEBUG)
 endif ()
 
-if(DEFINED NO_ANSI)
+option(NO_ANSI "Disable ANSI escape codes in output" OFF)
+if(NO_ANSI)
     add_compile_definitions(NO_ANSI)
 endif ()
 

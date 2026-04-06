@@ -1,5 +1,0 @@
-//
-// Created by Romir Kulshrestha on 12/11/2025.
-//
-
-#include "result.h"

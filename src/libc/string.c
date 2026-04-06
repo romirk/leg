@@ -2,7 +2,7 @@
 // Created by Romir Kulshrestha on 03/06/2025.
 //
 
-#include "string.h"
+#include "libc/string.h"
 
 int strlen(const char *s) {
     int len = 0;

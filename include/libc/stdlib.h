@@ -47,6 +47,4 @@ inline u32 swap_endianness(const u32 num) {
     return b0 | b1 | b2 | b3;
 }
 
-void panic(char *msg);
-
 #endif //STDLIB_H

@@ -1,14 +1,14 @@
-#include "boot.h"
+#include "kernel/boot.h"
 
-#include "linker.h"
-#include "mmu.h"
+#include "kernel/linker.h"
+#include "kernel/mmu.h"
 #include "types.h"
 
 [[gnu::section(".startup.boot")]]
 [[noreturn]]
 void kboot(void *dtb) {
     // Init MMU
-    init_mmu();
+    init_mmu(dtb);
 
     // copy binary to RAM
     auto len = kernel_main_end - kernel_main_beg;

@@ -2,7 +2,7 @@
 // Created by Romir Kulshrestha on 01/06/2025.
 //
 
-#include "uart.h"
+#include "kernel/uart.h"
 #include "types.h"
 
 static void wait_tx_complete() {

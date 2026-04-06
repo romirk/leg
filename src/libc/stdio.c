@@ -2,14 +2,12 @@
 // Created by Romir Kulshrestha on 03/06/2025.
 //
 
-#include "stdio.h"
+#include "libc/stdio.h"
 
 #include <stdarg.h>
 
-#include "builtins.h"
-#include "logs.h"
-#include "stdlib.h"
-#include "uart.h"
+#include "libc/builtins.h"
+#include "libc/stdlib.h"
 
 int print(const char *p) {
     auto s = p;
@@ -100,8 +98,8 @@ void printf(const char *fmt, ...) {
                 *ptr = n;
                 break;
             default:
-                putchar('\n');
-                err("printf: unknown format %%%c", t);
+                print("?%");
+                putchar(t);
                 va_end(args);
                 return;
         }
@@ -175,8 +173,8 @@ void pprintf(const char *fmt, ...) {
                 *ptr = n;
                 break;
             default:
-                putchar('\n');
-                err("printf: unknown format %%%c", t);
+                print("?%");
+                putchar(t);
                 va_end(args);
                 return;
         }

@@ -2,7 +2,7 @@
 // Created by Romir Kulshrestha on 02/03/2026.
 //
 
-#include "bump.h"
+#include "kernel/bump.h"
 
 static u8 *early_heap_base;
 static u8 *early_heap_end;

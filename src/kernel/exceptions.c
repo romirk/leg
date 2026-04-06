@@ -2,12 +2,12 @@
 // Created by Romir Kulshrestha on 04/06/2025.
 //
 
-#include "exceptions.h"
+#include "kernel/exceptions.h"
 
-#include "cpu.h"
-#include "gic.h"
-#include "logs.h"
-#include "uart.h"
+#include "kernel/cpu.h"
+#include "kernel/gic.h"
+#include "kernel/logs.h"
+#include "kernel/uart.h"
 #include "types.h"
 
 [[gnu::section(".startup.exceptions")]]

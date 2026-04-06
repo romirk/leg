@@ -59,10 +59,12 @@ vtable:
 .section .startup, "ax", %progbits
 handle_reset:
     // save DTB pointer (r2 from bootloader/firmware)
-    mov r4, r2
+    // fallback to start of RAM if r2 not set (e.g. QEMU without -kernel)
+    movs r4, r2
+    ldreq r4, =0x40000000
 
     // temporary SVC stack: 64KB past DTB (in RAM, before we know its size)
-    add sp, r2, #0x10000
+    add sp, r4, #0x10000
 
     // init exception mode stacks (virtual addresses, used after MMU)
     cps #0b10001            // FIQ mode

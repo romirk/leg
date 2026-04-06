@@ -35,7 +35,7 @@
 #define err(fmt, ...) (printf("\033[97;101m error \033[91;107m %s:%d \033[31;49m ", __FILE_NAME__, __LINE__), printf(fmt "\033[0m\n", ##__VA_ARGS__))
 
 // LOG_ERROR is defined if any log level is active, so ensure that stdio is included.
-#include "stdio.h"
+#include "libc/stdio.h"
 
 #else
 #define err(...)

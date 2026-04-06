@@ -2,16 +2,17 @@
 // Created by Romir Kulshrestha on 01/06/2025.
 //
 
-#include "kmain.h"
+#include "kernel/kmain.h"
 
-#include "bump.h"
-#include "logs.h"
+#include "kernel/bump.h"
+#include "kernel/logs.h"
+#include "kernel/mm.h"
 #include "utils.h"
-#include "stdlib.h"
+#include "libc/stdlib.h"
 
-#include "main.h"
-#include "fdt/fdt.h"
-#include "fdt/parser.h"
+#include "kernel/main.h"
+#include "kernel/fdt/fdt.h"
+#include "kernel/fdt/dtb.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 
@@ -24,14 +25,25 @@ void kmain(void *dtb) {
     void *heap_base = align((u8 *) dtb + dtb_size, 16);
     early_malloc_init(heap_base, EARLY_HEAP_SIZE);
 
-    // parse fdt
-    auto parse_result = parse_fdt(dtb);
-    if (!parse_result.is_ok) {
-        if (parse_result.value)
-            err("Failed to parse fdt: %s", parse_result.value);
+    // parse full device tree
+    dtb_tree_t tree;
+    auto dtb_err = dtb_parse(dtb, dtb_size, &tree, early_malloc);
+    if (dtb_err != DTB_OK) {
+        err("Failed to parse DTB: %d", dtb_err);
         goto halt;
     }
-    info("RAM: %p", ((struct fdt_parse_result *) parse_result.value)->size);
+
+    if (tree.memory_count == 0) {
+        err("No memory nodes found in DTB");
+        goto halt;
+    }
+    info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
+    dtb_dump(&tree);
+
+    // init full page allocator + kernel heap
+    u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
+    mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
+    early_malloc_reset();
 
     dbg("Jumping to main@0x%p", &main);
 

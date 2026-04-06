@@ -22,4 +22,7 @@ inline void swap(char *a, char *b) {
 inline void *align(void *ptr, const u8 alignment) {
     return (void *) (-alignment & (u32) ptr + alignment - 1);
 }
+[[noreturn]]
+void panic(char *msg);
+
 #endif //UTILS_H

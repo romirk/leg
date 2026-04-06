@@ -7,7 +7,8 @@
 
 #include "types.h"
 
-
+// Provided by the kernel (e.g. UART driver)
+void putchar(char c);
 
 int print(const char *);
 

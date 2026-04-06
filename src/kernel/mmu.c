@@ -2,11 +2,10 @@
 // Created by Romir Kulshrestha on 08/06/2025.
 //
 
-#include "mmu.h"
-#include "cpu.h"
-#include "linker.h"
+#include "kernel/mmu.h"
+#include "kernel/cpu.h"
+#include "kernel/linker.h"
 #include "utils.h"
-#include "fdt/fdt.h"
 
 #define MB_SHIFT 20
 
@@ -24,9 +23,8 @@ page_table peripheral_page_table;
 page_table process_page_tables[8];
 
 [[gnu::section(".startup.mmu")]]
-static void map_sections() {
+static void map_sections(void *dtb) {
     const auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
-    const auto peripheral_pages = (l2_entry *) ((u32) peripheral_page_table - VIRTUAL_OFFSET);
 
     // kernel section (flash)
     table[0x000] = (l1_entry){
@@ -76,32 +74,26 @@ static void map_sections() {
         }
     };
 
-    // DTB section
-    table[0x400] = (l1_entry){
-        .page_table = {
-            .type = L1_PAGE_TABLE,
-            .address = get_high_bits(peripheral_pages, 22),
-        }
-    };
-
-    for (int i = 0; i < 16; ++i) {
-        peripheral_pages[i] = (l2_entry){
-            .large_page = {
-                .type = L2_LARGE_PAGE,
-                .bufferable = true,
-                .cacheable = true,
+    // DTB / early RAM — identity-map 2MB from DTB base (DTB can be up to 1MB + early heap)
+    const u32 dtb_section = (u32) dtb >> MB_SHIFT;
+    for (u32 i = 0; i < 2; ++i) {
+        table[dtb_section + i] = (l1_entry){
+            .section = {
+                .type = L1_SECTION,
+                .address = dtb_section + i,
                 .access_perms = 0b10,
                 .type_ext = 0b001,
-                .address = get_high_bits(FDT_ADDR, 16),
+                .bufferable = true,
+                .cacheable = true,
             }
         };
     }
 }
 
 [[gnu::section(".startup.mmu")]]
-void init_mmu(void) {
+void init_mmu(void *dtb) {
     // manually map sections before mmu starts
-    map_sections();
+    map_sections(dtb);
 
     auto table = (l1_entry *) ((u32) kernel_translation_table - VIRTUAL_OFFSET);
     asm (

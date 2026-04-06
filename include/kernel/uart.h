@@ -60,6 +60,4 @@ void pl011_setup(struct pl011 *dev, u64 base_clock);
 
 void pl011_reset(const struct pl011 *dev);
 
-void putchar(char c);
-
 #endif // UART_H

@@ -133,7 +133,7 @@ typedef l2_entry page_table[0x100];
 /**
  * Configures the MMU and L1 translation table, ID-mapping the first mib of flash, RAM, and the UART address spaces.
  */
-void init_mmu(void);
+void init_mmu(void *dtb);
 
 extern translation_table kernel_translation_table;
 

@@ -2,7 +2,7 @@
 // Created by Romir Kulshrestha on 05/06/2025.
 //
 
-#include "gic.h"
+#include "kernel/gic.h"
 
 /* enable single IRQ (any irq number) */
 void gic_enable_irq(u32 irq) {

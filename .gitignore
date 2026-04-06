@@ -1,3 +1,6 @@
 cmake-build-*/
+build/
+.cache/
 *.dtb
+.DS_Store
 .idea/

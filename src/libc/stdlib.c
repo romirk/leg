@@ -2,12 +2,9 @@
 // Created by Romir Kulshrestha on 02/06/2025.
 //
 
-#include "stdlib.h"
+#include "libc/stdlib.h"
 
-#include "linker.h"
-#include "logs.h"
-#include "math.h"
-#include "stdio.h"
+#include "libc/math.h"
 
 [[gnu::const]]
 static int get_symbol(const u8 digit) {
@@ -67,19 +64,3 @@ char *hex32be(const u32 value, char str[9]) {
     return str;
 }
 
-[[noreturn]]
-void panic(char *msg) {
-    err("PANIC: %s", msg);
-
-    err("debug info:\nstack: *");
-    void *p = nullptr;
-    void *sp = &p;
-    const auto stack_height = (void *) STACK_BOTTOM - sp;
-
-    printf("%p\n", sp);
-    hexdump(sp, stack_height > 64 ? 64 : stack_height);
-
-    for (;;) {
-        asm ("wfi");
-    }
-}

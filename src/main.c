@@ -2,11 +2,11 @@
 // Created by Romir Kulshrestha on 20/08/2025.
 //
 
-#include "main.h"
+#include "kernel/main.h"
 
-#include "exceptions.h"
-#include "logs.h"
-#include "gic.h"
+#include "kernel/exceptions.h"
+#include "kernel/logs.h"
+#include "kernel/gic.h"
 #include "utils.h"
 
 
