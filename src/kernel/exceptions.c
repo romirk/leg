@@ -26,15 +26,14 @@ void handle_data_abort(void) {
 
 [[gnu::interrupt("IRQ")]]
 void handle_irq(void) {
-    *UARTDR = '!';
-    const u32 id = GICC_IAR & 0x3FFu; /* ACK the interrupt and get ID */
+    const u32 id = GICC_IAR & 0x3FFu;
 
     if (id == TIMER_IRQ) {
-        /* handle timer interrupt: clear/re-arm timer as needed */
-        /* for oneshot re-arm: write_cntp_tval(new_ticks); */
+        timer_set_oneshot_us(1000000u);
+    } else if (id == UART_IRQ) {
+        uart_irq_handler();
     }
 
-    /* signal end of interrupt */
     GICC_EOIR = id;
 }
 

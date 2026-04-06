@@ -10,7 +10,10 @@
 #include "utils.h"
 #include "libc/stdlib.h"
 
+#include "kernel/exceptions.h"
+#include "kernel/gic.h"
 #include "kernel/main.h"
+#include "kernel/uart.h"
 #include "kernel/fdt/fdt.h"
 #include "kernel/fdt/dtb.h"
 
@@ -38,12 +41,25 @@ void kmain(void *dtb) {
         goto halt;
     }
     info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
-    dtb_dump(&tree);
 
     // init full page allocator + kernel heap
     u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
     mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
     early_malloc_reset();
+
+    // init UART with RX interrupts
+    struct pl011 uart;
+    pl011_setup(&uart, 24000000u);
+
+    // init GIC
+    gic_dist_init();
+    gic_cpu_init();
+    gic_enable_irq(UART_IRQ);
+    gic_enable_irq(TIMER_IRQ);
+    timer_set_oneshot_us(1000000u);
+
+    // enable IRQs globally
+    enable_interrupts();
 
     dbg("Jumping to main@0x%p", &main);
 
@@ -55,5 +71,5 @@ void kmain(void *dtb) {
 
 halt:
     warn("HALT");
-    limbo;
+    poweroff();
 }

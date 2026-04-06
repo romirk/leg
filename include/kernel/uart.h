@@ -10,8 +10,8 @@
 #define UART0_BASE      UART0_PHYSICAL
 #define UART_REG(off)   (volatile u32 *)(UART0_BASE + (off))
 
-// GIC interrupt
-#define UART_GIC   0x01
+// GIC interrupt ID: SPI 1 → GIC ID 32 + 1 = 33
+#define UART_IRQ   33
 
 // UART registers
 
@@ -57,7 +57,7 @@ struct pl011 {
 };
 
 void pl011_setup(struct pl011 *dev, u64 base_clock);
-
 void pl011_reset(const struct pl011 *dev);
+void uart_irq_handler(void);
 
 #endif // UART_H

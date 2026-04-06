@@ -9,6 +9,7 @@
 
 // Provided by the kernel (e.g. UART driver)
 void putchar(char c);
+char getchar(void);
 
 int print(const char *);
 

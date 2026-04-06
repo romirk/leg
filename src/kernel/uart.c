@@ -58,13 +58,37 @@ void pl011_reset(const struct pl011 *dev) {
         lcr |= LCR_STP2;
 
 
-    // Disable DMA by setting all bits to 0
+    // Disable DMA
     *UARTDMACR = 0x0;
-    *UARTICR = 0x000;
-    *UARTIMSC = 0x7ef;
+
+    // Clear all pending interrupts
+    *UARTICR = 0x7FF;
+
+    // Enable RX interrupt only
+    *UARTIMSC = MSC_RXIM;
+
+    // Enable FIFOs + line control
+    lcr |= LCR_FEN;
+    *UARTLCR_H = lcr;
 
     // Finally enable UART
     *UARTCR = CR_TXEN | CR_RXEN | CR_UARTEN;
 }
 
 void putchar(const char c) { *UARTDR = c; }
+
+char getchar(void) {
+    // wait for data available (RXFE = bit 4 in FR: 1 = FIFO empty)
+    while (*UARTFR & (1 << 4));
+    return (char)(*UARTDR & 0xFF);
+}
+
+void uart_irq_handler(void) {
+    // read all available characters
+    while (!(*UARTFR & (1 << 4))) {
+        char c = (char)(*UARTDR & 0xFF);
+        putchar(c); // echo
+    }
+    // clear RX interrupt
+    *UARTICR = MSC_RXIM;
+}
