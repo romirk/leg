@@ -31,8 +31,8 @@ static const char *indent(const u8 depth) {
 }
 #endif
 
-Result parse_fdt() {
-    const auto header = (struct fdt_header *) FDT_ADDR;
+Result parse_fdt(void *dtb) {
+    const auto header = (struct fdt_header *) dtb;
     fdt_endianness_swap(header);
 
     if (header->magic != FDT_MAGIC) {

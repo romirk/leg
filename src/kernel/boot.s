@@ -58,7 +58,13 @@ vtable:
 
 .section .startup, "ax", %progbits
 handle_reset:
-    // init stacks
+    // save DTB pointer (r2 from bootloader/firmware)
+    mov r4, r2
+
+    // temporary SVC stack: 64KB past DTB (in RAM, before we know its size)
+    add sp, r2, #0x10000
+
+    // init exception mode stacks (virtual addresses, used after MMU)
     cps #0b10001            // FIQ mode
     ldr sp, = STACK_BOTTOM - 0x0000
     cps #0b10010            // IRQ mode
@@ -67,8 +73,7 @@ handle_reset:
     ldr sp, = STACK_BOTTOM - 0x0800
     cps #0b11011            // Undefined mode
     ldr sp, = STACK_BOTTOM - 0x0c00
-    cps #0b10011            // Supervisor (kernel) mode
-    ldr sp, = 0x40100000 - 0x1000
+    cps #0b10011            // back to Supervisor mode
 
     // from arm docs
     // Enable access to CP10 and CP11 and clear the ASEDIS bit in the CPACR
@@ -80,4 +85,6 @@ handle_reset:
     mov  r1, #0x40000000
     vmsr FPEXC, r1
 
+    // pass DTB pointer as first argument
+    mov r0, r4
     b kboot

@@ -15,6 +15,6 @@ struct fdt_parse_result {
     u32 size;
 };
 
-Result parse_fdt(void);
+Result parse_fdt(void *dtb);
 
 #endif //FDT_PARSER_H

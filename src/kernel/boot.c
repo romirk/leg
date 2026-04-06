@@ -6,7 +6,7 @@
 
 [[gnu::section(".startup.boot")]]
 [[noreturn]]
-void kboot() {
+void kboot(void *dtb) {
     // Init MMU
     init_mmu();
 
@@ -27,9 +27,9 @@ void kboot() {
     // remove flash from translation
     kernel_translation_table[0x000].raw = 0x00000000;
 
-    // jump
-    asm ("ldr pc, =kmain" ::: "pc");
+    // pass DTB pointer to kmain in r0
+    register void *r0 asm("r0") = dtb;
+    asm volatile ("ldr pc, =kmain" :: "r"(r0) : "pc");
 
-    // prevent the compiler from believing we can return from here
     __builtin_unreachable();
 }

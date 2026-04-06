@@ -7,6 +7,6 @@
 
 typedef int (main_fn)(void);
 
-void kmain(void);
+void kmain(void *dtb);
 
 #endif // KMAIN_H
