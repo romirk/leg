@@ -5,6 +5,7 @@
 #include "kernel/main.h"
 
 #include "utils.h"
+#include "kernel/fb.h"
 #include "libc/stdio.h"
 
 // cat: read lines and echo them back
@@ -36,5 +37,6 @@ void cat(void) {
 
 [[gnu::noinline]]
 int main() {
+    fb_print("Hello, world!", 0xFFFFFFFFu, 0x00000000u);
     limbo;
 }

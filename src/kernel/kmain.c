@@ -9,7 +9,6 @@
 #include "kernel/mm.h"
 #include "utils.h"
 #include "bswap.h"
-#include "string_data.h"
 
 #include "kernel/exceptions.h"
 #include "kernel/fb.h"
@@ -57,7 +56,6 @@ void kmain(void *dtb) {
     // init framebuffer (ramfb via fw-cfg)
     fwcfg_init();
     fb_init();
-    fb_print(src_kernel_boot_s, FB_WHITE, FB_BLACK);
 
     // init GIC
     gic_dist_init();
