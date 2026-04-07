@@ -31,11 +31,11 @@ static u32 read_cntfrq(void) {
 }
 
 static void write_cntp_tval(u32 val) {
-    asm volatile("mcr p15, 0, %0, c14, c2, 1" :: "r"(val));
+    asm volatile("mcr p15, 0, %0, c14, c2, 0" :: "r"(val));
 }
 
 static void write_cntp_ctl(u32 val) {
-    asm volatile("mcr p15, 0, %0, c14, c2, 0" :: "r"(val));
+    asm volatile("mcr p15, 0, %0, c14, c2, 1" :: "r"(val));
 }
 
 /* --- Timer setup: set timeout in microseconds --- */
@@ -49,7 +49,8 @@ void timer_set_oneshot_us(u32 usec) {
 }
 
 void timer_disable(void) {
-    write_cntp_ctl(0u);
+    // IMASK (bit 1) suppresses interrupt output while ISTATUS (bit 2, read-only) stays set
+    write_cntp_ctl(0x2u);
 }
 
 // /* --- Example usage in main --- */

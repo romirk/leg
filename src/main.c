@@ -8,6 +8,7 @@
 #include "kernel/fb.h"
 #include "kernel/rtc.h"
 #include "kernel/rng.h"
+#include "kernel/logs.h"
 #include "libc/stdio.h"
 
 static char rand_char(void) {
