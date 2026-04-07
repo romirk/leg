@@ -55,7 +55,7 @@ void kmain(void *dtb) {
 
     enable_interrupts();
 
-    struct process *p = process_create((proc_entry_t) main);
+    struct process *p = process_create(main);
     if (!p) {
         err("failed to create main process");
         goto halt;

@@ -105,7 +105,7 @@ typedef struct {
 static phys_mm_t g_pmm;
 
 static uint32_t pa_to_idx(uintptr_t pa) {
-    return pa - g_pmm.ram_base >> PAGE_SHIFT;
+    return (pa - g_pmm.ram_base) >> PAGE_SHIFT;
 }
 
 static uintptr_t idx_to_pa(uint32_t idx) {

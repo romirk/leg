@@ -65,6 +65,7 @@ void matrix(void) {
     }
 
     loop {
+        // ReSharper disable once CppDFAEndlessLoop
         for (u32 c = 0; c < MATRIX_COLS; c++) {
             if (!drops[c].active) {
                 if ((rand32() % 40) == 0) init_drop(c);

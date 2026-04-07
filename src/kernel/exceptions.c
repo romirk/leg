@@ -3,6 +3,7 @@
 #include "kernel/cpu.h"
 #include "kernel/gic.h"
 #include "kernel/logs.h"
+#include "kernel/process.h"
 #include "kernel/rtc.h"
 #include "kernel/uart.h"
 #include "types.h"
@@ -38,13 +39,14 @@ void handle_fiq(void) {
 }
 
 [[gnu::interrupt("SWI")]]
-void handle_svc(int svc_num) {
+void handle_svc(int r0) {
     u32 svc_instruction;
+    asm volatile("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
+    u32 svc_num = svc_instruction & 0xFFFFFF;
 
-    asm volatile("ldr %0, [lr, #-4]"
-                 : "=r"(svc_instruction)); // volatile: keeps asm from being eliminated
+    if (svc_num == 1) process_exit(current_proc, r0); // SVC #1: exit; r0 = exit code
 
-    warn("SVC %x (%x)", svc_instruction & 0xff, svc_num);
+    warn("unhandled SVC #%d", svc_num);
 }
 
 void enable_interrupts(void) {

@@ -8,6 +8,8 @@
 
 static pid_t next_pid = 1;
 
+struct process *current_proc = nullptr;
+
 struct process *process_create(proc_entry_t entry) {
     struct process *p = kzalloc(sizeof(*p));
     if (!p) {
@@ -57,6 +59,7 @@ void process_exit(struct process *p, int code) {
 [[noreturn]]
 void process_exec(struct process *p) {
     info("process: exec pid=%d", p->pid);
+    current_proc = p;
 
     // switch to process page table — kernel VA stays mapped, so we survive this
     mmu_set_proc_table(p->pgd);

@@ -51,7 +51,7 @@ AlignTrailingComments:
   Kind:           Always
   OverEmptyLines: 0
 
-AlignAfterOpenBracket:  Align
+AlignAfterOpenBracket:  true
 AlignEscapedNewlines:   Right
 
 # ── Attributes ─────────────────────────────────────────────────────────────────

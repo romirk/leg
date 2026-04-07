@@ -23,6 +23,9 @@ struct process {
     u32                stack_phys; // physical base of stack (for cleanup)
 };
 
+// Currently executing process (set by process_exec).
+extern struct process *current_proc;
+
 // Allocate a process and map its stack at PROC_STACK_VA_MB.
 struct process *process_create(proc_entry_t entry);
 
