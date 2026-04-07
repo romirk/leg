@@ -158,6 +158,11 @@ void fb_putc(char c, u32 fg, u32 bg) {
     }
 }
 
+void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg) {
+    if (col < FB_COLS && row < FB_ROWS)
+        draw_glyph(col, row, (u8) c, fg, bg);
+}
+
 void fb_print(const char *s, u32 fg, u32 bg) {
     while (*s)
         fb_putc(*s++, fg, bg);

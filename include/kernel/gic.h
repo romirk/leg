@@ -22,8 +22,8 @@
 #define GICC_IAR    (*(volatile u32 *)(GICC_BASE + 0x0C))
 #define GICC_EOIR   (*(volatile u32 *)(GICC_BASE + 0x10))
 
-/* choose IRQ from device tree (example: 0x0A) */
-#define TIMER_IRQ   0x0Au
+/* ARM generic timer CNTP = PPI 14 = GIC IRQ 30 */
+#define TIMER_IRQ   30u
 
 /* --- GIC helpers --- */
 inline void gic_cpu_init(void) {
@@ -41,5 +41,6 @@ inline void gic_dist_init(void) {
 void gic_enable_irq(u32 irq);
 
 void timer_set_oneshot_us(u32 usec);
+void timer_disable(void);
 
 #endif //GIC_H

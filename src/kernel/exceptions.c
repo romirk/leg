@@ -7,6 +7,7 @@
 #include "kernel/cpu.h"
 #include "kernel/gic.h"
 #include "kernel/logs.h"
+#include "kernel/rtc.h"
 #include "kernel/uart.h"
 #include "types.h"
 
@@ -29,7 +30,7 @@ void handle_irq(void) {
     const u32 id = GICC_IAR & 0x3FFu;
 
     if (id == TIMER_IRQ) {
-        timer_set_oneshot_us(1000000u);
+        rtc_timer_fired();
     } else if (id == UART_IRQ) {
         uart_irq_handler();
     }

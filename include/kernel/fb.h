@@ -40,6 +40,8 @@ void fb_clear(u32 color);
 // text — uses internal cursor, scrolls
 void fb_putc(char c, u32 fg, u32 bg);
 
+void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg);
+
 void fb_print(const char *s, u32 fg, u32 bg);
 
 #endif //LEG_FB_H

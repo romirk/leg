@@ -62,7 +62,6 @@ void kmain(void *dtb) {
     gic_cpu_init();
     gic_enable_irq(UART_IRQ);
     gic_enable_irq(TIMER_IRQ);
-    timer_set_oneshot_us(1000000u);
 
     // enable IRQs globally
     enable_interrupts();

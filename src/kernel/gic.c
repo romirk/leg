@@ -44,8 +44,12 @@ void timer_set_oneshot_us(u32 usec) {
     u64 ticks = (u64) freq * usec / 1000000u;
     if (ticks == 0) ticks = 1;
     write_cntp_tval((u32) ticks);
-    /* enable the physical non-secure timer (CNTPL?) - use CNTP_CTL: bit0 = enable */
+    /* enable the physical non-secure timer - CNTP_CTL: bit0 = enable */
     write_cntp_ctl(1u);
+}
+
+void timer_disable(void) {
+    write_cntp_ctl(0u);
 }
 
 // /* --- Example usage in main --- */

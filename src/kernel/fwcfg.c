@@ -25,11 +25,13 @@ static void fwcfg_read(void *buf, u32 len) {
 
 // --- DMA ---
 
-#define FWCFG_DMA_ERROR  0x01u
-#define FWCFG_DMA_READ   0x02u
-#define FWCFG_DMA_SKIP   0x04u
-#define FWCFG_DMA_SELECT 0x08u
-#define FWCFG_DMA_WRITE  0x10u
+typedef enum {
+    FWCFG_DMA_ERROR = 1 << 0,
+    FWCFG_DMA_READ = 1 << 1,
+    FWCFG_DMA_SKIP = 1 << 2,
+    FWCFG_DMA_SELECT = 1 << 3,
+    FWCFG_DMA_WRITE = 1 << 4,
+} fwcfg_dma_ctrl_t;
 
 struct [[gnu::packed, gnu::aligned(4)]] fwcfg_dma_access {
     u32 control;
