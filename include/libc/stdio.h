@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 03/06/2025.
-//
-
 #ifndef STDIO_H
 #define STDIO_H
 
@@ -22,4 +18,4 @@ void pprintf(const char *, ...);
 
 void hexdump(const void *, u32);
 
-#endif //STDIO_H
+#endif // STDIO_H

@@ -1,6 +1,4 @@
-//
 // process.c — process creation and execution
-//
 
 #include "kernel/process.h"
 #include "kernel/mmu.h"
@@ -25,7 +23,6 @@ struct process *process_create(proc_entry_t entry) {
         return nullptr;
     }
 
-    // allocate 1MB of physical pages for the stack
     p->stack_phys = (u32) mm_page_alloc_n(PROC_STACK_PAGES);
     if (!p->stack_phys) {
         err("process: OOM for stack");
@@ -44,34 +41,32 @@ struct process *process_create(proc_entry_t entry) {
     p->sp = PROC_STACK_TOP - 16; // 16-byte aligned, safety gap from top
     p->entry = entry;
 
-    info("process: pid=%d entry=0x%p stack phys=0x%p va=0x%p",
-         p->pid, (u32) p->entry, p->stack_phys, PROC_STACK_VA_MB << 20);
+    info("process: pid=%d entry=0x%p stack phys=0x%p va=0x%p", p->pid, (u32) p->entry,
+         p->stack_phys, PROC_STACK_VA_MB << 20);
 
     return p;
 }
 
-[[noreturn]] void process_exit(struct process *p, int code) {
+[[noreturn]]
+void process_exit(struct process *p, int code) {
     info("process: pid=%d exited with code %d", p->pid, code);
     // TODO: reclaim resources, wake scheduler
-    // for now just halt
     poweroff();
 }
 
-[[noreturn]] void process_exec(struct process *p) {
+[[noreturn]]
+void process_exec(struct process *p) {
     info("process: exec pid=%d", p->pid);
 
     // switch to process page table — kernel VA stays mapped, so we survive this
     mmu_set_proc_table(p->pgd);
 
-    // switch to the process stack and call entry; C handles the return path
     int code;
-    asm volatile(
-        "mov sp, %1 \n\t" // switch to process stack VA
-        "blx %2     \n\t" // call entry(); r0 = return code on return
-        "mov %0, r0" // capture return value
-        : "=r"(code)
-        : "r"(p->sp), "r"(p->entry)
-        : "r0", "r1", "r2", "r3", "lr"
-    );
+    asm volatile("mov sp, %1 \n\t" // switch to process stack VA
+                 "blx %2     \n\t" // call entry(); r0 = return code on return
+                 "mov %0, r0"      // capture return value
+                 : "=r"(code)
+                 : "r"(p->sp), "r"(p->entry)
+                 : "r0", "r1", "r2", "r3", "lr");
     process_exit(p, code);
 }

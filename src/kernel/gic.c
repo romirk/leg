@@ -1,29 +1,21 @@
-//
-// Created by Romir Kulshrestha on 05/06/2025.
-//
-
 #include "kernel/gic.h"
 
-/* enable single IRQ (any irq number) */
 void gic_enable_irq(u32 irq) {
     u32 reg = irq / 32u;
     u32 bit = 1u << (irq % 32u);
     GICD_ISENABLER(reg) = bit;
 
-    /* route this IRQ to CPU0: set ITARGETSR byte corresponding to irq */
+    // route to CPU0
     u32 idx = irq / 4u;
-    /* set each byte; keep it simple and target CPU0 (0x01) */
     u32 shift = (irq % 4u) * 8u;
     u32 cur = GICD_ITARGETSR(idx);
     cur &= ~(0xFFu << shift);
     cur |= (0x01u << shift);
     GICD_ITARGETSR(idx) = cur;
 
-    /* optional: set priority (lower = higher priority) */
-    GICD_IPRIORITYR(irq) = 0xA0u; /* mid priority */
+    GICD_IPRIORITYR(irq) = 0xA0u;
 }
 
-/* --- ARM Generic Timer sysreg helpers (ARMv7 generic timer) --- */
 static u32 read_cntfrq(void) {
     u32 val;
     asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
@@ -45,11 +37,11 @@ static u64 read_cntp_cval(void) {
 }
 
 static void write_cntp_cval(u64 val) {
-    asm volatile("mcrr p15, 2, %Q0, %R0, c14" :: "r"(val));
+    asm volatile("mcrr p15, 2, %Q0, %R0, c14" ::"r"(val));
 }
 
 static void write_cntp_ctl(u32 val) {
-    asm volatile("mcr p15, 0, %0, c14, c2, 1" :: "r"(val));
+    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(val));
 }
 
 static u32 us_to_ticks(u32 usec) {
@@ -59,14 +51,12 @@ static u32 us_to_ticks(u32 usec) {
     return freq_khz * (ms ? ms : 1u);
 }
 
-/* --- one-shot: set CVAL = now + ticks, enable --- */
 void timer_set_oneshot_us(u32 usec) {
     write_cntp_cval(read_cntpct() + us_to_ticks(usec));
     write_cntp_ctl(1u);
 }
 
-/* --- advance CVAL forward by ticks without touching CTL ---
- * used by periodic tick to reschedule without disable/re-enable */
+// advance CVAL without touching CTL — no jitter from disable/re-enable
 void timer_advance_cval(u32 usec) {
     write_cntp_cval(read_cntp_cval() + us_to_ticks(usec));
 }

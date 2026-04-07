@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 02/06/2025.
-//
-
 #include "libc/stdlib.h"
 
 #include "libc/math.h"
@@ -19,7 +15,7 @@ char *utoa(u32 value, char *buffer, const u8 radix) {
     }
 
     const auto digit_count = log(value, radix);
-    auto i = 0u;
+    auto       i = 0u;
     do {
         const u8 digit = value % radix;
         buffer[digit_count - i++] = get_symbol(digit);

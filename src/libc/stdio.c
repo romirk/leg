@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 03/06/2025.
-//
-
 #include "libc/stdio.h"
 
 #include <stdarg.h>
@@ -51,7 +47,7 @@ void printf(const char *fmt, ...) {
     va_start(args);
 
     char c;
-    int n = 0;
+    int  n = 0;
     while ((c = *fmt++)) {
         if (c != '%') {
             putchar(c);
@@ -112,7 +108,7 @@ void pprintf(const char *fmt, ...) {
     va_start(args);
 
     char c;
-    int n = 0;
+    int  n = 0;
     while ((c = *fmt++)) {
         if (c != '%') {
             putchar(c);
@@ -248,7 +244,6 @@ static void hexdump_buffer(const void *ptr, const u32 len) {
         const u8 b2 = (data & 0x0000FF00) >> 8u;
         const u8 b3 = (data & 0x00FF0000) >> 16;
         const u8 b4 = (data & 0xFF000000) >> 24;
-
 
         buffer[start] = is_printable(b1) ? b1 : '.';
         buffer[start + 1] = is_printable(b2) ? b2 : '.';

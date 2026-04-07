@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 01/06/2025.
-//
-
 #ifndef BUILTINS_H
 #define BUILTINS_H
 

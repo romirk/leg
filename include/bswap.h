@@ -1,13 +1,11 @@
-//
 // bswap.h — byte-swap and big-endian read utilities
-//
 
 #ifndef LEG_BSWAP_H
 #define LEG_BSWAP_H
 
 #include "types.h"
 
-// --- in-register byte swap (compiler emits `rev`/`rev16`) ---
+// in-register byte swap (compiler emits `rev`/`rev16`)
 
 [[gnu::const]]
 inline u16 bswap16(const u16 x) {
@@ -32,14 +30,11 @@ inline u64 bswap64(u64 x) {
     return hi | lo;
 }
 
-// --- big-endian reads from memory (safe on any alignment for ARMv7) ---
+// big-endian reads from memory (safe on any alignment for ARMv7)
 
 static u32 be32_read(const void *p) {
     const u8 *b = p;
-    return (u32) b[0] << 24
-           | (u32) b[1] << 16
-           | (u32) b[2] << 8
-           | (u32) b[3] << 0;
+    return (u32) b[0] << 24 | (u32) b[1] << 16 | (u32) b[2] << 8 | (u32) b[3] << 0;
 }
 
 static u64 be64_read(const void *p) {
@@ -48,4 +43,4 @@ static u64 be64_read(const void *p) {
     return hi | lo;
 }
 
-#endif //LEG_BSWAP_H
+#endif // LEG_BSWAP_H

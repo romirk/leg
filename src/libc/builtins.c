@@ -1,14 +1,9 @@
-//
-// Created by Romir Kulshrestha on 01/06/2025.
-//
-
 #include "libc/builtins.h"
 #include "types.h"
 
 void *memcpy(void *dst, const void *src, size_t len) {
-    if (dst == src)
-        return nullptr;
-    u8 *dp8 = dst;
+    if (dst == src) return nullptr;
+    u8       *dp8 = dst;
     const u8 *sp8 = (void *) src;
     while (len--)
         *dp8++ = *sp8++;
@@ -17,9 +12,8 @@ void *memcpy(void *dst, const void *src, size_t len) {
 }
 
 static void *revcpy(void *dst, const void *src, size_t len) {
-    if (dst == src)
-        return nullptr;
-    u8 *dp8 = dst + len - 1;
+    if (dst == src) return nullptr;
+    u8       *dp8 = dst + len - 1;
     const u8 *sp8 = src + len - 1;
     while (len--)
         *dp8-- = *sp8--;
@@ -28,10 +22,8 @@ static void *revcpy(void *dst, const void *src, size_t len) {
 }
 
 void *memmove(void *dst, const void *src, const size_t len) {
-    if (dst < src)
-        return memcpy(dst, src, len);
-    if (dst > src)
-        return revcpy(dst, src, len);
+    if (dst < src) return memcpy(dst, src, len);
+    if (dst > src) return revcpy(dst, src, len);
     return dst;
 }
 

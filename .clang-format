@@ -1,0 +1,68 @@
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+
+# ── Column and indent ──────────────────────────────────────────────────────────
+ColumnLimit:              100
+IndentWidth:              4
+TabWidth:                 4
+UseTab:                   Never
+ContinuationIndentWidth:  4
+
+# ── Braces ─────────────────────────────────────────────────────────────────────
+BreakBeforeBraces:  Attach
+
+# ── Pointers / references ──────────────────────────────────────────────────────
+PointerAlignment:    Right
+ReferenceAlignment:  Right
+DerivePointerAlignment: false
+
+# ── Spacing ────────────────────────────────────────────────────────────────────
+SpaceAfterCStyleCast:           true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens:              ControlStatements
+SpacesInParentheses:            false
+SpacesInSquareBrackets:         false
+
+# ── Short constructs ───────────────────────────────────────────────────────────
+AllowShortFunctionsOnASingleLine:    None
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine:        false
+AllowShortBlocksOnASingleLine:       Empty
+
+# ── Vertical alignment ─────────────────────────────────────────────────────────
+# Aligns consecutive macro definitions, variable declarations, and trailing
+# comments into neat columns within each uninterrupted block.
+
+AlignConsecutiveMacros:
+  Enabled:          true
+  AcrossEmptyLines: false
+  AcrossComments:   false
+
+AlignConsecutiveDeclarations:
+  Enabled:          true
+  AcrossEmptyLines: false
+  AcrossComments:   false
+
+AlignConsecutiveAssignments:
+  Enabled:          false   # too noisy in function bodies
+
+AlignTrailingComments:
+  Kind:           Always
+  OverEmptyLines: 0
+
+AlignAfterOpenBracket:  Align
+AlignEscapedNewlines:   Right
+
+# ── Attributes ─────────────────────────────────────────────────────────────────
+# Keep [[gnu::section(...)]], [[noreturn]], etc. on their own line.
+BreakAfterAttributes: Always
+
+# ── Includes ───────────────────────────────────────────────────────────────────
+# Include order matters for bare-metal cross-compilation — never reorder.
+SortIncludes:    Never
+IncludeBlocks:   Preserve
+
+# ── Misc ───────────────────────────────────────────────────────────────────────
+IndentCaseLabels:      true
+Cpp11BracedListStyle:  true

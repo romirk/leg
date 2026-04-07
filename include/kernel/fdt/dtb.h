@@ -7,47 +7,37 @@
 #include "types.h"
 #include "bswap.h"
 
-// ---------------------------------------------------------------------------
 // Allocator interface
-// ---------------------------------------------------------------------------
 typedef void *(*dtb_alloc_fn)(u32 size);
 
-// ---------------------------------------------------------------------------
 // Limits
-// ---------------------------------------------------------------------------
 #ifndef DTB_MAX_NODES
-#  define DTB_MAX_NODES     256
+#define DTB_MAX_NODES 256
 #endif
 #ifndef DTB_MAX_PROPS
-#  define DTB_MAX_PROPS     1024
+#define DTB_MAX_PROPS 1024
 #endif
 
-// ---------------------------------------------------------------------------
 // Property value types (heuristically decoded or explicit)
-// ---------------------------------------------------------------------------
 typedef enum : u8 {
-    DTB_VAL_EMPTY = 0, // no data
-    DTB_VAL_U32 = 1, // single big-endian u32
-    DTB_VAL_U64 = 2, // two big-endian u32s → u64
-    DTB_VAL_STRING = 3, // null-terminated string
+    DTB_VAL_EMPTY = 0,   // no data
+    DTB_VAL_U32 = 1,     // single big-endian u32
+    DTB_VAL_U64 = 2,     // two big-endian u32s → u64
+    DTB_VAL_STRING = 3,  // null-terminated string
     DTB_VAL_STRINGS = 4, // stringlist (multiple NUL-terminated)
-    DTB_VAL_BYTES = 5, // raw byte array
-    DTB_VAL_CELLS = 6, // array of big-endian u32 cells
+    DTB_VAL_BYTES = 5,   // raw byte array
+    DTB_VAL_CELLS = 6,   // array of big-endian u32 cells
 } dtb_val_type_t;
 
-// ---------------------------------------------------------------------------
 // A parsed property
-// ---------------------------------------------------------------------------
 typedef struct dtb_prop {
-    const char *name; // pointer into string block
-    const u8 *data; // pointer into raw FDT blob
-    u32 len; // byte length of data
+    const char    *name; // pointer into string block
+    const u8      *data; // pointer into raw FDT blob
+    u32            len;  // byte length of data
     dtb_val_type_t type; // decoded type hint
 } dtb_prop_t;
 
-// ---------------------------------------------------------------------------
 // A parsed node
-// ---------------------------------------------------------------------------
 typedef struct dtb_node dtb_node_t;
 
 struct dtb_node {
@@ -56,16 +46,14 @@ struct dtb_node {
     dtb_node_t *children; // linked list
     dtb_node_t *next_sibling;
     dtb_prop_t *props; // array
-    u32 prop_count;
-    u32 phandle; // 0 = none
+    u32         prop_count;
+    u32         phandle; // 0 = none
     // #address-cells / #size-cells inherited or local
     u32 address_cells;
     u32 size_cells;
 };
 
-// ---------------------------------------------------------------------------
 // Top-level parsed tree
-// ---------------------------------------------------------------------------
 typedef struct {
     dtb_node_t *root;
 
@@ -75,37 +63,30 @@ typedef struct {
         u64 size;
     } memory[8];
 
-    u32 memory_count;
-    u32 boot_cpuid;
+    u32         memory_count;
+    u32         boot_cpuid;
     const char *compatible; // root compatible string (first entry)
 } dtb_tree_t;
 
-// ---------------------------------------------------------------------------
 // Error codes
-// ---------------------------------------------------------------------------
 typedef enum : int {
     DTB_OK = 0,
-    DTB_ERR_NULL = -1, // null pointer
-    DTB_ERR_MAGIC = -2, // bad FDT magic
-    DTB_ERR_VERSION = -3, // unsupported FDT version
+    DTB_ERR_NULL = -1,      // null pointer
+    DTB_ERR_MAGIC = -2,     // bad FDT magic
+    DTB_ERR_VERSION = -3,   // unsupported FDT version
     DTB_ERR_TRUNCATED = -4, // blob smaller than reported
-    DTB_ERR_NOMEM = -5, // allocator returned NULL
-    DTB_ERR_OVERFLOW = -6, // exceeded DTB_MAX_* limit
-    DTB_ERR_CORRUPT = -7, // structural inconsistency
+    DTB_ERR_NOMEM = -5,     // allocator returned NULL
+    DTB_ERR_OVERFLOW = -6,  // exceeded DTB_MAX_* limit
+    DTB_ERR_CORRUPT = -7,   // structural inconsistency
 } dtb_err_t;
 
-// ---------------------------------------------------------------------------
 // API
-// ---------------------------------------------------------------------------
 
 // Parse a raw FDT blob.  `blob` must remain valid for the lifetime of `tree`.
 // All allocations go through `alloc` (e.g. early_malloc).
-dtb_err_t dtb_parse(const void *blob, u32 blob_len,
-                    dtb_tree_t *tree, dtb_alloc_fn alloc);
+dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_fn alloc);
 
-// ---------------------------------------------------------------------------
 // Query helpers
-// ---------------------------------------------------------------------------
 
 // Find a node by path, e.g. "/cpus/cpu@0"
 dtb_node_t *dtb_find_node(const dtb_tree_t *tree, const char *path);
@@ -128,8 +109,7 @@ bool dtb_prop_string(const dtb_prop_t *prop, const char **out);
 
 // Read a reg entry: (base, size) pair from a node's "reg" property
 // `index` selects which pair.  Returns false if out of range.
-bool dtb_reg_entry(const dtb_node_t *node, u32 index,
-                   u64 *base, u64 *size);
+bool dtb_reg_entry(const dtb_node_t *node, u32 index, u64 *base, u64 *size);
 
 // Iterate children: returns first child on NULL, next sibling otherwise
 dtb_node_t *dtb_child_first(const dtb_node_t *node);

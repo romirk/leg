@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 02/06/2025.
-//
-
 #ifndef STDLIB_H
 #define STDLIB_H
 #include "types.h"
@@ -37,4 +33,4 @@ char *hex32le(u32 value, char str[9]);
 
 char *hex32be(u32 value, char str[9]);
 
-#endif //STDLIB_H
+#endif // STDLIB_H

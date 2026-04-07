@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 01/06/2025.
-//
-
 #include "kernel/kmain.h"
 
 #include "kernel/bump.h"
@@ -22,16 +18,13 @@
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 
-[[noreturn]]
-[[gnu::used]]
+[[noreturn]] [[gnu::used]]
 void kmain(void *dtb) {
-    // set up bump allocator after DTB blob
-    auto header = (struct fdt_header *) dtb;
-    u32 dtb_size = bswap32(header->totalsize);
+    auto  header = (struct fdt_header *) dtb;
+    u32   dtb_size = bswap32(header->totalsize);
     void *heap_base = align((u8 *) dtb + dtb_size, 16);
     early_malloc_init(heap_base, EARLY_HEAP_SIZE);
 
-    // parse full device tree
     dtb_tree_t tree;
     const auto dtb_err = dtb_parse(dtb, dtb_size, &tree, early_malloc);
     if (dtb_err != DTB_OK) {
@@ -45,36 +38,29 @@ void kmain(void *dtb) {
     }
     info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
 
-    // init full page allocator + kernel heap
     const u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
     mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
     early_malloc_reset();
 
-    // init UART with RX interrupts
     struct pl011 uart;
     pl011_setup(&uart, 24000000u);
 
-    // init framebuffer (ramfb via fw-cfg)
     fwcfg_init();
     fb_init();
 
-    // init GIC
     gic_dist_init();
     gic_cpu_init();
     gic_enable_irq(UART_IRQ);
     gic_enable_irq(TIMER_IRQ);
 
-    // enable IRQs globally
     enable_interrupts();
-
-    dbg("Jumping to main@0x%p", &main);
 
     struct process *p = process_create((proc_entry_t) main);
     if (!p) {
         err("failed to create main process");
         goto halt;
     }
-    process_exec(p); // never returns
+    process_exec(p);
 
 halt:
     warn("HALT");

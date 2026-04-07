@@ -1,13 +1,11 @@
-//
-// Created by Romir Kulshrestha on 17/08/2025.
-//
+// rtc.h — ARM generic timer utilities (CNTPCT-based ticks, delays, periodic callbacks)
 
 #ifndef LEG_RTC_H
 #define LEG_RTC_H
 
 #include "types.h"
 
-#define RTC_BASE    0x09010000
+#define RTC_BASE 0x09010000
 
 u64 rtc_ticks(void);
 
@@ -21,4 +19,4 @@ void timer_clear_tick(void);
 // called from IRQ handler when timer fires
 void rtc_timer_fired(void);
 
-#endif //LEG_RTC_H
+#endif // LEG_RTC_H

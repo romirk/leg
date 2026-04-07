@@ -1,6 +1,4 @@
-//
-// rng.c — xorshift32 PRNG + urandom
-//
+// rng.c — xorshift32 PRNG
 
 #include "kernel/rng.h"
 

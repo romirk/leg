@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 20/08/2025.
-//
-
 #include "kernel/main.h"
 
 #include "utils.h"
@@ -19,27 +15,24 @@ static char rand_char(void) {
     return '!' + (r - 36);
 }
 
-// ---------------------------------------------------------------------------
-// Matrix digital rain
-// ---------------------------------------------------------------------------
-#define MATRIX_COLS     FB_COLS
-#define MATRIX_ROWS     FB_ROWS
-#define TRAIL_LEN       16
-#define BRIGHT_GREEN    0x00CCFFCCu
-#define MED_GREEN       0x0000CC00u
-#define DIM_GREEN       0x00006600u
-#define FAINT_GREEN     0x00003300u
+#define MATRIX_COLS  FB_COLS
+#define MATRIX_ROWS  FB_ROWS
+#define TRAIL_LEN    16
+#define BRIGHT_GREEN 0x00CCFFCCu
+#define MED_GREEN    0x0000CC00u
+#define DIM_GREEN    0x00006600u
+#define FAINT_GREEN  0x00003300u
 
 struct drop {
-    u32 y; // current head row
-    u32 speed; // frames between advances (1 = fastest)
-    u32 tick; // frame counter
-    u32 len; // trail length
+    u32  y;     // current head row
+    u32  speed; // frames between advances
+    u32  tick;  // frame counter
+    u32  len;   // trail length
     bool active;
 };
 
 static struct drop drops[MATRIX_COLS];
-static char grid[MATRIX_COLS][MATRIX_ROWS];
+static char        grid[MATRIX_COLS][MATRIX_ROWS];
 
 static u32 fade_color(u32 dist) {
     if (dist == 0) return BRIGHT_GREEN;
@@ -72,35 +65,30 @@ void matrix(void) {
     }
 
     loop {
-        // ReSharper disable once CppDFAEndlessLoop
         for (u32 c = 0; c < MATRIX_COLS; c++) {
             if (!drops[c].active) {
-                // random chance to spawn
-                if ((rand32() % 40) == 0)
-                    init_drop(c);
+                if ((rand32() % 40) == 0) init_drop(c);
                 continue;
             }
 
             drops[c].tick++;
-            if (drops[c].tick < drops[c].speed)
-                continue;
+            if (drops[c].tick < drops[c].speed) continue;
             drops[c].tick = 0;
 
             // advance head
             drops[c].y++;
             u32 head = drops[c].y;
 
-            // deactivate when trail fully off-screen
+            // deactivate once the trail has scrolled fully off-screen
             if (head > MATRIX_ROWS + drops[c].len) {
                 drops[c].active = false;
                 continue;
             }
 
-            // mutate a random character in the trail
+            // mutate a random character somewhere in the trail
             if (head >= 2 && head <= MATRIX_ROWS) {
                 u32 mr = head - 2 + rand32() % 3;
-                if (mr < MATRIX_ROWS)
-                    grid[c][mr] = rand_char();
+                if (mr < MATRIX_ROWS) grid[c][mr] = rand_char();
             }
 
             // draw new char at head
@@ -118,7 +106,7 @@ void matrix(void) {
                 fb_putc_at(c, r, grid[c][r], color, FB_BLACK);
             }
 
-            // erase tail
+            // erase the tail cell
             u32 erase = (head > drops[c].len + 4) ? head - drops[c].len - 4 : 0;
             if (erase < MATRIX_ROWS && head > drops[c].len + 4)
                 fb_putc_at(c, erase, ' ', FB_BLACK, FB_BLACK);

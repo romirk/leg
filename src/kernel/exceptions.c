@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 04/06/2025.
-//
-
 #include "kernel/exceptions.h"
 
 #include "kernel/cpu.h"
@@ -20,9 +16,7 @@ void handle_boot_exception(void) {
 
 [[gnu::interrupt("ABORT")]]
 void handle_data_abort(void) {
-    // We got a page fault...
     *UARTDR = 'A';
-    // We handled the page fault
 }
 
 [[gnu::interrupt("IRQ")]]
@@ -47,8 +41,8 @@ void handle_fiq(void) {
 void handle_svc(int svc_num) {
     u32 svc_instruction;
 
-    // NOTE: `VOLATILE` PREVENTS THIS INSTRUCTION FROM BEING RENDERED USELESS
-    asm volatile ("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
+    asm volatile("ldr %0, [lr, #-4]"
+                 : "=r"(svc_instruction)); // volatile: keeps asm from being eliminated
 
     warn("SVC %x (%x)", svc_instruction & 0xff, svc_num);
 }

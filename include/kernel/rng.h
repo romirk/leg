@@ -1,6 +1,4 @@
-//
 // rng.h — pseudo-random number generation
-//
 
 #ifndef LEG_RNG_H
 #define LEG_RNG_H
@@ -19,4 +17,4 @@ u32 rand_below(u32 bound);
 // fill buf with n pseudo-random bytes
 void urandom(void *buf, u32 n);
 
-#endif //LEG_RNG_H
+#endif // LEG_RNG_H

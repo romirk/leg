@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 04/06/2025.
-//
-
 #include "utils.h"
 
 #include "kernel/linker.h"
@@ -13,8 +9,8 @@ void panic(char *msg) {
     err("PANIC: %s", msg);
 
     err("debug info:\nstack: *");
-    void *p = nullptr;
-    void *sp = &p;
+    void      *p = nullptr;
+    void      *sp = &p;
     const auto stack_height = (void *) STACK_BOTTOM - sp;
 
     printf("%p\n", sp);

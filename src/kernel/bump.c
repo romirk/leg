@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 02/03/2026.
-//
-
 #include "kernel/bump.h"
 
 static u8 *early_heap_base;

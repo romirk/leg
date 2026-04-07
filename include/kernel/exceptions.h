@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 04/06/2025.
-//
-
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
@@ -19,4 +15,4 @@ void enable_interrupts(void);
 
 void disable_interrupts(void);
 
-#endif //EXCEPTIONS_H
+#endif // EXCEPTIONS_H

@@ -1,7 +1,3 @@
-//
-// Created by Romir Kulshrestha on 01/06/2025.
-//
-
 #ifndef LINKER_H
 #define LINKER_H
 

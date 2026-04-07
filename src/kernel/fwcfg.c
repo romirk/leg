@@ -1,6 +1,4 @@
-//
 // fw-cfg — QEMU firmware configuration interface (MMIO)
-//
 
 #include "kernel/fwcfg.h"
 #include "kernel/mmu.h"
@@ -8,8 +6,6 @@
 #include "libc/string.h"
 #include "bswap.h"
 #include "utils.h"
-
-// --- low-level register access ---
 
 static void fwcfg_select(u16 sel) {
     // QEMU applies DEVICE_BIG_ENDIAN (bswap on LE guests),
@@ -23,20 +19,20 @@ static void fwcfg_read(void *buf, u32 len) {
         p[i] = FWCFG_DATA;
 }
 
-// --- DMA ---
-
+// control flags written to fwcfg_dma_access.control (big-endian to device)
 typedef enum {
-    FWCFG_DMA_ERROR = 1 << 0,
+    FWCFG_DMA_ERROR = 1 << 0, // set by device on error
     FWCFG_DMA_READ = 1 << 1,
     FWCFG_DMA_SKIP = 1 << 2,
-    FWCFG_DMA_SELECT = 1 << 3,
+    FWCFG_DMA_SELECT = 1 << 3, // select a file by embedding selector in bits [31:16]
     FWCFG_DMA_WRITE = 1 << 4,
 } fwcfg_dma_ctrl_t;
 
+// DMA command descriptor written to FWCFG_DMA_LO; all fields big-endian
 struct [[gnu::packed, gnu::aligned(4)]] fwcfg_dma_access {
-    u32 control;
-    u32 length;
-    u64 address;
+    u32 control; // fwcfg_dma_ctrl_t flags | (selector << 16)
+    u32 length;  // byte count to transfer
+    u64 address; // physical address of the data buffer
 };
 
 static volatile struct fwcfg_dma_access dma_cmd;
@@ -58,8 +54,6 @@ void fwcfg_dma_write(u16 selector, const void *buf, u32 len) {
         asm volatile("dmb");
 }
 
-// --- init + directory ---
-
 void fwcfg_init(void) {
     fwcfg_select(FWCFG_SIG_SEL);
     char sig[4];
@@ -76,16 +70,15 @@ i32 fwcfg_find(const char *name) {
     u32 count = bswap32(count_be);
 
     for (u32 i = 0; i < count; i++) {
-        u32 size_be;
-        u16 sel_be, reserved;
+        u32  size_be;
+        u16  sel_be, reserved;
         char fname[56];
         fwcfg_read(&size_be, 4);
         fwcfg_read(&sel_be, 2);
         fwcfg_read(&reserved, 2);
         fwcfg_read(fname, 56);
 
-        if (strcmp(fname, name) == 0)
-            return bswap16(sel_be);
+        if (strcmp(fname, name) == 0) return bswap16(sel_be);
     }
     return -1;
 }

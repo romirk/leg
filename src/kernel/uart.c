@@ -1,12 +1,9 @@
-//
-// Created by Romir Kulshrestha on 01/06/2025.
-//
-
 #include "kernel/uart.h"
 #include "types.h"
 
 static void wait_tx_complete() {
-    while (*UARTFR & FR_BUSY);
+    while (*UARTFR & FR_BUSY)
+        ;
 }
 
 static void calculate_divisors(u32 *integer, u32 *fractional, const u32 base_clock,
@@ -32,8 +29,8 @@ void pl011_setup(struct pl011 *dev, const u64 base_clock) {
 
 void pl011_reset(const struct pl011 *dev) {
     const auto cr = *UARTCR;
-    auto lcr = *UARTLCR_H;
-    u32 ibrd, fbrd;
+    auto       lcr = *UARTLCR_H;
+    u32        ibrd, fbrd;
 
     // disable UART
     *UARTCR = cr & CR_UARTEN;
@@ -41,53 +38,50 @@ void pl011_reset(const struct pl011 *dev) {
     // wait for any ongoing transmissions to complete
     wait_tx_complete();
 
-    // Flush FIFOs
+    // flush FIFOs
     *UARTLCR_H = lcr & ~LCR_FEN;
 
-    // set frequency divisors to control speed
+    // set baud rate divisors
     calculate_divisors(&ibrd, &fbrd, dev->base_clock, dev->baudrate);
     *UARTIBRD = ibrd;
     *UARTFBRD = fbrd;
 
     // data frame format
     lcr = 0x0;
-    // get WLEN
     lcr |= (dev->data_bits - 1 & 0x3) << 5;
-    // Configure the number of stop bits
-    if (dev->stop_bits == 2)
-        lcr |= LCR_STP2;
+    if (dev->stop_bits == 2) lcr |= LCR_STP2;
 
-
-    // Disable DMA
+    // disable DMA
     *UARTDMACR = 0x0;
 
-    // Clear all pending interrupts
+    // clear all pending interrupts
     *UARTICR = 0x7FF;
 
-    // Enable RX interrupt only
+    // enable RX interrupt only
     *UARTIMSC = MSC_RXIM;
 
-    // Enable FIFOs + line control
+    // enable FIFOs + line control
     lcr |= LCR_FEN;
     *UARTLCR_H = lcr;
 
-    // Finally enable UART
+    // enable UART
     *UARTCR = CR_TXEN | CR_RXEN | CR_UARTEN;
 }
 
-void putchar(const char c) { *UARTDR = c; }
+void putchar(const char c) {
+    *UARTDR = c;
+}
 
 char getchar(void) {
-    // wait for data available (RXFE = bit 4 in FR: 1 = FIFO empty)
-    while (*UARTFR & (1 << 4));
+    while (*UARTFR & (1 << 4))
+        ; // RXFE: 1 = FIFO empty
     return (char) (*UARTDR & 0xFF);
 }
 
 void uart_irq_handler(void) {
-    // read all available characters
     while (!(*UARTFR & (1 << 4))) {
         char c = (char) (*UARTDR & 0xFF);
-        putchar(c); // echo
+        putchar(c);
     }
     // clear RX interrupt
     *UARTICR = MSC_RXIM;

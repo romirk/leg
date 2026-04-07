@@ -1,6 +1,4 @@
-//
-// Created by Romir Kulshrestha on 07/04/2026.
-//
+// scheduler.h — process scheduler (stub)
 
 #ifndef LEG_SCHEDULER_H
 #define LEG_SCHEDULER_H
@@ -8,7 +6,7 @@
 
 typedef u32 pid_t;
 
-typedef u32 (entry_fn)(u8 argc, const char **argv);
+typedef u32(entry_fn)(u8 argc, const char **argv);
 
 typedef enum {
     Stopped,
@@ -16,11 +14,12 @@ typedef enum {
     Blocked,
 } ProcessState;
 
+// scheduler-visible process descriptor
 struct Process {
-    pid_t pid;
-    pid_t ppid;
-    entry_fn *entry;
+    pid_t        pid;   // unique process id
+    pid_t        ppid;  // parent process id
+    entry_fn    *entry; // entry point
     ProcessState state;
 };
 
-#endif //LEG_SCHEDULER_H
+#endif // LEG_SCHEDULER_H

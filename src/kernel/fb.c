@@ -1,6 +1,4 @@
-//
 // fb.c — ramfb framebuffer driver + 8x8 text console
-//
 
 #include "kernel/fb.h"
 #include "kernel/fwcfg.h"
@@ -10,36 +8,26 @@
 #include "bswap.h"
 #include "kernel/fonts.h"
 
-// ---------------------------------------------------------------------------
-// ramfb config struct (all fields big-endian, written to fw-cfg "etc/ramfb")
-// ---------------------------------------------------------------------------
+// ramfb configuration written to fw-cfg "etc/ramfb" — all fields big-endian
 struct [[gnu::packed]] ramfb_cfg {
-    u64 addr;
-    u32 fourcc;
-    u32 flags;
+    u64 addr;   // physical address of the framebuffer
+    u32 fourcc; // pixel format (DRM_FORMAT_XRGB8888)
+    u32 flags;  // reserved, must be 0
     u32 width;
     u32 height;
-    u32 stride;
+    u32 stride; // bytes per row
 };
 
 // DRM_FORMAT_XRGB8888 = little-endian fourcc "XR24"
 #define DRM_FORMAT_XRGB8888 0x34325258u
 
-// ---------------------------------------------------------------------------
-// Framebuffer state
-// ---------------------------------------------------------------------------
 static volatile u32 *fb_base;
-static u32 fb_phys;
+static u32           fb_phys;
 
-// text console state
 static u32 cursor_col;
 static u32 cursor_row;
 
-// ---------------------------------------------------------------------------
-// Init — allocate FB memory, configure ramfb via fw-cfg
-// ---------------------------------------------------------------------------
 void fb_init(void) {
-    // allocate framebuffer pages
     u32 fb_bytes = FB_WIDTH * FB_HEIGHT * FB_BPP;
     u32 fb_pages = (fb_bytes + PAGE_SIZE - 1) / PAGE_SIZE;
     fb_phys = mm_page_alloc_n(fb_pages);
@@ -48,25 +36,21 @@ void fb_init(void) {
         return;
     }
 
-    // identity-map the sections covering the framebuffer
+    // identity-map all sections covering the framebuffer
     u32 first_section = fb_phys >> 20;
     u32 last_section = (fb_phys + fb_bytes - 1) >> 20;
     for (u32 s = first_section; s <= last_section; s++)
         mmu_map_identity(s, false);
 
     fb_base = (volatile u32 *) fb_phys;
-
-    // clear to black
     fb_clear(FB_BLACK);
 
-    // find ramfb fw-cfg file
     i32 sel = fwcfg_find("etc/ramfb");
     if (sel < 0) {
         warn("fb: etc/ramfb not found");
         return;
     }
 
-    // build config (all fields big-endian)
     static struct ramfb_cfg cfg;
     cfg.addr = bswap64(fb_phys);
     cfg.fourcc = bswap32(DRM_FORMAT_XRGB8888);
@@ -82,12 +66,8 @@ void fb_init(void) {
     info("fb: " STR(FB_WIDTH) "x" STR(FB_HEIGHT) " @ 0x%p", fb_phys);
 }
 
-// ---------------------------------------------------------------------------
-// Pixel operations
-// ---------------------------------------------------------------------------
 void fb_putpixel(u32 x, u32 y, u32 color) {
-    if (x < FB_WIDTH && y < FB_HEIGHT)
-        fb_base[y * FB_WIDTH + x] = color;
+    if (x < FB_WIDTH && y < FB_HEIGHT) fb_base[y * FB_WIDTH + x] = color;
 }
 
 void fb_fill_rect(u32 x, u32 y, u32 w, u32 h, u32 color) {
@@ -102,13 +82,10 @@ void fb_clear(u32 color) {
         fb_base[i] = color;
 }
 
-// ---------------------------------------------------------------------------
-// Text — glyph rendering + scrolling console
-// ---------------------------------------------------------------------------
 static void draw_glyph(u32 cx, u32 cy, u8 ch, u32 fg, u32 bg) {
     const u8 *glyph = &sans_data[ch * 8];
-    u32 px = cx * FONT_W;
-    u32 py = cy * FONT_H;
+    u32       px = cx * FONT_W;
+    u32       py = cy * FONT_H;
     for (u32 row = 0; row < FONT_H; row++) {
         u8 bits = glyph[row];
         for (u32 col = 0; col < FONT_W; col++) {
@@ -119,12 +96,10 @@ static void draw_glyph(u32 cx, u32 cy, u8 ch, u32 fg, u32 bg) {
 }
 
 static void scroll_up(u32 bg) {
-    // shift all rows up by one glyph row (FONT_H pixel rows)
     u32 row_pixels = FONT_H * FB_WIDTH;
     u32 total = (FB_HEIGHT - FONT_H) * FB_WIDTH;
     for (u32 i = 0; i < total; i++)
         fb_base[i] = fb_base[i + row_pixels];
-    // clear last row
     u32 start = total;
     for (u32 i = start; i < start + row_pixels; i++)
         fb_base[i] = bg;
@@ -159,8 +134,7 @@ void fb_putc(char c, u32 fg, u32 bg) {
 }
 
 void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg) {
-    if (col < FB_COLS && row < FB_ROWS)
-        draw_glyph(col, row, (u8) c, fg, bg);
+    if (col < FB_COLS && row < FB_ROWS) draw_glyph(col, row, (u8) c, fg, bg);
 }
 
 void fb_print(const char *s, u32 fg, u32 bg) {
