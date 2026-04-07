@@ -63,4 +63,3 @@ char *hex32be(const u32 value, char str[9]) {
     str[8] = '\0';
     return str;
 }
-

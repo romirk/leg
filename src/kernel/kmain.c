@@ -15,6 +15,7 @@
 #include "kernel/fwcfg.h"
 #include "kernel/gic.h"
 #include "kernel/main.h"
+#include "kernel/process.h"
 #include "kernel/uart.h"
 #include "kernel/fdt/fdt.h"
 #include "kernel/fdt/dtb.h"
@@ -68,11 +69,12 @@ void kmain(void *dtb) {
 
     dbg("Jumping to main@0x%p", &main);
 
-    // TODO give main_ptr to a scheduler
-    auto ret = main();
-    if (ret) {
-        err("Main process exited with code %d", ret);
+    struct process *p = process_create((proc_entry_t) main);
+    if (!p) {
+        err("failed to create main process");
+        goto halt;
     }
+    process_exec(p); // never returns
 
 halt:
     warn("HALT");

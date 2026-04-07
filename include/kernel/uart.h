@@ -57,7 +57,9 @@ struct pl011 {
 };
 
 void pl011_setup(struct pl011 *dev, u64 base_clock);
+
 void pl011_reset(const struct pl011 *dev);
+
 void uart_irq_handler(void);
 
 #endif // UART_H

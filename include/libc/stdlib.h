@@ -6,7 +6,7 @@
 #define STDLIB_H
 #include "types.h"
 
-extern const char * const ALPHANUM;
+extern const char *const ALPHANUM;
 
 /**
  * Convert <code>unsigned int</code> into a string

@@ -25,6 +25,13 @@ page_table peripheral_page_table;
 [[gnu::section(".tt")]]
 page_table process_page_tables[8];
 
+#define MAX_PROCS 4
+
+[[gnu::section(".tt")]]
+[[gnu::aligned(0x4000)]]
+static translation_table proc_tables[MAX_PROCS];
+static bool proc_table_used[MAX_PROCS];
+
 // offset of a kernel virtual symbol within the kernel image
 #define KRN_OFFSET(sym) ((u32)(sym) - (u32)kernel_main_beg)
 
@@ -124,6 +131,52 @@ void mmu_map_identity(u32 phys_mb, bool device) {
     asm volatile(
         "mcr p15, 0, %0, c8, c7, 0\n\t" // invalidate TLB
         "dsb\n\tisb" :: "r"(0)
+    );
+}
+
+translation_table *mmu_alloc_proc_table(void) {
+    for (u32 i = 0; i < MAX_PROCS; i++) {
+        if (!proc_table_used[i]) {
+            proc_table_used[i] = true;
+            // clone kernel mappings into process table
+            for (u32 j = 0; j < 0x1000; j++)
+                proc_tables[i][j] = kernel_translation_table[j];
+            return &proc_tables[i];
+        }
+    }
+    return nullptr;
+}
+
+void mmu_free_proc_table(translation_table *tt) {
+    for (u32 i = 0; i < MAX_PROCS; i++) {
+        if (&proc_tables[i] == tt) {
+            proc_table_used[i] = false;
+            return;
+        }
+    }
+}
+
+void mmu_map_section(translation_table *tt, u32 va_mb, u32 pa_mb, bool device) {
+    (*tt)[va_mb] = (l1_entry){
+        .section = {
+            .type = L1_SECTION,
+            .address = pa_mb,
+            .access_perms = 0b11, // RW kernel+user
+            .type_ext = device ? 0b000 : 0b001,
+            .bufferable = true,
+            .cacheable = !device,
+        }
+    };
+}
+
+void mmu_set_proc_table(translation_table *tt) {
+    u32 phys = virt_to_phys(tt);
+    asm volatile(
+        "mcr p15, 0, %0, c2, c0, 0\n\t" // TTBR0 = process table
+        "mcr p15, 0, %0, c8, c7, 0\n\t" // invalidate entire TLB
+        "dsb\n\t"
+        "isb"
+        :: "r"(phys) : "memory"
     );
 }
 

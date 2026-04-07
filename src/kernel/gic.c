@@ -30,50 +30,48 @@ static u32 read_cntfrq(void) {
     return val;
 }
 
-static void write_cntp_tval(u32 val) {
-    asm volatile("mcr p15, 0, %0, c14, c2, 0" :: "r"(val));
+// CNTPCT — free-running counter (64-bit)
+static u64 read_cntpct(void) {
+    u32 lo, hi;
+    asm volatile("mrrc p15, 0, %0, %1, c14" : "=r"(lo), "=r"(hi));
+    return (u64) hi << 32 | lo;
+}
+
+// CNTP_CVAL — absolute compare value (64-bit); fires when CNTPCT >= CVAL
+static u64 read_cntp_cval(void) {
+    u32 lo, hi;
+    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(lo), "=r"(hi));
+    return (u64) hi << 32 | lo;
+}
+
+static void write_cntp_cval(u64 val) {
+    asm volatile("mcrr p15, 2, %Q0, %R0, c14" :: "r"(val));
 }
 
 static void write_cntp_ctl(u32 val) {
     asm volatile("mcr p15, 0, %0, c14, c2, 1" :: "r"(val));
 }
 
-/* --- Timer setup: set timeout in microseconds --- */
+static u32 us_to_ticks(u32 usec) {
+    // avoid 64-bit division: (freq / 1000) * (usec / 1000), ms-precision
+    u32 freq_khz = read_cntfrq() / 1000u;
+    u32 ms = usec / 1000u;
+    return freq_khz * (ms ? ms : 1u);
+}
+
+/* --- one-shot: set CVAL = now + ticks, enable --- */
 void timer_set_oneshot_us(u32 usec) {
-    u32 freq = read_cntfrq(); /* ticks per second */
-    u64 ticks = (u64) freq * usec / 1000000u;
-    if (ticks == 0) ticks = 1;
-    write_cntp_tval((u32) ticks);
-    /* enable the physical non-secure timer - CNTP_CTL: bit0 = enable */
+    write_cntp_cval(read_cntpct() + us_to_ticks(usec));
     write_cntp_ctl(1u);
 }
 
-void timer_disable(void) {
-    // IMASK (bit 1) suppresses interrupt output while ISTATUS (bit 2, read-only) stays set
-    write_cntp_ctl(0x2u);
+/* --- advance CVAL forward by ticks without touching CTL ---
+ * used by periodic tick to reschedule without disable/re-enable */
+void timer_advance_cval(u32 usec) {
+    write_cntp_cval(read_cntp_cval() + us_to_ticks(usec));
 }
 
-// /* --- Example usage in main --- */
-// int main(void)
-// {
-//     /* initialize GIC */
-//     gic_cpu_init();
-//     gic_dist_init();
-//
-//     /* enable the timer IRQ found in device tree */
-//     gic_enable_irq(TIMER_IRQ);
-//
-//     /* program timer for 1000000 us (1s) */
-//     timer_set_oneshot_us(1000000u);
-//
-//     /* enable IRQs globally */
-//     asm volatile("cpsie i");
-//
-//     /* main loop */
-//     while (1) {
-//         /* wait for interrupts (wfi) */
-//         asm volatile("wfi");
-//     }
-//
-//     return 0;
-// }
+void timer_disable(void) {
+    // IMASK (bit 1) suppresses interrupt output while ISTATUS stays set
+    write_cntp_ctl(0x2u);
+}

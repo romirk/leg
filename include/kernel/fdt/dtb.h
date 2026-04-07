@@ -138,4 +138,3 @@ dtb_node_t *dtb_child_next(const dtb_node_t *child);
 
 // Print the entire parsed tree to UART (via printf)
 void dtb_dump(const dtb_tree_t *tree);
-

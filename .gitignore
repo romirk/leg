@@ -4,3 +4,4 @@ build/
 *.dtb
 .DS_Store
 .idea/
+*.pf

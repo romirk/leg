@@ -152,4 +152,15 @@ static u32 virt_to_phys(const void *va) {
 
 extern translation_table kernel_translation_table;
 
+// Allocate a process L1 table pre-cloned from the kernel table.
+translation_table *mmu_alloc_proc_table(void);
+
+void mmu_free_proc_table(translation_table *tt);
+
+// Map a 1MB section at va_mb into a specific L1 table (not kernel_translation_table).
+void mmu_map_section(translation_table *tt, u32 va_mb, u32 pa_mb, bool device);
+
+// Switch TTBR0 to a process table (physical address). Flushes TLB.
+void mmu_set_proc_table(translation_table *tt);
+
 #endif //MEMORY_H

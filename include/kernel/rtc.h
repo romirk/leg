@@ -10,7 +10,13 @@
 #define RTC_BASE    0x09010000
 
 u64 rtc_ticks(void);
+
 void delay_us(u32 usec);
+
+// periodic tick — fn is called every interval_us from IRQ context
+void timer_set_tick(u32 interval_us, void (*fn)(void));
+
+void timer_clear_tick(void);
 
 // called from IRQ handler when timer fires
 void rtc_timer_fired(void);

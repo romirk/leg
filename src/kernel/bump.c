@@ -14,7 +14,7 @@ void early_malloc_init(void *base, u32 size) {
     early_heap_ptr = 0;
 }
 
-void* early_malloc(u32 size) {
+void *early_malloc(u32 size) {
     u8 *current_ptr = early_heap_base + early_heap_ptr;
 
     if (current_ptr + size > early_heap_end) {
