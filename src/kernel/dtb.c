@@ -1,8 +1,8 @@
 // DTB (Flattened Device Tree) Parser
 // C23, clang/GCC extensions, no libc dependency
 
-#include "kernel/fdt/dtb.h"
-#include "kernel/fdt/fdt.h"
+#include "kernel/dtb.h"
+#include "kernel/fdt.h"
 #include "libc/builtins.h"
 #include "libc/stdio.h"
 #include "libc/string.h"

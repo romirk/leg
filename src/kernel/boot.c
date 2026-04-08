@@ -1,7 +1,7 @@
 #include "kernel/boot.h"
 
 #include "kernel/linker.h"
-#include "kernel/mmu.h"
+#include "kernel/mem/mmu.h"
 #include "types.h"
 
 [[gnu::section(".startup.boot")]] [[noreturn]]
@@ -21,7 +21,7 @@ void kboot(void *dtb) {
         *p = 0;
 
     // set kernel_phys_base now that kernel is mapped
-    kernel_phys_base = ((u32) dtb & ~0xFFFFF) + 0x200000;
+    kernel_phys_base = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
 
     // set vtable base address
     extern unsigned char vtable[];

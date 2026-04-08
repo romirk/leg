@@ -1,4 +1,4 @@
-#include "kernel/gic.h"
+#include "kernel/dev/gic.h"
 
 void gic_enable_irq(u32 irq) {
     u32 reg = irq / 32u;

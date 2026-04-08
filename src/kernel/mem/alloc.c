@@ -1,26 +1,9 @@
-// mm.c — physical page allocator + kernel heap
+// alloc.c — physical page allocator + kernel heap
 
-#include "kernel/mm.h"
+#include "kernel/mem/alloc.h"
 
 #include "utils.h"
 #include "libc/builtins.h"
-
-#define MM_ASSERT(cond, msg)                                                                       \
-    do {                                                                                           \
-        if (!(cond)) panic(msg);                                                                   \
-    } while (0)
-
-static uptr align_up(uptr x, uptr align) {
-    return (x + align - 1u) & ~(align - 1u);
-}
-
-static uptr align_down(uptr x, uptr align) {
-    return x & ~(align - 1u);
-}
-
-static u32 div_round_up(u32 a, u32 b) {
-    return (a + b - 1u) / b;
-}
 
 // bitmap: 1 bit per page, 1 = allocated/reserved, 0 = free
 typedef u32 bm_word_t;
@@ -136,19 +119,16 @@ static void reserve_range(uptr base, uptr end) {
 }
 
 void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserved_end) {
-    uptr ram_base, ram_end;
-    if (dtb_mem_size > 0) {
-        ram_base = dtb_mem_base;
-        // clamp to 32-bit PA space (ARMv7a)
-        const u64 end64 = (u64) dtb_mem_base + dtb_mem_size;
-        ram_end = (end64 > U32_MAX) ? U32_MAX & PAGE_MASK : (uptr) end64;
-    } else {
-        panic("mm_init: no RAM info from DTB");
-    }
+    ASSERT(dtb_mem_size > 0, "mm_init: no RAM info from DTB");
+
+    // clamp to 32-bit PA space (ARMv7a)
+    const u64 end64 = (u64) dtb_mem_base + dtb_mem_size;
+    uptr      ram_base = dtb_mem_base;
+    uptr      ram_end = (end64 > U32_MAX) ? U32_MAX & PAGE_MASK : (uptr) end64;
     ram_base = align_up(ram_base, PAGE_SIZE);
     ram_end = align_down(ram_end, PAGE_SIZE);
 
-    MM_ASSERT(ram_end > ram_base, "mm_init: degenerate RAM range");
+    ASSERT(ram_end > ram_base, "mm_init: degenerate RAM range");
 
     g_pmm.ram_base = ram_base;
     g_pmm.ram_end = ram_end;
@@ -161,7 +141,7 @@ void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserve
     g_pmm.bitmap_words = div_round_up(g_pmm.total_pages, BM_BITS);
     const size_t bitmap_bytes = g_pmm.bitmap_words * sizeof(bm_word_t);
 
-    MM_ASSERT(bitmap_pa + bitmap_bytes <= ram_end, "mm_init: bitmap overflows RAM");
+    ASSERT(bitmap_pa + bitmap_bytes <= ram_end, "mm_init: bitmap overflows RAM");
 
     g_pmm.bitmap = (bm_word_t *) bitmap_pa;
     memset(g_pmm.bitmap, 0, bitmap_bytes);
@@ -246,7 +226,7 @@ void mm_stats(mm_stats_t *out) {
 #define HDR_SIZE         (sizeof(kheap_hdr_t))
 
 static void kheap_init(uptr base, size_t size) {
-    MM_ASSERT(size > HDR_SIZE + KHEAP_MIN_SPLIT, "kheap: region too small");
+    ASSERT(size > HDR_SIZE + KHEAP_MIN_SPLIT, "kheap: region too small");
 
     g_kheap.base = (u8 *) base;
     g_kheap.capacity = size;
@@ -278,7 +258,7 @@ void *kmalloc(size_t size) {
     kheap_hdr_t *cur = g_kheap.free_list;
 
     while (cur) {
-        MM_ASSERT(cur->magic == KHEAP_MAGIC_FREE, "kmalloc: heap corruption (bad free-list magic)");
+        ASSERT(cur->magic == KHEAP_MAGIC_FREE, "kmalloc: heap corruption (bad free-list magic)");
 
         if (cur->size >= size) {
             if (cur->size >= size + HDR_SIZE + KHEAP_MIN_SPLIT) {
@@ -320,7 +300,7 @@ void kfree(void *ptr) {
     if (!ptr) return;
 
     kheap_hdr_t *h = hdr_of(ptr);
-    MM_ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "kfree: invalid or double-free");
+    ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "kfree: invalid or double-free");
 
     h->magic = KHEAP_MAGIC_FREE;
     g_kheap.used -= h->size;
@@ -369,7 +349,7 @@ void *krealloc(void *ptr, const size_t size) {
     }
 
     const kheap_hdr_t *h = hdr_of(ptr);
-    MM_ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "krealloc: invalid pointer");
+    ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "krealloc: invalid pointer");
 
     const size_t rounded = (size + KHEAP_ALIGN - 1u) & ~(KHEAP_ALIGN - 1u);
     if (h->size >= rounded) return ptr;

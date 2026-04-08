@@ -1,11 +1,11 @@
 #include "kernel/exceptions.h"
 
 #include "kernel/cpu.h"
-#include "kernel/gic.h"
+#include "kernel/dev/gic.h"
 #include "kernel/logs.h"
 #include "kernel/process.h"
-#include "kernel/rtc.h"
-#include "kernel/uart.h"
+#include "kernel/dev/rtc.h"
+#include "kernel/dev/uart.h"
 #include "types.h"
 
 [[gnu::section(".startup.exceptions")]]

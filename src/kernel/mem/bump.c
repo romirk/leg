@@ -1,4 +1,4 @@
-#include "kernel/bump.h"
+#include "kernel/mem/bump.h"
 
 static u8 *early_heap_base;
 static u8 *early_heap_end;

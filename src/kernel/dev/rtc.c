@@ -1,5 +1,5 @@
-#include "kernel/rtc.h"
-#include "kernel/gic.h"
+#include "kernel/dev/rtc.h"
+#include "kernel/dev/gic.h"
 
 static volatile bool timer_pending;
 

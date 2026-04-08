@@ -3,11 +3,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 #include "types.h"
-
-#define KERNEL_VA 0xC0000000
-
-// Set during early boot by kboot; physical base where kernel image lives in RAM.
-extern u32 kernel_phys_base;
+#include "kernel/mem/memory.h"
 
 // L1 entry type bits [1:0]
 typedef enum {
@@ -124,14 +120,6 @@ void init_mmu(void *dtb);
 
 // Map a 1MB physical section as identity (VA == PA). Flushes TLB.
 void mmu_map_identity(u32 phys_mb, bool device);
-
-// Convert a virtual address to physical.
-// Kernel VA (>=0xC0000000) uses kernel_phys_base offset; otherwise identity.
-static u32 virt_to_phys(const void *va) {
-    u32 v = (u32) va;
-    if (v >= KERNEL_VA) return kernel_phys_base + (v - KERNEL_VA);
-    return v; // identity-mapped
-}
 
 extern translation_table kernel_translation_table;
 

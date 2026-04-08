@@ -1,5 +1,5 @@
 #pragma once
-// mm.h — physical page allocator + kernel heap
+// alloc.h — physical page allocator + kernel heap
 
 #include "types.h"
 

@@ -1,12 +1,9 @@
-#include "kernel/mmu.h"
+#include "kernel/mem/mmu.h"
 #include "kernel/cpu.h"
 #include "kernel/linker.h"
 #include "utils.h"
 
-#define MB_SHIFT     20
-#define KPHYS_OFFSET 0x200000 // kernel placed 2MB past DTB section base
-
-u32 kernel_phys_base;
+#define MB_SHIFT 20
 
 [[gnu::section(".tt")]] [[gnu::aligned(0x4000)]]
 translation_table kernel_translation_table;

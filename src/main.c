@@ -1,11 +1,11 @@
 #include "kernel/main.h"
 
 #include "utils.h"
-#include "kernel/fb.h"
-#include "kernel/rtc.h"
-#include "kernel/rng.h"
+#include "kernel/dev/fb.h"
+#include "kernel/dev/rtc.h"
+#include "kernel/dev/rng.h"
 #include "kernel/logs.h"
-#include "kernel/gic.h"
+#include "kernel/dev/gic.h"
 #include "libc/stdio.h"
 
 static char rand_char(void) {

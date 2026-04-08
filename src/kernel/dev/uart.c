@@ -1,4 +1,4 @@
-#include "kernel/uart.h"
+#include "kernel/dev/uart.h"
 #include "types.h"
 
 static void wait_tx_complete() {

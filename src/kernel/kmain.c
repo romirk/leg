@@ -1,20 +1,20 @@
 #include "kernel/kmain.h"
 
-#include "kernel/bump.h"
+#include "kernel/mem/bump.h"
 #include "kernel/logs.h"
-#include "kernel/mm.h"
+#include "kernel/mem/alloc.h"
 #include "utils.h"
 #include "bswap.h"
 
 #include "kernel/exceptions.h"
-#include "kernel/fb.h"
-#include "kernel/fwcfg.h"
-#include "kernel/gic.h"
+#include "kernel/dev/fb.h"
+#include "kernel/dev/fwcfg.h"
+#include "kernel/dev/gic.h"
 #include "kernel/main.h"
 #include "kernel/process.h"
-#include "kernel/uart.h"
-#include "kernel/fdt/fdt.h"
-#include "kernel/fdt/dtb.h"
+#include "kernel/dev/uart.h"
+#include "kernel/fdt.h"
+#include "kernel/dtb.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 

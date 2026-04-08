@@ -1,7 +1,7 @@
 // fw-cfg — QEMU firmware configuration interface (MMIO)
 
-#include "kernel/fwcfg.h"
-#include "kernel/mmu.h"
+#include "kernel/dev/fwcfg.h"
+#include "kernel/mem/mmu.h"
 #include "kernel/logs.h"
 #include "libc/string.h"
 #include "bswap.h"

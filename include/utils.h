@@ -20,8 +20,26 @@ inline void *align(void *ptr, const u8 alignment) {
     return (void *) (-alignment & (u32) ptr + alignment - 1);
 }
 
+[[gnu::const]]
+inline uptr align_up(uptr x, uptr align) {
+    return (x + align - 1u) & ~(align - 1u);
+}
+[[gnu::const]]
+inline uptr align_down(uptr x, uptr align) {
+    return x & ~(align - 1u);
+}
+[[gnu::const]]
+inline u32 div_round_up(u32 a, u32 b) {
+    return (a + b - 1u) / b;
+}
+
 [[noreturn]]
 void panic(char *msg);
+
+#define ASSERT(cond, msg)                                                                          \
+    do {                                                                                           \
+        if (!__builtin_expect(!!(cond), 1)) panic(msg);                                            \
+    } while (0)
 
 // PSCI v0.2 via HVC (QEMU virt)
 #define PSCI_SYSTEM_OFF   0x84000008u

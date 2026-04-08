@@ -1,6 +1,6 @@
 // rng.c — xorshift32 PRNG
 
-#include "kernel/rng.h"
+#include "kernel/dev/rng.h"
 
 static u32 state = 0xDEADBEEF;
 

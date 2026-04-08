@@ -1,8 +1,8 @@
 // process.c — process creation and execution
 
 #include "kernel/process.h"
-#include "kernel/mmu.h"
-#include "kernel/mm.h"
+#include "kernel/mem/mmu.h"
+#include "kernel/mem/alloc.h"
 #include "kernel/logs.h"
 #include "utils.h"
 
