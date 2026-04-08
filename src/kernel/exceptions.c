@@ -5,6 +5,7 @@
 #include "kernel/logs.h"
 #include "kernel/process.h"
 #include "kernel/dev/rtc.h"
+#include "kernel/dev/kbd.h"
 #include "kernel/dev/uart.h"
 #include "types.h"
 
@@ -28,6 +29,8 @@ void handle_irq(void) {
         rtc_timer_fired();
     } else if (id == UART_IRQ) {
         uart_irq_handler();
+    } else if (kbd_irq && id == kbd_irq) {
+        kbd_virtio_irq_handler();
     }
 
     GICC_EOIR = id;

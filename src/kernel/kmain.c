@@ -12,6 +12,7 @@
 #include "kernel/dev/gic.h"
 #include "kernel/main.h"
 #include "kernel/process.h"
+#include "kernel/dev/kbd.h"
 #include "kernel/dev/uart.h"
 #include "kernel/fdt.h"
 #include "kernel/dtb.h"
@@ -44,6 +45,8 @@ void kmain(void *dtb) {
 
     struct pl011 uart;
     pl011_setup(&uart, 24000000u);
+    kbd_init();
+    if (kbd_irq) gic_enable_irq(kbd_irq);
 
     fwcfg_init();
     fb_init();

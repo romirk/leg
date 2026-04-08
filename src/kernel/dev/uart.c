@@ -1,4 +1,5 @@
 #include "kernel/dev/uart.h"
+#include "kernel/dev/kbd.h"
 #include "types.h"
 
 static void wait_tx_complete() {
@@ -82,6 +83,7 @@ void uart_irq_handler(void) {
     while (!(*UARTFR & (1 << 4))) {
         char c = (char) (*UARTDR & 0xFF);
         putchar(c);
+        kbd_handle_char(c);
     }
     // clear RX interrupt
     *UARTICR = MSC_RXIM;
