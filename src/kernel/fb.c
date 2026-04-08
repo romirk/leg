@@ -28,8 +28,8 @@ static u32 cursor_col;
 static u32 cursor_row;
 
 void fb_init(void) {
-    u32 fb_bytes = FB_WIDTH * FB_HEIGHT * FB_BPP;
-    u32 fb_pages = (fb_bytes + PAGE_SIZE - 1) / PAGE_SIZE;
+    constexpr u32 fb_bytes = FB_WIDTH * FB_HEIGHT * FB_BPP;
+    constexpr u32 fb_pages = (fb_bytes + PAGE_SIZE - 1) / PAGE_SIZE;
     fb_phys = mm_page_alloc_n(fb_pages);
     if (!fb_phys) {
         warn("fb: page alloc failed");
@@ -37,15 +37,15 @@ void fb_init(void) {
     }
 
     // identity-map all sections covering the framebuffer
-    u32 first_section = fb_phys >> 20;
-    u32 last_section = (fb_phys + fb_bytes - 1) >> 20;
+    const u32 first_section = fb_phys >> 20;
+    const u32 last_section = (fb_phys + fb_bytes - 1) >> 20;
     for (u32 s = first_section; s <= last_section; s++)
         mmu_map_identity(s, false);
 
     fb_base = (volatile u32 *) fb_phys;
     fb_clear(FB_BLACK);
 
-    i32 sel = fwcfg_find("etc/ramfb");
+    const i32 sel = fwcfg_find("etc/ramfb");
     if (sel < 0) {
         warn("fb: etc/ramfb not found");
         return;
@@ -66,23 +66,23 @@ void fb_init(void) {
     info("fb: " STR(FB_WIDTH) "x" STR(FB_HEIGHT) " @ 0x%p", fb_phys);
 }
 
-void fb_putpixel(u32 x, u32 y, u32 color) {
+void fb_putpixel(const u32 x, const u32 y, const u32 color) {
     if (x < FB_WIDTH && y < FB_HEIGHT) fb_base[y * FB_WIDTH + x] = color;
 }
 
-void fb_fill_rect(u32 x, u32 y, u32 w, u32 h, u32 color) {
+void fb_fill_rect(const u32 x, const u32 y, const u32 w, const u32 h, const u32 color) {
     for (u32 row = y; row < y + h && row < FB_HEIGHT; row++)
         for (u32 col = x; col < x + w && col < FB_WIDTH; col++)
             fb_base[row * FB_WIDTH + col] = color;
 }
 
-void fb_clear(u32 color) {
-    u32 total = FB_WIDTH * FB_HEIGHT;
+void fb_clear(const u32 color) {
+    const u32 total = FB_WIDTH * FB_HEIGHT;
     for (u32 i = 0; i < total; i++)
         fb_base[i] = color;
 }
 
-static void draw_glyph(u32 cx, u32 cy, u8 ch, u32 fg, u32 bg) {
+static void draw_glyph(const u32 cx, const u32 cy, const u8 ch, const u32 fg, const u32 bg) {
     const u8 *glyph = &sans_data[ch * 8];
     u32       px = cx * FONT_W;
     u32       py = cy * FONT_H;
@@ -95,7 +95,7 @@ static void draw_glyph(u32 cx, u32 cy, u8 ch, u32 fg, u32 bg) {
     }
 }
 
-static void scroll_up(u32 bg) {
+static void scroll_up(const u32 bg) {
     u32 row_pixels = FONT_H * FB_WIDTH;
     u32 total = (FB_HEIGHT - FONT_H) * FB_WIDTH;
     for (u32 i = 0; i < total; i++)
@@ -105,7 +105,7 @@ static void scroll_up(u32 bg) {
         fb_base[i] = bg;
 }
 
-void fb_putc(char c, u32 fg, u32 bg) {
+void fb_putc(const char c, const u32 fg, const u32 bg) {
     if (!fb_base) return;
 
     if (c == '\n' || c == '\r') {
@@ -133,11 +133,11 @@ void fb_putc(char c, u32 fg, u32 bg) {
     }
 }
 
-void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg) {
+void fb_putc_at(const u32 col, const u32 row, const char c, const u32 fg, const u32 bg) {
     if (col < FB_COLS && row < FB_ROWS) draw_glyph(col, row, (u8) c, fg, bg);
 }
 
-void fb_print(const char *s, u32 fg, u32 bg) {
+void fb_print(const char *s, const u32 fg, const u32 bg) {
     while (*s)
         fb_putc(*s++, fg, bg);
 }

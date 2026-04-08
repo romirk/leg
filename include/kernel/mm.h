@@ -1,8 +1,7 @@
 #pragma once
 // mm.h — physical page allocator + kernel heap
 
-#include <stdint.h>
-#include <stddef.h>
+#include "types.h"
 
 // page size for ARMv7 small pages
 #define PAGE_SIZE  4096u
@@ -24,35 +23,39 @@ typedef enum : int {
 } mm_err_t;
 
 typedef struct {
-    uint32_t  total_pages;
-    uint32_t  free_pages;
-    uint32_t  reserved_pages; // kernel image + page tables + bitmap
-    uintptr_t heap_base;
-    uintptr_t heap_end;
-    uintptr_t heap_used;
+    u32  total_pages;
+    u32  free_pages;
+    u32  reserved_pages; // kernel image + page tables + bitmap
+    uptr heap_base;
+    uptr heap_end;
+    uptr heap_used;
 } mm_stats_t;
 
-// Initialise from DTB /memory node. reserved_end is the first usable byte after
+// Initialize from DTB /memory node. reserved_end is the first usable byte after
 // all early-boot reservations (DTB blob, bump heap, etc.).
-void mm_init(uintptr_t dtb_mem_base, uint64_t dtb_mem_size, uintptr_t reserved_end);
+void mm_init(uptr dtb_mem_base, u64 dtb_mem_size, uptr reserved_end);
 
 // Allocate one 4KB physical page. Returns PA or 0 on OOM.
-uintptr_t mm_page_alloc(void);
+uptr mm_page_alloc(void);
 
 // Allocate n contiguous physical pages. Returns base PA or 0 on OOM.
-uintptr_t mm_page_alloc_n(uint32_t n);
+uptr mm_page_alloc_n(u32 n);
 
-mm_err_t mm_page_free(uintptr_t pa);
-mm_err_t mm_page_free_n(uintptr_t pa, uint32_t n);
+// Free a single physical page. Returns MM_ERR_ALIGN/RANGE if invalid.
+mm_err_t mm_page_free(uptr pa);
+// Free n contiguous pages starting at pa.
+mm_err_t mm_page_free_n(uptr pa, u32 n);
 
-// Reserve [pa, pa+size) so it is never returned by the allocator (MMIO, ROM, etc.).
-mm_err_t mm_reserve(uintptr_t pa, size_t size);
-
-bool mm_page_is_allocated(uintptr_t pa);
+// Returns true if the page at pa is currently allocated.
+bool mm_page_is_allocated(uptr pa);
+// Fill out with current allocator and heap statistics.
 void mm_stats(mm_stats_t *out);
 
 // General-purpose kernel heap. Always 8-byte aligned; returns NULL on failure.
 void *kmalloc(size_t size);
-void *kzalloc(size_t size); // zeroed
-void  kfree(void *ptr);
+// Like kmalloc but zero-initializes the returned block.
+void *kzalloc(size_t size);
+// Free a block previously returned by kmalloc/kzalloc/krealloc.
+void kfree(void *ptr);
+// Resize an allocation; semantics match standard realloc.
 void *krealloc(void *ptr, size_t size);
