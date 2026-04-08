@@ -1,4 +1,5 @@
 #include "kernel/dev/gic.h"
+#include "kernel/cpu.h"
 
 void gic_enable_irq(u32 irq) {
     u32 reg = irq / 32u;
@@ -16,34 +17,6 @@ void gic_enable_irq(u32 irq) {
     GICD_IPRIORITYR(irq) = 0xA0u;
 }
 
-static u32 read_cntfrq(void) {
-    u32 val;
-    asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
-    return val;
-}
-
-// CNTPCT — free-running counter (64-bit)
-static u64 read_cntpct(void) {
-    u32 lo, hi;
-    asm volatile("mrrc p15, 0, %0, %1, c14" : "=r"(lo), "=r"(hi));
-    return (u64) hi << 32 | lo;
-}
-
-// CNTP_CVAL — absolute compare value (64-bit); fires when CNTPCT >= CVAL
-static u64 read_cntp_cval(void) {
-    u32 lo, hi;
-    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(lo), "=r"(hi));
-    return (u64) hi << 32 | lo;
-}
-
-static void write_cntp_cval(u64 val) {
-    asm volatile("mcrr p15, 2, %Q0, %R0, c14" ::"r"(val));
-}
-
-static void write_cntp_ctl(u32 val) {
-    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(val));
-}
-
 static u32 us_to_ticks(u32 usec) {
     // avoid 64-bit division: (freq / 1000) * (usec / 1000), ms-precision
     u32 freq_khz = read_cntfrq() / 1000u;
@@ -53,7 +26,7 @@ static u32 us_to_ticks(u32 usec) {
 
 void timer_set_oneshot_us(u32 usec) {
     write_cntp_cval(read_cntpct() + us_to_ticks(usec));
-    write_cntp_ctl(1u);
+    write_cntp_ctl((struct cntp_ctl) {.ENABLE = true});
 }
 
 // advance CVAL without touching CTL — no jitter from disable/re-enable
@@ -62,6 +35,6 @@ void timer_advance_cval(u32 usec) {
 }
 
 void timer_disable(void) {
-    // IMASK (bit 1) suppresses interrupt output while ISTATUS stays set
-    write_cntp_ctl(0x2u);
+    // IMASK suppresses interrupt output while ISTATUS stays set
+    write_cntp_ctl((struct cntp_ctl) {.IMASK = true});
 }

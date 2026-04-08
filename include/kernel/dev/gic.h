@@ -19,12 +19,14 @@
 // CNTP = PPI 14 = GIC IRQ 30
 #define TIMER_IRQ 30u
 
-inline void gic_cpu_init(void) {
+[[maybe_unused]]
+static void gic_cpu_init(void) {
     GICC_PMR = 0xFFu; // allow all priorities
     GICC_CTLR = 0x1u; // enable CPU interface
 }
 
-inline void gic_dist_init(void) {
+[[maybe_unused]]
+static void gic_dist_init(void) {
     GICD_CTLR = 0x1u; // enable distributor
 }
 

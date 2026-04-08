@@ -35,7 +35,7 @@ void kboot(void *dtb) {
 
     // pass DTB pointer to kmain in r0
     register void *r0 asm("r0") = dtb;
-    asm volatile("ldr pc, =kmain" ::"r"(r0) : "pc");
+    asm volatile("ldr pc, =kmain" ::"r"(r0));
 
     __builtin_unreachable();
 }

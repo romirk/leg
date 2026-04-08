@@ -34,6 +34,6 @@ struct process *process_create(proc_entry_t entry);
 void process_exec(struct process *p);
 
 [[noreturn]]
-void process_exit(struct process *p, int code);
+void process_exit(const struct process *p, int code);
 
 #endif // LEG_PROCESS_H

@@ -15,7 +15,7 @@
  *   0x00000000  ROM — boot vtable, .startup code, kernel load image (AT>bin)
  *   0x40000000  DTB blob (up to 1MB, padded by QEMU)
  *   0x40002000  early bump heap (128KB) — placed dynamically after DTB
- *   0x40100000  kernel_phys_base — kernel image copied here by kboot
+ *   0x40200000  kernel_phys_base — kernel image copied here by kboot
  *   0x40300000  free RAM (managed by page allocator after mm_init)
  *
  * The kernel virtual address (0xC0000000) is fixed. The physical placement

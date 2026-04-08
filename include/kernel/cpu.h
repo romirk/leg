@@ -4,6 +4,21 @@
 #define CPU_H
 #include "types.h"
 
+// Configuration Base Address Register (CBAR) — GIC/peripheral base
+struct [[gnu::packed]] cbar {
+    u8 PERIPHBASE_39_32; // extended bits [39:32]
+    u8 : 7;
+    u32 PERIPHBASE_31_15 : 17; // base address bits [31:15]
+};
+
+// Generic timer control register (CNTP_CTL)
+struct [[gnu::packed]] cntp_ctl {
+    bool ENABLE : 1;  // timer active
+    bool IMASK : 1;   // mask interrupt output
+    bool ISTATUS : 1; // (read-only) condition met
+    u32 : 29;
+};
+
 // CPSR M[4:0] — processor mode field values
 enum processor_mode {
     usr = 0b10000,
@@ -52,19 +67,6 @@ struct [[gnu::packed]] scr {
     u32 : 22;
 };
 
-// Vector Base Address Register (VBAR) — base of the exception vector table
-struct [[gnu::packed]] vbar {
-    u8 : 5;
-    u32 addr : 27; // bits [31:5] of vector table base
-};
-
-// Configuration Base Address Register (CBAR) — GIC/peripheral base
-struct [[gnu::packed]] cbar {
-    u8 PERIPHBASE_39_32; // extended bits [39:32]
-    u8 : 7;
-    u32 PERIPHBASE_31_15 : 17; // base address bits [31:15]
-};
-
 // System Control Register (SCTLR) — MMU, caches, alignment, vectors
 struct [[gnu::packed]] sctlr {
     bool M : 1; // MMU enable
@@ -99,46 +101,95 @@ struct [[gnu::packed]] sctlr {
     bool : 1;
 };
 
-inline struct cpsr read_cpsr() {
-    struct cpsr cpsr;
-    asm("mrs %0, cpsr" : "=r"(cpsr));
-    return cpsr;
-}
+// Vector Base Address Register (VBAR) — base of the exception vector table
+struct [[gnu::packed]] vbar {
+    u8 : 5;
+    u32 addr : 27; // bits [31:5] of vector table base
+};
 
-[[gnu::naked]]
-inline struct scr read_scr() {
-    asm("mrc p15, 0, r0, c1, c1, 0");
-    asm("bx lr");
-}
+// Accessors — grouped by register (read then write)
 
-inline struct vbar read_vbar() {
-    struct vbar vbar;
-    asm("mrc p15, 0, %0, c12, c0, 0" : "=r"(vbar));
-    return vbar;
-}
-
-inline struct sctlr read_sctlr(void) {
-    struct sctlr sctlr;
-    asm("mrc p15, 0, %0, c1, c0, 0" : "=r"(sctlr));
-    return sctlr;
-}
-
-inline u32 read_periphbase_39_15(void) {
+[[maybe_unused]]
+static u32 read_periphbase_39_15(void) {
     struct cbar cbar;
     asm("MRC p15, 4, %0, c15, c0, 0" : "=r"(cbar));
     return cbar.PERIPHBASE_31_15 | cbar.PERIPHBASE_39_32 << 17;
 }
 
-inline void write_cpsr(struct cpsr cpsr) {
+// CNTFRQ — counter frequency in Hz
+[[maybe_unused]]
+static u32 read_cntfrq(void) {
+    u32 val;
+    asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
+    return val;
+}
+
+// CNTPCT — free-running counter (64-bit)
+[[maybe_unused]]
+static u64 read_cntpct(void) {
+    u32 lo, hi;
+    asm volatile("mrrc p15, 0, %0, %1, c14" : "=r"(lo), "=r"(hi));
+    return (u64) hi << 32 | lo;
+}
+
+// CNTP_CVAL — absolute compare value (64-bit); fires when CNTPCT >= CVAL
+[[maybe_unused]]
+static u64 read_cntp_cval(void) {
+    u32 lo, hi;
+    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(lo), "=r"(hi));
+    return (u64) hi << 32 | lo;
+}
+
+[[maybe_unused]]
+static void write_cntp_cval(u64 val) {
+    asm volatile("mcrr p15, 2, %Q0, %R0, c14" ::"r"(val));
+}
+
+[[maybe_unused]]
+static void write_cntp_ctl(struct cntp_ctl val) {
+    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(val));
+}
+
+[[maybe_unused]]
+static struct cpsr read_cpsr() {
+    struct cpsr cpsr;
+    asm("mrs %0, cpsr" : "=r"(cpsr));
+    return cpsr;
+}
+
+[[maybe_unused]]
+static void write_cpsr(struct cpsr cpsr) {
     asm("msr cpsr, %0" ::"r"(cpsr));
 }
 
-inline void write_vbar(struct vbar vbar) {
-    asm("mcr p15, 0, %0, c12, c0, 0" ::"r"(vbar));
+[[gnu::naked, maybe_unused]]
+static struct scr read_scr() {
+    asm("mrc p15, 0, r0, c1, c1, 0");
+    asm("bx lr");
 }
 
-inline void write_sctlr(struct sctlr sctlr) {
+[[maybe_unused]]
+static struct sctlr read_sctlr(void) {
+    struct sctlr sctlr;
+    asm("mrc p15, 0, %0, c1, c0, 0" : "=r"(sctlr));
+    return sctlr;
+}
+
+[[maybe_unused]]
+static void write_sctlr(struct sctlr sctlr) {
     asm("mcr p15, 0, %0, c1, c0, 0" ::"r"(sctlr));
+}
+
+[[maybe_unused]]
+static struct vbar read_vbar() {
+    struct vbar vbar;
+    asm("mrc p15, 0, %0, c12, c0, 0" : "=r"(vbar));
+    return vbar;
+}
+
+[[maybe_unused]]
+static void write_vbar(struct vbar vbar) {
+    asm("mcr p15, 0, %0, c12, c0, 0" ::"r"(vbar));
 }
 
 #endif // CPU_H

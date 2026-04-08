@@ -18,7 +18,7 @@
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 
-[[noreturn]] [[gnu::used]]
+[[noreturn, gnu::used]]
 void kmain(void *dtb) {
     auto  header = (struct fdt_header *) dtb;
     u32   dtb_size = bswap32(header->totalsize);

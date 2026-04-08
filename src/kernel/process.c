@@ -50,7 +50,7 @@ struct process *process_create(proc_entry_t entry) {
 }
 
 [[noreturn]]
-void process_exit(struct process *p, int code) {
+void process_exit([[maybe_unused]] const struct process *p, [[maybe_unused]] const int code) {
     info("process: pid=%d exited with code %d", p->pid, code);
     // TODO: reclaim resources, wake scheduler
     poweroff();

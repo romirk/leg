@@ -5,9 +5,50 @@
 #include "utils.h"
 #include "libc/builtins.h"
 
+#define BM_BITS (sizeof(u32) * 8u)
+
+#define KHEAP_MIN_SPLIT  32u
+#define KHEAP_ALIGN      8u
+#define KHEAP_MAGIC_FREE 0xCAFEu
+#define KHEAP_MAGIC_USED 0xBEEFu
+
 // bitmap: 1 bit per page, 1 = allocated/reserved, 0 = free
 typedef u32 bm_word_t;
-#define BM_BITS (sizeof(bm_word_t) * 8u)
+
+typedef struct kheap_hdr kheap_hdr_t;
+
+// header prepended to every heap block (free or allocated)
+struct [[maybe_unused]] kheap_hdr {
+    u32          magic;     // KHEAP_MAGIC_FREE or KHEAP_MAGIC_USED
+    u32          size;      // usable bytes following this header
+    kheap_hdr_t *next_free; // next block in free list (allocated blocks: NULL)
+};
+
+#define HDR_SIZE (sizeof(kheap_hdr_t))
+static_assert(KHEAP_SIZE > HDR_SIZE + KHEAP_MIN_SPLIT, "kheap: region too small");
+
+// kernel heap — first-fit free-list; each block: [kheap_hdr_t | user data]
+typedef struct {
+    u8          *base;      // start of the heap region
+    size_t       capacity;  // total bytes in the region
+    size_t       used;      // bytes currently allocated (excl. headers)
+    kheap_hdr_t *free_list; // head of the free-block list (address-ordered)
+} kheap_t;
+
+// physical memory manager state
+typedef struct {
+    uptr       ram_base; // first page-aligned byte of managed RAM
+    uptr       ram_end;  // one past last managed byte
+    u32        total_pages;
+    bm_word_t *bitmap; // one bit per page; lives in RAM just after reserved_end
+    u32        bitmap_words;
+    u32        free_pages;
+    u32        reserved_pages;
+    u32        next_hint; // roving start index for O(1) amortised alloc
+} phys_mm_t;
+
+static phys_mm_t g_pmm;   // global physical memory manager
+static kheap_t   g_kheap; // global kernel heap
 
 static void bm_set(bm_word_t *bm, u32 bit) {
     bm[bit / BM_BITS] |= (1u << (bit % BM_BITS));
@@ -21,7 +62,7 @@ static bool bm_test(const bm_word_t *bm, u32 bit) {
     return (bm[bit / BM_BITS] >> (bit % BM_BITS)) & 1u;
 }
 
-// returns start of first run of n free bits at or after start_bit, or U32_MAX
+// Returns start of first run of n free bits at or after start_bit, or U32_MAX.
 static u32 bm_find_free_run(const bm_word_t *bm, const u32 total_bits, const u32 start_bit,
                             const u32 n) {
     u32 run_start = start_bit;
@@ -50,41 +91,6 @@ static u32 bm_find_free_run(const bm_word_t *bm, const u32 total_bits, const u32
     }
     return U32_MAX;
 }
-
-typedef struct kheap_hdr kheap_hdr_t;
-
-// header prepended to every heap block (free or allocated)
-struct [[maybe_unused]] kheap_hdr {
-    u32          magic;     // KHEAP_MAGIC_FREE or KHEAP_MAGIC_USED
-    u32          size;      // usable bytes following this header
-    kheap_hdr_t *next_free; // next block in free list (allocated blocks: NULL)
-};
-
-// kernel heap instance
-typedef struct {
-    u8          *base;      // start of the heap region
-    size_t       capacity;  // total bytes in the region
-    size_t       used;      // bytes currently allocated (excl. headers)
-    kheap_hdr_t *free_list; // head of the free-block list (address-ordered)
-} kheap_t;
-
-static kheap_t g_kheap;
-
-static void kheap_init(uptr base, size_t size);
-
-// physical memory manager state
-typedef struct {
-    uptr       ram_base; // first page-aligned byte of managed RAM
-    uptr       ram_end;  // one past last managed byte
-    u32        total_pages;
-    bm_word_t *bitmap; // one bit per page; lives in RAM just after reserved_end
-    u32        bitmap_words;
-    u32        free_pages;
-    u32        reserved_pages;
-    u32        next_hint; // roving start index for O(1) amortised alloc
-} phys_mm_t;
-
-static phys_mm_t g_pmm;
 
 static u32 pa_to_idx(const uptr pa) {
     return (pa - g_pmm.ram_base) >> PAGE_SHIFT;
@@ -118,6 +124,17 @@ static void reserve_range(uptr base, uptr end) {
     }
 }
 
+static kheap_hdr_t *hdr_of(void *ptr) {
+    return (kheap_hdr_t *) ((uptr *) ptr - HDR_SIZE);
+}
+
+static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
+    const uptr haddr = (uptr) h;
+    const uptr base = (uptr) g_kheap.base;
+    if (haddr < base || haddr + HDR_SIZE > base + g_kheap.capacity) return false;
+    return h->magic == expected_magic;
+}
+
 void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserved_end) {
     ASSERT(dtb_mem_size > 0, "mm_init: no RAM info from DTB");
 
@@ -130,15 +147,16 @@ void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserve
 
     ASSERT(ram_end > ram_base, "mm_init: degenerate RAM range");
 
+    const uptr bitmap_pa = align_up(reserved_end, PAGE_SIZE);
+
     g_pmm.ram_base = ram_base;
     g_pmm.ram_end = ram_end;
     g_pmm.total_pages = (ram_end - ram_base) >> PAGE_SHIFT;
     g_pmm.next_hint = 0;
     g_pmm.free_pages = g_pmm.total_pages;
     g_pmm.reserved_pages = 0;
-
-    const uptr bitmap_pa = align_up(reserved_end, PAGE_SIZE);
     g_pmm.bitmap_words = div_round_up(g_pmm.total_pages, BM_BITS);
+
     const size_t bitmap_bytes = g_pmm.bitmap_words * sizeof(bm_word_t);
 
     ASSERT(bitmap_pa + bitmap_bytes <= ram_end, "mm_init: bitmap overflows RAM");
@@ -146,12 +164,20 @@ void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserve
     g_pmm.bitmap = (bm_word_t *) bitmap_pa;
     memset(g_pmm.bitmap, 0, bitmap_bytes);
 
-    reserve_range(ram_base, bitmap_pa); // DTB, bump heap, etc.
-    reserve_range(bitmap_pa, bitmap_pa + bitmap_bytes);
-    const uptr heap_pa = align_up(bitmap_pa + bitmap_bytes, PAGE_SIZE);
+    const uptr bitmap_end = bitmap_pa + bitmap_bytes;
+    const uptr heap_pa = align_up(bitmap_end, PAGE_SIZE);
+
+    reserve_range(bitmap_pa, bitmap_end); // bitmap
     reserve_range(heap_pa, heap_pa + KHEAP_SIZE);
 
-    kheap_init(heap_pa, KHEAP_SIZE);
+    g_kheap.base = (u8 *) heap_pa;
+    g_kheap.capacity = KHEAP_SIZE;
+    g_kheap.used = 0;
+    const auto h = (kheap_hdr_t *) heap_pa;
+    h->magic = KHEAP_MAGIC_FREE;
+    h->size = KHEAP_SIZE - HDR_SIZE;
+    h->next_free = nullptr;
+    g_kheap.free_list = h;
 }
 
 uptr mm_page_alloc(void) {
@@ -214,40 +240,6 @@ void mm_stats(mm_stats_t *out) {
     out->heap_base = heap_base;
     out->heap_end = heap_base + g_kheap.capacity;
     out->heap_used = g_kheap.used;
-}
-
-// kernel heap — first-fit free-list
-// each block: [kheap_hdr_t | user data], size = usable bytes (excl. header)
-
-#define KHEAP_MIN_SPLIT  32u
-#define KHEAP_ALIGN      8u
-#define KHEAP_MAGIC_FREE 0xCAFEu
-#define KHEAP_MAGIC_USED 0xBEEFu
-#define HDR_SIZE         (sizeof(kheap_hdr_t))
-
-static void kheap_init(uptr base, size_t size) {
-    ASSERT(size > HDR_SIZE + KHEAP_MIN_SPLIT, "kheap: region too small");
-
-    g_kheap.base = (u8 *) base;
-    g_kheap.capacity = size;
-    g_kheap.used = 0;
-
-    const auto h = (kheap_hdr_t *) base;
-    h->magic = KHEAP_MAGIC_FREE;
-    h->size = size - HDR_SIZE;
-    h->next_free = nullptr;
-    g_kheap.free_list = h;
-}
-
-static kheap_hdr_t *hdr_of(void *ptr) {
-    return (kheap_hdr_t *) ((u8 *) ptr - HDR_SIZE);
-}
-
-static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
-    const uptr haddr = (uptr) h;
-    const uptr base = (uptr) g_kheap.base;
-    if (haddr < base || haddr + HDR_SIZE > base + g_kheap.capacity) return false;
-    return h->magic == expected_magic;
 }
 
 void *kmalloc(size_t size) {

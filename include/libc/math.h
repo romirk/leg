@@ -4,8 +4,8 @@
 
 #define log2(X) ((unsigned) (8 * sizeof(u64) - __builtin_clzll(X) - 1))
 
-[[gnu::const]]
-inline u32 log(const u32 value, const u8 base) {
+[[gnu::const, maybe_unused]]
+static u32 log(const u32 value, const u8 base) {
     return log2(value) / log2(base);
 }
 
