@@ -4,3 +4,4 @@ information about the operating environment can be found in [qemu.sh](./qemu.sh)
 startup begins in [boot.s](src/kernel/boot.s).
 
 ![whoa](./matrixshell.png)
+![brot](./brot.png)

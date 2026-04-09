@@ -14,6 +14,7 @@
 #include "kernel/process.h"
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/uart.h"
+#include "kernel/dev/rng.h"
 #include "kernel/fdt.h"
 #include "kernel/dtb.h"
 
@@ -31,6 +32,17 @@ void kmain(void *dtb) {
     if (dtb_err != DTB_OK) {
         err("Failed to parse DTB: %d", dtb_err);
         goto halt;
+    }
+
+    dtb_node_t *chosen = dtb_find_node(&tree, "/chosen");
+    if (chosen) {
+        const dtb_prop_t *seed_prop = dtb_get_prop(chosen, "rng-seed");
+        if (seed_prop && seed_prop->len >= 4) {
+            u32 seed = 0;
+            for (u32 i = 0; i + 4 <= seed_prop->len; i += 4)
+                seed ^= be32_read(seed_prop->data + i);
+            rng_seed(seed);
+        }
     }
 
     if (tree.memory_count == 0) {

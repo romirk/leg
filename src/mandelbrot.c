@@ -32,132 +32,113 @@ typedef struct {
     int    max_iter;
 } Config;
 
-/**
- * @brief Maps an iteration count to an ASCII character.
- * @param value The iteration value (0 to max_iter).
- * @param max_iter The maximum number of iterations.
- * @return A character for visualization.
- */
 char cnt2char(int value, int max_iter) {
     const char *symbols = "MW2a_. ";
     int         ns = strlen(symbols);
-    // Map the value [0, max_iter] to an index [0, ns-1]
-    int idx = (int) ((double) value / max_iter * (ns - 1));
+    int         idx = (int) ((double) value / max_iter * (ns - 1));
     return symbols[idx];
 }
 
-void putpixel(int value, int max_iter, int x, int y) {
-    if (value == 0) {
-        fb_putpixel(x, y, FB_BLACK);
-        return;
+// Blue-gold palette: navy → royal blue → sky blue → white → gold → orange → dark brown → navy
+typedef struct {
+    double t;
+    u8     r, g, b;
+} ColorStop;
+static const ColorStop palette[] = {
+    {0.00, 0, 2, 80},      {0.30, 20, 90, 210}, {0.50, 80, 170, 255},
+    {0.65, 255, 255, 255}, {0.75, 255, 210, 0}, {0.85, 255, 130, 0},
+    {0.95, 80, 10, 0},     {1.00, 0, 2, 80}, // wraps back to navy
+};
+
+static u32 palette_lookup(double t) {
+    constexpr int N = sizeof(palette) / sizeof(palette[0]) - 1;
+    for (int i = 0; i < N; i++) {
+        if (t <= palette[i + 1].t) {
+            double f = (t - palette[i].t) / (palette[i + 1].t - palette[i].t);
+            u32    r = (u32) (palette[i].r + f * ((int) palette[i + 1].r - palette[i].r));
+            u32    g = (u32) (palette[i].g + f * ((int) palette[i + 1].g - palette[i].g));
+            u32    b = (u32) (palette[i].b + f * ((int) palette[i + 1].b - palette[i].b));
+            return (r << 16) | (g << 8) | b;
+        }
     }
-    // smooth hue cycling: map escape count to 0..1 and cycle through HSV hues
-    double t = (double) value / max_iter;
-    double h = t * 360.0 * 4.0; // 4 full hue cycles
-    h = h - (int) (h / 360.0) * 360.0;
-    double s = 1.0, v = 1.0;
-    double c_ = v * s;
-    double x_ =
-        c_ * (1.0 - (h / 60.0 - (int) (h / 60.0) * 2 > 1.0 ? 2.0 - h / 60.0 + (int) (h / 60.0)
-                                                           : h / 60.0 - (int) (h / 60.0)));
-    double r1, g1, b1;
-    int    hi = (int) (h / 60.0) % 6;
-    switch (hi) {
-        case 0:
-            r1 = c_;
-            g1 = x_;
-            b1 = 0;
-            break;
-        case 1:
-            r1 = x_;
-            g1 = c_;
-            b1 = 0;
-            break;
-        case 2:
-            r1 = 0;
-            g1 = c_;
-            b1 = x_;
-            break;
-        case 3:
-            r1 = 0;
-            g1 = x_;
-            b1 = c_;
-            break;
-        case 4:
-            r1 = x_;
-            g1 = 0;
-            b1 = c_;
-            break;
-        default:
-            r1 = c_;
-            g1 = 0;
-            b1 = x_;
-            break;
-    }
-    u32 r = (u32) (r1 * 255);
-    u32 g = (u32) (g1 * 255);
-    u32 b = (u32) (b1 * 255);
-    fb_putpixel(x, y, (r << 16) | (g << 8) | b);
+    return 0;
 }
 
-/**
- * @brief Calculates the escape time for a point in the complex plane.
- * @param cr The real part of the complex number c.
- * @param ci The imaginary part of the complex number c.
- * @param max_iter The maximum number of iterations.
- * @return An integer representing how close the point is to the set.
- */
-[[gnu::pure]]
-int escape_time(double cr, double ci, int max_iter) {
-    double zr = 0.0, zi = 0.0;
-    int    iter;
+// Natural log via IEEE 754 bit extraction + atanh series for mantissa in [1,2).
+// Accurate to ~7 decimal places
+// Technique: https://math.stackexchange.com/a/977836
+static double d_log(double x) {
+    union {
+        double d;
+        u64    u;
+    } b;
+    b.d = x;
+    int e = (int) ((b.u >> 52) & 0x7FFu) - 1023;
+    b.u = (b.u & 0x000FFFFFFFFFFFFFULL) | 0x3FF0000000000000ULL; // m in [1,2)
+    double t = (b.d - 1.0) / (b.d + 1.0);                        // atanh argument in [0, 1/3)
+    double t2 = t * t;
+    double ln_m =
+        2.0 * t * (1.0 + t2 * (1.0 / 3.0 + t2 * (1.0 / 5.0 + t2 * (1.0 / 7.0 + t2 / 9.0))));
+    return e * 0.6931471805599453 + ln_m;
+}
 
-    for (iter = 0; iter < max_iter; ++iter) {
-        double zr2 = zr * zr;
-        double zi2 = zi * zi;
+// Returns smooth (continuous) escape count, or 0.0 for in-set.
+// Smooth = iter + 1 - d_log(d_log(|z|)) / d_log(2), removing integer banding.
+[[gnu::pure]]
+static double escape_time(double cr, double ci, int max_iter) {
+    double zr = 0.0, zi = 0.0;
+    for (int iter = 0; iter < max_iter; ++iter) {
+        double zr2 = zr * zr, zi2 = zi * zi;
         if (zr2 + zi2 > 4.0) {
-            break;
+            double log_zn = d_log(zr2 + zi2) * 0.5;         // ln(|z|)
+            double nu = d_log(log_zn) / 0.6931471805599453; // log2(d_log(|z|))
+            return (double) iter + 1.0 - nu;
         }
         double tmp = zr2 - zi2 + cr;
         zi = 2.0 * zr * zi + ci;
         zr = tmp;
     }
-    return max_iter - iter;
+    return 0.0;
 }
 
-/**
- * @brief Renders the Mandelbrot set as ASCII art to stdout.
- * @param config A pointer to the configuration struct.
- */
+static void putpixel(double smooth, int x, int y) {
+    if (smooth == 0.0) {
+        fb_putpixel(x, y, FB_BLACK);
+        return;
+    }
+    // Cycle the palette every 32 iterations
+    double t = smooth / 32.0;
+    t = t - (int) t; // fractional part → [0, 1)
+    fb_putpixel(x, y, palette_lookup(t));
+}
+
 void ascii_output(const Config *config) {
     double     fwidth = config->ur_x - config->ll_x;
     double     fheight = config->ur_y - config->ll_y;
     const auto max_iter = config->max_iter;
 
-    fb_clear(FB_BLUE);
+    fb_clear(FB_BLACK);
 
     for (int y = 0; y < config->height; ++y) {
         for (int x = 0; x < config->width; ++x) {
-            double    real = config->ll_x + x * fwidth / config->width;
-            double    imag = config->ur_y - y * fheight / config->height;
-            const int iter = escape_time(real, imag, max_iter);
-            // putchar(cnt2char(iter, config->max_iter));
-            putpixel(iter, max_iter, x, y);
+            double real = config->ll_x + x * fwidth / config->width;
+            double imag = config->ur_y - y * fheight / config->height;
+            double smooth = escape_time(real, imag, max_iter);
+            putpixel(smooth, x, y);
         }
-        // putchar('\n');
     }
 }
 
 [[gnu::noinline]]
-int mandelbrot(double ll_x, double ll_y, double ur_x, double ur_y) {
+int mandelbrot(double min_re, double min_im, double max_re, double max_im) {
     Config config = {.width = FB_WIDTH,
                      .height = FB_HEIGHT,
                      .png = false,
-                     .ll_x = ll_x,
-                     .ll_y = ll_y,
-                     .ur_x = ur_x,
-                     .ur_y = ur_y,
-                     .max_iter = 255};
+                     .ll_x = min_re,
+                     .ll_y = min_im,
+                     .ur_x = max_re,
+                     .ur_y = max_im,
+                     .max_iter = 1000};
 
     ascii_output(&config);
 

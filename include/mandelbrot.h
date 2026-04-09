@@ -5,6 +5,6 @@
 #ifndef LEG_MANDELBROT_H
 #define LEG_MANDELBROT_H
 
-int mandelbrot(double ll_x, double ll_y, double ur_x, double ur_y);
+int mandelbrot(double min_re, double min_im, double max_re, double max_im);
 
 #endif // LEG_MANDELBROT_H

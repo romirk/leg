@@ -135,16 +135,26 @@ int main() {
         } else if (strncmp(buf, "clear", 5) == 0) {
             fb_clear(FB_BLACK);
         } else if (strncmp(buf, "brot", 4) == 0) {
-            u64 t0 = rtc_ticks();
-            mandelbrot(-2.0, -1.5, 1.0, 1.5);
+            u64            t0 = rtc_ticks();
+            constexpr auto c_re  = -.74364085;
+            constexpr auto c_im  = .13182733;
+            constexpr auto d_re  = .00012068;
+            constexpr auto d_im  = d_re * (600.0 / 800.0);
+            constexpr auto min_re = c_re - d_re / 2;
+            constexpr auto max_re = c_re + d_re / 2;
+            constexpr auto min_im = c_im - d_im / 2;
+            constexpr auto max_im = c_im + d_im / 2;
+
+            mandelbrot(min_re, min_im, max_re, max_im);
+
             u64 dt = rtc_ticks() - t0;
             u32 freq = read_cntfrq();
-            u32 secs = (u32)(dt / freq);
-            u32 ms   = (u32)((dt % freq) * 1000 / freq);
+            u32 secs = (u32) (dt / freq);
+            u32 ms = (u32) ((dt % freq) * 1000 / freq);
             // %03d unsupported — zero-pad ms manually
             printf("brot: %d.", secs);
             if (ms < 100) putchar('0');
-            if (ms < 10)  putchar('0');
+            if (ms < 10) putchar('0');
             printf("%ds\n", ms);
         }
 
