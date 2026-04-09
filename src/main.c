@@ -130,7 +130,10 @@ int main() {
             printf("%s\n", buf + 5);
         } else if (strncmp(buf, "matrix", 5) == 0) {
             matrix();
+        } else if (strncmp(buf, "clear", 5) == 0) {
+            fb_clear(FB_BLACK);
         }
+
     } while (true);
     return 0;
 }

@@ -82,6 +82,8 @@ void fb_clear(const u32 color) {
     const u32 total = FB_WIDTH * FB_HEIGHT;
     for (u32 i = 0; i < total; i++)
         fb_base[i] = color;
+    cursor_col = 0;
+    cursor_row = 0;
 }
 
 static void draw_glyph(const u32 cx, const u32 cy, const u8 ch, const u32 fg, const u32 bg) {
