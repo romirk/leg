@@ -8,6 +8,10 @@
 #include "types.h"
 #include "utils.h"
 
+// Interrupt handlers only call integer-only kernel paths; VFP state is not touched.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warm-interrupt-vfp-clobber"
+
 [[gnu::section(".startup.exceptions")]]
 void handle_boot_exception(void) {
     *UARTDR = '!';
@@ -40,6 +44,8 @@ void handle_irq(void) {
 void handle_fiq(void) {
     *UARTDR = '?';
 }
+
+#pragma clang diagnostic pop
 
 void enable_interrupts(void) {
     auto cpsr = read_cpsr();
