@@ -16,7 +16,7 @@
  * ./mandelbrot width=120 ll_x=-0.75 ll_y=0.1 ur_x=-0.74 ur_y=0.11
  * ./mandelbrot png=1 width=800 height=600 > mandelbrot.dat
  */
-#include "mandelbrot.h"
+#include "usr/mandelbrot.h"
 
 #include "kernel/dev/fb.h"
 #include "libc/string.h"

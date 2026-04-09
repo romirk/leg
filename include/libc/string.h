@@ -25,4 +25,14 @@ int strncmp(const char *s1, const char *s2, size_t n);
 
 char *strcpy(char *dest, const char *src);
 
+// Split line into whitespace-delimited tokens in-place.
+// Writes pointers into argv (up to max_argc) and null-terminates each token.
+// Returns the number of tokens found.
+int str_split(char *line, char **argv, int max_argc);
+
+// Trim leading and trailing whitespace in-place.
+// Null-terminates after the last non-whitespace character.
+// Returns a pointer to the first non-whitespace character.
+char *trim(char *s);
+
 #endif // STRING_H

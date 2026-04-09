@@ -1,0 +1,104 @@
+#include "usr/hash.h"
+
+#include "usr/mandelbrot.h"
+#include "usr/matrix.h"
+#include "kernel/cpu.h"
+#include "kernel/dev/fb.h"
+#include "kernel/dev/rtc.h"
+#include "kernel/tty.h"
+#include "libc/stdio.h"
+#include "libc/stdlib.h"
+#include "libc/string.h"
+#include "types.h"
+
+#define MAX_ARGS 16
+
+typedef bool (*cmd_fn)(int argc, char **argv);
+
+typedef struct {
+    const char *name;
+    cmd_fn      fn;
+} Command;
+
+static bool cmd_exit([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+    return false;
+}
+
+static bool cmd_echo(int argc, char **argv) {
+    for (int i = 1; i < argc; i++) {
+        if (i > 1) putchar(' ');
+        printf("%s", argv[i]);
+    }
+    putchar('\n');
+    return true;
+}
+
+static bool cmd_matrix([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+    matrix();
+    return true;
+}
+
+static bool cmd_clear([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+    fb_clear(FB_BLACK);
+    return true;
+}
+
+static bool cmd_brot(int argc, char **argv) {
+    double min_re, min_im, max_re, max_im;
+
+    if (argc >= 5) {
+        min_re = atof(argv[1]);
+        min_im = atof(argv[2]);
+        max_re = atof(argv[3]);
+        max_im = atof(argv[4]);
+    } else {
+        constexpr double c_re = -.74364085;
+        constexpr double c_im = .13182733;
+        constexpr double d_re = .00012068;
+        constexpr double d_im = d_re * (600.0 / 800.0);
+        min_re = c_re - d_re / 2;
+        max_re = c_re + d_re / 2;
+        min_im = c_im - d_im / 2;
+        max_im = c_im + d_im / 2;
+    }
+
+    u64 t0 = rtc_ticks();
+    mandelbrot(min_re, min_im, max_re, max_im);
+    u64 dt = rtc_ticks() - t0;
+    u32 freq = read_cntfrq();
+    u32 secs = (u32) (dt / freq);
+    u32 ms = (u32) ((dt % freq) * 1000 / freq);
+    printf("brot: %d.", secs);
+    if (ms < 100) putchar('0');
+    if (ms < 10) putchar('0');
+    printf("%ds\n", ms);
+    return true;
+}
+
+static const Command commands[] = {
+    {"exit", cmd_exit},   {"echo", cmd_echo}, {"matrix", cmd_matrix},
+    {"clear", cmd_clear}, {"brot", cmd_brot},
+};
+
+void hash_run(void) {
+    char  buf[256];
+    char *argv[MAX_ARGS];
+
+    while (true) {
+        printf("hash # ");
+        readline(buf, sizeof(buf));
+
+        int argc = str_split(buf, argv, MAX_ARGS);
+        if (argc == 0) continue;
+
+        bool found = false;
+        for (u32 i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+            if (strcmp(argv[0], commands[i].name) == 0) {
+                found = true;
+                if (!commands[i].fn(argc, argv)) return;
+                break;
+            }
+        }
+        if (!found) printf("unknown command: %s\n", argv[0]);
+    }
+}

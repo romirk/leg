@@ -33,4 +33,6 @@ char *hex32le(u32 value, char str[9]);
 
 char *hex32be(u32 value, char str[9]);
 
+double atof(const char *s);
+
 #endif // STDLIB_H
