@@ -21,6 +21,8 @@ struct [[gnu::packed]] ramfb_cfg {
 // DRM_FORMAT_XRGB8888 = little-endian fourcc "XR24"
 #define DRM_FORMAT_XRGB8888 0x34325258u
 
+#define FONT sans_data
+
 static volatile u32 *fb_base;
 static u32           fb_phys;
 
@@ -83,7 +85,7 @@ void fb_clear(const u32 color) {
 }
 
 static void draw_glyph(const u32 cx, const u32 cy, const u8 ch, const u32 fg, const u32 bg) {
-    const u8 *glyph = &sans_data[ch * 8];
+    const u8 *glyph = &FONT[ch * 8];
     u32       px = cx * FONT_W;
     u32       py = cy * FONT_H;
     for (u32 row = 0; row < FONT_H; row++) {

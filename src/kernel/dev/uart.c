@@ -1,5 +1,5 @@
 #include "kernel/dev/uart.h"
-#include "kernel/dev/kbd.h"
+#include "kernel/tty.h"
 #include "types.h"
 
 static void wait_tx_complete() {
@@ -69,11 +69,11 @@ void pl011_reset(const struct pl011 *dev) {
     *UARTCR = CR_TXEN | CR_RXEN | CR_UARTEN;
 }
 
-void putchar(const char c) {
+void uart_putchar(const char c) {
     *UARTDR = c;
 }
 
-char getchar(void) {
+char uart_getchar(void) {
     while (*UARTFR & (1 << 4))
         ; // RXFE: 1 = FIFO empty
     return (char) (*UARTDR & 0xFF);
@@ -82,9 +82,7 @@ char getchar(void) {
 void uart_irq_handler(void) {
     while (!(*UARTFR & (1 << 4))) {
         char c = (char) (*UARTDR & 0xFF);
-        putchar(c);
-        kbd_handle_char(c);
+        tty_input(c);
     }
-    // clear RX interrupt
     *UARTICR = MSC_RXIM;
 }

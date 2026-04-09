@@ -58,7 +58,6 @@ void process_exit([[maybe_unused]] const struct process *p, [[maybe_unused]] con
 
 [[noreturn]]
 void process_exec(struct process *p) {
-    info("process: exec pid=%d", p->pid);
     current_proc = p;
 
     // switch to process page table — kernel VA stays mapped, so we survive this

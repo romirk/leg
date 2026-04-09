@@ -43,22 +43,36 @@ void kmain(void *dtb) {
     mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
     early_malloc_reset();
 
-    struct pl011 uart;
-    pl011_setup(&uart, 24000000u);
-    kbd_init();
-    if (kbd_irq) gic_enable_irq(kbd_irq);
-
     fwcfg_init();
     fb_init();
+
+    info("kernel: started; DTB at %p (size %u bytes)", dtb, dtb_size);
+    info("kernel: initialized framebuffer");
+
+    struct pl011 uart;
+    pl011_setup(&uart, 24000000u);
+    info("UART: initialized");
+
+    kbd_init();
+    info("kbd: initialized");
+
+    if (kbd_irq) gic_enable_irq(kbd_irq);
 
     gic_dist_init();
     gic_cpu_init();
     gic_enable_irq(UART_IRQ);
     gic_enable_irq(TIMER_IRQ);
+    info("GIC: initialized");
 
     enable_interrupts();
+    info("kernel: interrupts enabled");
 
     struct process *p = process_create(main);
+
+    fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);
+    fb_print("<uhhhhhhh>", FB_BLUE, FB_BLACK);
+    fb_print("!\n\n\n", FB_WHITE, FB_BLACK);
+
     if (!p) {
         err("failed to create main process");
         goto halt;

@@ -1,7 +1,7 @@
 #include "kernel/dev/kbd.h"
 #include "kernel/logs.h"
 #include "kernel/mem/memory.h"
-#include "utils.h"
+#include "kernel/tty.h"
 #include "types.h"
 
 // virtio-mmio bus: 32 slots at 0x0a000000, stride 0x200; SPI 16+N → GIC 48+N
@@ -93,10 +93,10 @@ u32 kbd_irq;
 
 static u32 find_keyboard(void) {
     for (u32 i = 0; i < VIRTIO_MMIO_COUNT; i++) {
-        u32 base = VIRTIO_MMIO_BASE + i * VIRTIO_MMIO_STRIDE;
+        const u32 base = VIRTIO_MMIO_BASE + i * VIRTIO_MMIO_STRIDE;
         if (VMIO(base, VMIO_MAGIC) != VIRTIO_MAGIC) continue;
-        u32 ver = VMIO(base, VMIO_VERSION);
-        u32 dev = VMIO(base, VMIO_DEVICE_ID);
+        const u32 ver = VMIO(base, VMIO_VERSION);
+        const u32 dev = VMIO(base, VMIO_DEVICE_ID);
         if (dev != 0) dbg("kbd: slot %d version=%d device_id=%d", i, ver, dev);
         if (dev != VIRTIO_DEVICE_INPUT) continue;
         kbd_irq = VIRTIO_MMIO_IRQ_BASE + i;
@@ -105,7 +105,7 @@ static u32 find_keyboard(void) {
     return 0;
 }
 
-static void setup_eventq(u32 base) {
+static void setup_eventq(const u32 base) {
     for (u32 i = 0; i < QUEUE_SIZE; i++) {
         g_desc[i] = (vq_desc_t) {
             .addr = virt_to_phys(&g_events[i]),
@@ -121,7 +121,7 @@ static void setup_eventq(u32 base) {
 
     VMIO(base, VMIO_GUEST_PAGE_SIZE) = PAGE_SIZE;
     VMIO(base, VMIO_QUEUE_SEL) = 0;
-    u32 qmax = VMIO(base, VMIO_QUEUE_NUM_MAX);
+    const u32 qmax = VMIO(base, VMIO_QUEUE_NUM_MAX);
     VMIO(base, VMIO_QUEUE_NUM) = qmax < QUEUE_SIZE ? qmax : QUEUE_SIZE;
     VMIO(base, VMIO_QUEUE_ALIGN) = PAGE_SIZE;
     VMIO(base, VMIO_QUEUE_PFN) = virt_to_phys(g_queue_mem) >> 12;
@@ -150,6 +150,36 @@ void kbd_init(void) {
     VMIO(base, VMIO_QUEUE_NOTIFY) = 0;
 }
 
+// Linux keycode → ASCII, unshifted and shifted.
+// Index = Linux keycode (0–57 covers all basic keys).
+static const char keymap_lower[58] = {
+    0,   0,                      // 0 reserved, 1 ESC
+    '1', '2',  '3',  '4',  '5',  // 2-6
+    '6', '7',  '8',  '9',  '0',  // 7-11
+    '-', '=',  '\b', '\t',       // 12-15
+    'q', 'w',  'e',  'r',  't',  // 16-20
+    'y', 'u',  'i',  'o',  'p',  // 21-25
+    '[', ']',  '\n', 0,          // 26-29 (29 = LEFTCTRL)
+    'a', 's',  'd',  'f',  'g',  // 30-34
+    'h', 'j',  'k',  'l',        // 35-38
+    ';', '\'', '`',  0,    '\\', // 39-43 (42 = LEFTSHIFT)
+    'z', 'x',  'c',  'v',  'b',  // 44-48
+    'n', 'm',  ',',  '.',  '/',  // 49-53
+    0,   '*',  0,    ' ',        // 54-57 (54=RIGHTSHIFT, 56=LEFTALT)
+};
+
+static const char keymap_upper[58] = {
+    0,    0,   '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',  '\b',
+    '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0,
+    'A',  'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,   '|',  'Z',
+    'X',  'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,   '*', 0,   ' ',
+};
+
+#define KEY_LEFTSHIFT  42u
+#define KEY_RIGHTSHIFT 54u
+
+static bool g_shift;
+
 void kbd_virtio_irq_handler(void) {
     u32 isr = VMIO(g_virtio_base, VMIO_INT_STATUS);
     VMIO(g_virtio_base, VMIO_INT_ACK) = isr;
@@ -159,9 +189,14 @@ void kbd_virtio_irq_handler(void) {
         u32                   desc_id = g_used->ring[g_last_used_idx % QUEUE_SIZE].id;
         virtio_input_event_t *ev = &g_events[desc_id];
 
-        dbg("kbd: EV type=%d code=%d value=%d", ev->type, ev->code, ev->value);
-
-        if (ev->type == EV_KEY && ev->value == 1 && ev->code == KEY_Q) poweroff();
+        if (ev->type == EV_KEY) {
+            if (ev->code == KEY_LEFTSHIFT || ev->code == KEY_RIGHTSHIFT)
+                g_shift = ev->value != 0;
+            else if ((ev->value == 1 || ev->value == 2) && ev->code < 58u) {
+                char c = g_shift ? keymap_upper[ev->code] : keymap_lower[ev->code];
+                if (c) tty_input(c);
+            }
+        }
 
         g_avail->ring[g_avail->idx % QUEUE_SIZE] = (u16) desc_id;
         g_avail->idx++;
@@ -173,5 +208,5 @@ void kbd_virtio_irq_handler(void) {
 }
 
 void kbd_handle_char(const char c) {
-    if (c == 'q' || c == 'Q') poweroff();
+    tty_input(c);
 }

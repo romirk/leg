@@ -4,16 +4,9 @@
 #include "kernel/dev/fb.h"
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/rng.h"
-#include "kernel/logs.h"
-#include "kernel/dev/gic.h"
+#include "kernel/tty.h"
 #include "libc/stdio.h"
-
-static char rand_char(void) {
-    u32 r = rand_below(63);
-    if (r < 10) return '0' + r;
-    if (r < 36) return 'A' + (r - 10);
-    return '!' + (r - 36);
-}
+#include "libc/string.h"
 
 #define MATRIX_COLS  FB_COLS
 #define MATRIX_ROWS  FB_ROWS
@@ -23,16 +16,22 @@ static char rand_char(void) {
 #define DIM_GREEN    0x00006600u
 #define FAINT_GREEN  0x00003300u
 
-struct drop {
-    u32  y;     // current head row
-    u32  speed; // frames between advances
-    u32  tick;  // frame counter
-    u32  len;   // trail length
-    bool active;
-};
+static struct {
+    u32  y;      // current head row
+    u32  speed;  // frames between advances
+    u32  tick;   // frame counter
+    u32  len;    // trail length
+    bool active; // whether the drop is on-screen
+} drops[MATRIX_COLS];
 
-static struct drop drops[MATRIX_COLS];
-static char        grid[MATRIX_COLS][MATRIX_ROWS];
+static char grid[MATRIX_COLS][MATRIX_ROWS];
+
+static char rand_char(void) {
+    u32 r = rand_below(63);
+    if (r < 10) return '0' + r;
+    if (r < 36) return 'A' + (r - 10);
+    return '!' + (r - 36);
+}
 
 static u32 fade_color(u32 dist) {
     if (dist == 0) return BRIGHT_GREEN;
@@ -113,12 +112,25 @@ void matrix(void) {
                 fb_putc_at(c, erase, ' ', FB_BLACK, FB_BLACK);
         }
 
+        if (getchar_nonblocking() == 'q') break;
         delay_us(50000);
     }
 }
 
-[[gnu::noinline]]
 int main() {
-    matrix();
+    char buf[256];
+    do {
+        printf("hash # ");
+        readline(buf, sizeof(buf));
+
+        if (strcmp(buf, "exit") == 0) {
+            break;
+        }
+        if (strncmp(buf, "echo ", 5) == 0) {
+            printf("%s\n", buf + 5);
+        } else if (strncmp(buf, "matrix", 5) == 0) {
+            matrix();
+        }
+    } while (true);
     return 0;
 }

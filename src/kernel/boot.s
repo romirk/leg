@@ -90,3 +90,22 @@ handle_reset:
     // pass DTB pointer as first argument
     mov r0, r4
     b kboot
+
+// SVC trampoline — captures user r0-r3 and the SVC number, calls svc_dispatch,
+// returns the result in r0 to the caller.
+//
+// Stack layout after push {r1-r12, lr}  (13 regs × 4 = 52 bytes):
+//   sp+0  = r1  ...  sp+44 = r12  sp+48 = lr_svc
+// Then push {r12} (svc_num, 4 bytes) → sp 8-byte aligned before bl.
+//
+// C signature:  u32 svc_dispatch(u32 r0, u32 r1, u32 r2, u32 r3, u32 svc_num);
+.global handle_svc
+handle_svc:
+    push {r1-r12, lr}           // save user r1-r12 and lr_svc; r0 stays as arg/retval
+    ldr  r12, [lr, #-4]         // r12 = SVC instruction word (lr_svc still valid)
+    and  r12, r12, #0xFFFFFF    // r12 = SVC number
+    push {r12}                  // 5th arg to svc_dispatch (stack, per AAPCS)
+    bl   svc_dispatch           // svc_dispatch(r0, r1, r2, r3, svc_num) → r0
+    add  sp,  sp,  #4           // pop svc_num
+    pop  {r1-r12, lr}           // restore user r1-r12 and lr_svc; r0 = return value
+    movs pc,  lr                // return to user, restore CPSR from SPSR_svc

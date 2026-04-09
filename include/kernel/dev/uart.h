@@ -50,4 +50,7 @@ void pl011_reset(const struct pl011 *dev);
 
 void uart_irq_handler(void);
 
+void uart_putchar(char c);
+char uart_getchar(void);
+
 #endif // UART_H

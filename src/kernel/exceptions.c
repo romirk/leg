@@ -2,11 +2,10 @@
 
 #include "kernel/cpu.h"
 #include "kernel/dev/gic.h"
-#include "kernel/logs.h"
-#include "kernel/process.h"
-#include "kernel/dev/rtc.h"
 #include "kernel/dev/kbd.h"
+#include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
+#include "kernel/logs.h"
 #include "types.h"
 
 [[gnu::section(".startup.exceptions")]]
@@ -39,17 +38,6 @@ void handle_irq(void) {
 [[gnu::interrupt("FIQ")]]
 void handle_fiq(void) {
     *UARTDR = '?';
-}
-
-[[gnu::interrupt("SWI")]]
-void handle_svc(int r0) {
-    u32 svc_instruction;
-    asm volatile("ldr %0, [lr, #-4]" : "=r"(svc_instruction));
-    u32 svc_num = svc_instruction & 0xFFFFFF;
-
-    if (svc_num == 1) process_exit(current_proc, r0); // SVC #1: exit; r0 = exit code
-
-    warn("unhandled SVC #%d", svc_num);
 }
 
 void enable_interrupts(void) {
