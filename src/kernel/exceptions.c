@@ -5,14 +5,15 @@
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
-#include "kernel/logs.h"
 #include "types.h"
+#include "utils.h"
 
 [[gnu::section(".startup.exceptions")]]
 void handle_boot_exception(void) {
     *UARTDR = '!';
     *UARTDR = '\n';
-    asm("b #0"); // reboot
+
+    poweroff();
 }
 
 [[gnu::interrupt("ABORT")]]

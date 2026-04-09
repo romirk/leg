@@ -10,7 +10,7 @@
 #include "kernel/dev/fb.h"
 #include "kernel/dev/fwcfg.h"
 #include "kernel/dev/gic.h"
-#include "kernel/main.h"
+#include "main.h"
 #include "kernel/process.h"
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/uart.h"

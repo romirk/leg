@@ -91,6 +91,7 @@ handle_reset:
     mov r0, r4
     b kboot
 
+.section .text, "ax", %progbits
 // SVC trampoline — captures user r0-r3 and the SVC number, calls svc_dispatch,
 // returns the result in r0 to the caller.
 //

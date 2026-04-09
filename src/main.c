@@ -1,5 +1,6 @@
-#include "kernel/main.h"
+#include "main.h"
 
+#include "mandelbrot.h"
 #include "utils.h"
 #include "kernel/dev/fb.h"
 #include "kernel/dev/rtc.h"
@@ -132,6 +133,8 @@ int main() {
             matrix();
         } else if (strncmp(buf, "clear", 5) == 0) {
             fb_clear(FB_BLACK);
+        } else if (strncmp(buf, "brot", 4) == 0) {
+            mandelbrot(-2.0, -1.5, 1.0, 1.5);
         }
 
     } while (true);
