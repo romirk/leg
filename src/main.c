@@ -3,6 +3,7 @@
 #include "mandelbrot.h"
 #include "utils.h"
 #include "kernel/dev/fb.h"
+#include "kernel/cpu.h"
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/rng.h"
 #include "kernel/tty.h"
@@ -134,7 +135,17 @@ int main() {
         } else if (strncmp(buf, "clear", 5) == 0) {
             fb_clear(FB_BLACK);
         } else if (strncmp(buf, "brot", 4) == 0) {
+            u64 t0 = rtc_ticks();
             mandelbrot(-2.0, -1.5, 1.0, 1.5);
+            u64 dt = rtc_ticks() - t0;
+            u32 freq = read_cntfrq();
+            u32 secs = (u32)(dt / freq);
+            u32 ms   = (u32)((dt % freq) * 1000 / freq);
+            // %03d unsupported — zero-pad ms manually
+            printf("brot: %d.", secs);
+            if (ms < 100) putchar('0');
+            if (ms < 10)  putchar('0');
+            printf("%ds\n", ms);
         }
 
     } while (true);

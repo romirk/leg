@@ -107,6 +107,7 @@ void putpixel(int value, int max_iter, int x, int y) {
  * @param max_iter The maximum number of iterations.
  * @return An integer representing how close the point is to the set.
  */
+[[gnu::pure]]
 int escape_time(double cr, double ci, int max_iter) {
     double zr = 0.0, zi = 0.0;
     int    iter;
@@ -129,23 +130,25 @@ int escape_time(double cr, double ci, int max_iter) {
  * @param config A pointer to the configuration struct.
  */
 void ascii_output(const Config *config) {
-    double fwidth = config->ur_x - config->ll_x;
-    double fheight = config->ur_y - config->ll_y;
+    double     fwidth = config->ur_x - config->ll_x;
+    double     fheight = config->ur_y - config->ll_y;
+    const auto max_iter = config->max_iter;
 
     fb_clear(FB_BLUE);
 
     for (int y = 0; y < config->height; ++y) {
         for (int x = 0; x < config->width; ++x) {
-            double real = config->ll_x + x * fwidth / config->width;
-            double imag = config->ur_y - y * fheight / config->height;
-            int    iter = escape_time(real, imag, config->max_iter);
+            double    real = config->ll_x + x * fwidth / config->width;
+            double    imag = config->ur_y - y * fheight / config->height;
+            const int iter = escape_time(real, imag, max_iter);
             // putchar(cnt2char(iter, config->max_iter));
-            putpixel(iter, config->max_iter, x, y);
+            putpixel(iter, max_iter, x, y);
         }
         // putchar('\n');
     }
 }
 
+[[gnu::noinline]]
 int mandelbrot(double ll_x, double ll_y, double ur_x, double ur_y) {
     Config config = {.width = FB_WIDTH,
                      .height = FB_HEIGHT,
