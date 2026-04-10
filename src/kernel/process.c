@@ -4,6 +4,7 @@
 #include "kernel/mem/mmu.h"
 #include "kernel/mem/alloc.h"
 #include "kernel/logs.h"
+#include "kernel/cpu.h"
 #include "utils.h"
 
 static pid_t next_pid = 1;
@@ -56,19 +57,34 @@ void process_exit([[maybe_unused]] const struct process *p, [[maybe_unused]] con
     poweroff();
 }
 
+[[gnu::naked]]
+void sys_exit_stub(void) {
+    asm volatile("svc #0");
+}
+
 [[noreturn]]
 void process_exec(struct process *p) {
     current_proc = p;
 
-    // switch to process page table — kernel VA stays mapped, so we survive this
     mmu_set_proc_table(p->pgd);
 
-    int code;
-    asm volatile("mov sp, %1 \n\t" // switch to process stack VA
-                 "blx %2     \n\t" // call entry(); r0 = return code on return
-                 "mov %0, r0"      // capture return value
-                 : "=r"(code)
-                 : "r"(p->sp), "r"(p->entry)
-                 : "r0", "r1", "r2", "r3", "lr");
-    process_exit(p, code);
+    psr_t s = {
+        .M = usr,   // User mode
+        .I = false, // Enable interrupts for userland
+    };
+
+    write_spsr(s); // Set up SPSR_svc
+
+    asm volatile("cps #31          \n\t" // System Mode
+                 "mov sp, %0       \n\t" // Set sp_usr
+                 "mov lr, %1       \n\t" // Set lr_usr (exit stub)
+                 "cps #19          \n\t" // Back to SVC Mode
+
+                 "mov lr, %2       \n\t" // entry point into lr_svc
+                 "movs pc, lr      \n\t" // Mode switch (PC=lr, CPSR=SPSR)
+                 :
+                 : "r"(p->sp), "r"(sys_exit_stub), "r"(p->entry)
+                 : "memory");
+
+    __builtin_unreachable();
 }

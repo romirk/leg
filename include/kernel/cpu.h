@@ -20,7 +20,7 @@ struct [[gnu::packed]] cntp_ctl {
 };
 
 // CPSR M[4:0] — processor mode field values
-enum processor_mode {
+enum processor_mode : u8 {
     usr = 0b10000,
     fiq = 0b10001,
     irq = 0b10010,
@@ -33,24 +33,24 @@ enum processor_mode {
 };
 
 // Current Program Status Register (CPSR)
-struct [[gnu::packed]] cpsr {
-    u8   M : 5;   // processor mode (see processor_mode)
-    bool T : 1;   // Thumb state
-    bool F : 1;   // FIQ disable
-    bool I : 1;   // IRQ disable
-    bool A : 1;   // asynchronous abort disable
-    bool E : 1;   // endianness (0 = little)
-    u8   ITl : 6; // IT[7:2] — if-then block state (low)
-    u8   GE : 4;  // SIMD >= condition flags
-    u8 : 4;
-    bool J : 1;   // Jazelle state
-    u8   ITh : 2; // IT[1:0] — if-then block state (high)
-    bool Q : 1;   // cumulative saturation
-    bool V : 1;   // overflow
-    bool C : 1;   // carry
-    bool Z : 1;   // zero
-    bool N : 1;   // negative
-};
+typedef struct [[gnu::packed]] cpsr {
+    enum processor_mode M : 5;   // processor mode
+    bool                T : 1;   // Thumb state
+    bool                F : 1;   // FIQ disable
+    bool                I : 1;   // IRQ disable
+    bool                A : 1;   // asynchronous abort disable
+    bool                E : 1;   // endianness (0 = little)
+    u8                  ITl : 6; // IT[7:2] — if-then block state (low)
+    u8                  GE : 4;  // SIMD >= condition flags
+    u8                  _ : 4;   // blank
+    bool                J : 1;   // Jazelle state
+    u8                  ITh : 2; // IT[1:0] — if-then block state (high)
+    bool                Q : 1;   // cumulative saturation
+    bool                V : 1;   // overflow
+    bool                C : 1;   // carry
+    bool                Z : 1;   // zero
+    bool                N : 1;   // negative
+} psr_t;
 
 // Secure Configuration Register (SCR) — controls security state
 struct [[gnu::packed]] scr {
@@ -151,15 +151,27 @@ static void write_cntp_ctl(struct cntp_ctl val) {
 }
 
 [[maybe_unused]]
-static struct cpsr read_cpsr() {
-    struct cpsr cpsr;
+static psr_t read_cpsr() {
+    psr_t cpsr;
     asm("mrs %0, cpsr" : "=r"(cpsr));
     return cpsr;
 }
 
 [[maybe_unused]]
-static void write_cpsr(struct cpsr cpsr) {
-    asm("msr cpsr, %0" ::"r"(cpsr));
+static void write_cpsr(psr_t cpsr) {
+    asm("msr cpsr, %0" ::"r"(cpsr) : "memory");
+}
+
+[[maybe_unused]]
+static psr_t read_spsr(void) {
+    psr_t val;
+    asm volatile("mrs %0, spsr" : "=r"(val));
+    return val;
+}
+
+[[maybe_unused]]
+static void write_spsr(psr_t val) {
+    asm volatile("msr spsr_cxsf, %0" ::"r"(val) : "memory");
 }
 
 [[gnu::naked, maybe_unused]]
