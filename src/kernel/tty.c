@@ -11,7 +11,7 @@ static volatile u32  g_line_start = 0;
 
 static volatile bool echo_chars = false;
 
-void putchar(char c) {
+void tty_putchar(char c) {
     fb_putc(c, FB_WHITE, FB_BLACK);
 }
 
@@ -21,15 +21,15 @@ void tty_input(char c) {
     if (c == '\b' || c == 127) { // backspace / DEL
         if (g_line_len > 0) {
             g_line_len--;
-            putchar('\b');
-            putchar(' ');
-            putchar('\b'); // UART: erase char
+            tty_putchar('\b');
+            tty_putchar(' ');
+            tty_putchar('\b');
         }
         return;
     }
 
     if (echo_chars) {
-        putchar(c);
+        tty_putchar(c);
     }
 
     if (g_line_len < LINE_BUF_SIZE - 1)
@@ -38,10 +38,10 @@ void tty_input(char c) {
     if (c == '\n') g_line_ready = true;
 }
 
-u32 readline(char *buf, u32 max) {
+u32 tty_readline(char *buf, u32 max) {
     echo_chars = true;
     while (!g_line_ready)
-        ; // spin; IRQs must be enabled by caller
+        asm("wfi" ::: "memory"); // spin; IRQs must be enabled by caller
 
     if (!g_line_len) {
         g_line_ready = false;
@@ -62,15 +62,15 @@ u32 readline(char *buf, u32 max) {
     return n;
 }
 
-char getchar() {
+char tty_getchar(void) {
     while (!g_line_len)
-        ; // spin; IRQs must be enabled by caller
+        asm("wfi" ::: "memory"); // spin; IRQs must be enabled by caller
     char c = g_line_buf[g_line_start++];
     g_line_len--;
     return c;
 }
 
-char getchar_nonblocking() {
+char tty_getchar_nb(void) {
     if (!g_line_len) return '\0';
     char c = g_line_buf[g_line_start++];
     g_line_len--;

@@ -44,8 +44,7 @@ void *memclr(void *dst, const size_t len) {
 // Uses binary long division (64 iterations).
 [[gnu::naked]]
 void __aeabi_uldivmod(void) {
-    asm(
-        "push  {r4-r9, lr}       \n" // save callee-saved + lr
+    asm("push  {r4-r9, lr}       \n" // save callee-saved + lr
         "mov   r4, #0            \n" // q_lo  = 0
         "mov   r5, #0            \n" // q_hi  = 0
         "mov   r6, #0            \n" // rem_lo = 0
@@ -86,6 +85,5 @@ void __aeabi_uldivmod(void) {
         "mov   r3, r7            \n" // rem_hi → r3
         "mov   r0, r4            \n" // q_lo   → r0
         "mov   r1, r5            \n" // q_hi   → r1
-        "pop   {r4-r9, pc}       \n"
-    );
+        "pop   {r4-r9, pc}       \n");
 }

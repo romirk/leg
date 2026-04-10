@@ -13,4 +13,6 @@ typedef signed char            i8;
 #define U32_MAX ((u32) ~0)
 #define U64_MAX ((u64) ~0)
 
+#define loop for (;;)
+
 #endif // TYPES_H

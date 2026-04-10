@@ -2,13 +2,11 @@
 
 #include "usr/mandelbrot.h"
 #include "usr/matrix.h"
-#include "kernel/cpu.h"
-#include "kernel/dev/fb.h"
-#include "kernel/dev/rtc.h"
-#include "kernel/tty.h"
+#include "libc/display.h"
 #include "libc/stdio.h"
 #include "libc/stdlib.h"
 #include "libc/string.h"
+#include "libc/time.h"
 #include "types.h"
 
 #define MAX_ARGS 16
@@ -62,10 +60,10 @@ static bool cmd_brot(int argc, char **argv) {
         max_im = c_im + d_im / 2;
     }
 
-    u64 t0 = rtc_ticks();
+    u64 t0 = get_ticks();
     mandelbrot(min_re, min_im, max_re, max_im);
-    u64 dt = rtc_ticks() - t0;
-    u32 freq = read_cntfrq();
+    u64 dt = get_ticks() - t0;
+    u32 freq = cntfrq();
     u32 secs = (u32) (dt / freq);
     u32 ms = (u32) ((dt % freq) * 1000 / freq);
     printf("brot: %d.", secs);

@@ -62,13 +62,20 @@ char *hex32be(const u32 value, char str[9]) {
 
 double atof(const char *s) {
     double result = 0.0, frac = 1.0;
-    bool   neg    = false;
-    if (*s == '-') { neg = true; s++; }
-    else if (*s == '+') s++;
-    while (*s >= '0' && *s <= '9') result = result * 10.0 + (*s++ - '0');
+    bool   neg = false;
+    if (*s == '-') {
+        neg = true;
+        s++;
+    } else if (*s == '+')
+        s++;
+    while (*s >= '0' && *s <= '9')
+        result = result * 10.0 + (*s++ - '0');
     if (*s == '.') {
         s++;
-        while (*s >= '0' && *s <= '9') { frac /= 10.0; result += (*s++ - '0') * frac; }
+        while (*s >= '0' && *s <= '9') {
+            frac /= 10.0;
+            result += (*s++ - '0') * frac;
+        }
     }
     return neg ? -result : result;
 }

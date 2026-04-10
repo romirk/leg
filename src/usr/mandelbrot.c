@@ -18,7 +18,7 @@
  */
 #include "usr/mandelbrot.h"
 
-#include "kernel/dev/fb.h"
+#include "libc/display.h"
 #include "libc/string.h"
 
 typedef struct {

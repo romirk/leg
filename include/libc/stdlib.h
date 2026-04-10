@@ -1,5 +1,7 @@
 #ifndef STDLIB_H
 #define STDLIB_H
+
+#include "syscall.h"
 #include "types.h"
 
 extern const char *const ALPHANUM;
@@ -34,5 +36,23 @@ char *hex32le(u32 value, char str[9]);
 char *hex32be(u32 value, char str[9]);
 
 double atof(const char *s);
+
+// ─── Time ────────────────────────────────────────────────────────────────────
+
+static inline void delay_us(u32 us) {
+    sys_sleep(us);
+}
+
+// ─── RNG ─────────────────────────────────────────────────────────────────────
+
+static inline u32 rand32(void) {
+    return sys_rand();
+}
+static inline u32 rand_below(u32 bound) {
+    return sys_rand() % bound;
+}
+static inline void rng_seed(u32 seed) {
+    sys_rand_seed(seed);
+}
 
 #endif // STDLIB_H

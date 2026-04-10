@@ -4,6 +4,23 @@
 
 #include "libc/builtins.h"
 #include "libc/stdlib.h"
+#include "syscall.h"
+
+void putchar(char c) {
+    sys_write(&c, 1);
+}
+
+char getchar(void) {
+    return sys_getchar();
+}
+
+char getchar_nb(void) {
+    return sys_getchar_nb();
+}
+
+u32 readline(char *buf, u32 max) {
+    return sys_read(buf, max);
+}
 
 int print(const char *p) {
     auto s = p;

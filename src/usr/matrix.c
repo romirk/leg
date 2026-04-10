@@ -2,14 +2,14 @@
 // Created by Romir Kulshrestha on 09/04/2026.
 //
 
-#include "utils.h"
-#include "kernel/tty.h"
-#include "kernel/dev/fb.h"
-#include "kernel/dev/rng.h"
-#include "kernel/dev/rtc.h"
+#include "usr/matrix.h"
 
-#define MATRIX_COLS  FB_COLS
-#define MATRIX_ROWS  FB_ROWS
+#include "libc/display.h"
+#include "libc/stdio.h"
+#include "libc/stdlib.h"
+#include "libc/time.h"
+#include "types.h"
+
 #define TRAIL_LEN    16
 #define BRIGHT_GREEN 0x00CCFFCCu
 #define MED_GREEN    0x0000CC00u
@@ -22,9 +22,9 @@ static struct {
     u32  tick;   // frame counter
     u32  len;    // trail length
     bool active; // whether the drop is on-screen
-} drops[MATRIX_COLS];
+} drops[FB_COLS];
 
-static char grid[MATRIX_COLS][MATRIX_ROWS];
+static char grid[FB_COLS][FB_ROWS];
 
 static char rand_char(void) {
     u32 r = rand_below(63);
@@ -42,6 +42,7 @@ static u32 fade_color(u32 dist) {
     return FB_BLACK;
 }
 
+[[gnu::noinline]]
 static void init_drop(u32 col) {
     drops[col].y = 0;
     drops[col].speed = 1 + rand32() % 3;
@@ -51,21 +52,21 @@ static void init_drop(u32 col) {
 }
 
 void matrix(void) {
-    rng_seed((u32) rtc_ticks());
+    rng_seed((u32) get_ticks());
     fb_clear(FB_BLACK);
 
     // stagger initial drops
-    for (u32 c = 0; c < MATRIX_COLS; c++) {
+    for (u32 c = 0; c < FB_COLS; c++) {
         init_drop(c);
-        drops[c].y = rand32() % MATRIX_ROWS;
+        drops[c].y = rand32() % FB_ROWS;
         drops[c].active = (rand32() % 3) != 0;
-        for (u32 r = 0; r < MATRIX_ROWS; r++)
+        for (u32 r = 0; r < FB_ROWS; r++)
             grid[c][r] = rand_char();
     }
 
     loop {
         // ReSharper disable once CppDFAEndlessLoop
-        for (u32 c = 0; c < MATRIX_COLS; c++) {
+        for (u32 c = 0; c < FB_COLS; c++) {
             if (!drops[c].active) {
                 if ((rand32() % 40) == 0) init_drop(c);
                 continue;
@@ -80,19 +81,19 @@ void matrix(void) {
             u32 head = drops[c].y;
 
             // deactivate once the trail has scrolled fully off-screen
-            if (head > MATRIX_ROWS + drops[c].len) {
+            if (head > FB_ROWS + drops[c].len) {
                 drops[c].active = false;
                 continue;
             }
 
             // mutate a random character somewhere in the trail
-            if (head >= 2 && head <= MATRIX_ROWS) {
+            if (head >= 2 && head <= FB_ROWS) {
                 u32 mr = head - 2 + rand32() % 3;
-                if (mr < MATRIX_ROWS) grid[c][mr] = rand_char();
+                if (mr < FB_ROWS) grid[c][mr] = rand_char();
             }
 
             // draw new char at head
-            if (head < MATRIX_ROWS) {
+            if (head < FB_ROWS) {
                 grid[c][head] = rand_char();
                 fb_putc_at(c, head, grid[c][head], BRIGHT_GREEN, FB_BLACK);
             }
@@ -101,18 +102,18 @@ void matrix(void) {
             for (u32 d = 1; d <= drops[c].len + 4; d++) {
                 if (head < d) break;
                 u32 r = head - d;
-                if (r >= MATRIX_ROWS) continue;
+                if (r >= FB_ROWS) continue;
                 u32 color = fade_color(d);
                 fb_putc_at(c, r, grid[c][r], color, FB_BLACK);
             }
 
             // erase the tail cell
             u32 erase = (head > drops[c].len + 4) ? head - drops[c].len - 4 : 0;
-            if (erase < MATRIX_ROWS && head > drops[c].len + 4)
+            if (erase < FB_ROWS && head > drops[c].len + 4)
                 fb_putc_at(c, erase, ' ', FB_BLACK, FB_BLACK);
         }
 
-        if (getchar_nonblocking() == 'q') break;
+        if (getchar_nb() == 'q') break;
         delay_us(50000);
     }
 }

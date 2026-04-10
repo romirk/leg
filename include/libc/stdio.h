@@ -3,10 +3,14 @@
 
 #include "types.h"
 
-// Provided by the kernel (e.g. UART driver)
 void putchar(char c);
 
 char getchar(void);
+
+char getchar_nb(void);
+
+// Read one line from the TTY into buf (up to max bytes). Blocks until \n. Returns byte count.
+u32 readline(char *buf, u32 max);
 
 int print(const char *);
 
