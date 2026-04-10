@@ -4,7 +4,7 @@
 #define LEG_PROCESS_H
 
 #include "types.h"
-#include "kernel/mem/mmu.h"
+#include "dev/mmu.h"
 
 // User virtual address layout
 #define PROC_STACK_VA_MB 0x001u                          // 1MB at VA 0x00100000

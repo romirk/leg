@@ -2,8 +2,8 @@
 
 #ifndef MEMORY_H
 #define MEMORY_H
+
 #include "types.h"
-#include "kernel/mem/memory.h"
 
 // L1 entry type bits [1:0]
 typedef enum {
@@ -46,9 +46,9 @@ typedef union {
         bool          execute_never : 1;
         u8            domain : 4;
         bool : 1;
-        u8   access_perms : 2; // AP[1:0] — access permission bits
-        u8   type_ext : 3;     // TEX[2:0] — memory type extension
-        bool access_ext : 1;   // APX — makes AP read-only when set
+        u8   ap_low : 2;   // AP[1:0] — access permission bits
+        u8   type_ext : 3; // TEX[2:0] — memory type extension
+        bool ap_high : 1;  // APX — makes AP read-only when set
         bool shareable : 1;
         bool not_global : 1;
         bool supersection : 1; // must be 0 for a regular section
@@ -64,9 +64,9 @@ typedef union {
         bool          execute_never : 1;
         u8            xaddr_39_36 : 4; // extended address bits [39:36]
         bool : 1;
-        u8   access_perms : 2;
+        u8   ap_low : 2;
         u8   type_ext : 3;
-        bool access_ext : 1;
+        bool ap_high : 1;
         bool shareable : 1;
         bool not_global : 1;
         bool supersection : 1; // must be 1
@@ -82,13 +82,13 @@ typedef union {
     l2_descriptor type : 2;
 
     // type == L2_LARGE_PAGE — maps a 64KB page
-    struct [[gnu::packed]] [[gnu::aligned(4)]] {
+    struct [[gnu::packed, gnu::aligned(4)]] {
         l2_descriptor type : 2;
         bool          bufferable : 1;
         bool          cacheable : 1;
-        u8            access_perms : 2;
+        u8            ap_low : 2;
         u8 : 3;
-        bool access_ext : 1;
+        bool ap_high : 1;
         bool shareable : 1;
         bool not_global : 1;
         u8   type_ext : 3;
@@ -97,16 +97,16 @@ typedef union {
     } large_page;
 
     // type == L2_SMALL_PAGE — maps a 4KB page
-    struct [[gnu::packed]] [[gnu::aligned(4)]] {
-        l2_descriptor type : 2;
-        bool          bufferable : 1;
-        bool          cacheable : 1;
-        u8            access_perms : 2;
-        u8            type_ext : 3;
-        bool          access_ext : 1;
-        bool          shareable : 1;
-        bool          not_global : 1;
-        u32           address : 20; // small page base address [31:12]
+    struct [[gnu::packed, gnu::aligned(4)]] {
+        l2_descriptor type : 2;       // Bits [1:0]
+        bool          bufferable : 1; // Bit 2
+        bool          cacheable : 1;  // Bit 3
+        u8            ap_low : 2;     // Bits [5:4]
+        u8            type_ext : 3;   // Bits [8:6]
+        bool          ap_high : 1;    // Bit 9
+        bool          shareable : 1;  // Bit 10
+        bool          not_global : 1; // Bit 11
+        u32           address : 20;   // Bits [31:12]
     } small_page;
 } l2_entry;
 
@@ -115,13 +115,17 @@ typedef l1_entry translation_table[0x1000];
 // L2 translation table
 typedef l2_entry page_table[0x100];
 
+// Table located at TTBR1
+extern translation_table kernel_translation_table;
+
+// Table located at TTBR0
+extern translation_table process_translation_table;
+
 // Configures the MMU and L1 translation table, ID-mapping flash, RAM, and UART address spaces.
 void init_mmu(void *dtb);
 
 // Map a 1MB physical section as identity (VA == PA). Flushes TLB.
 void mmu_map_identity(u32 phys_mb, bool device);
-
-extern translation_table kernel_translation_table;
 
 // Allocate a process L1 table pre-cloned from the kernel table.
 translation_table *mmu_alloc_proc_table(void);

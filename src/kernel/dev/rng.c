@@ -4,11 +4,11 @@
 
 static u32 state = 0xDEADBEEF;
 
-void rng_seed(const u32 seed) {
+void sys_rng_seed(const u32 seed) {
     state = seed ? seed : 0xDEADBEEF;
 }
 
-u32 rand32(void) {
+u32 sys_rand32(void) {
     u32 x = state;
     x ^= x << 13;
     x ^= x >> 17;
@@ -17,14 +17,14 @@ u32 rand32(void) {
     return x;
 }
 
-u32 rand_below(const u32 bound) {
-    return rand32() % bound;
+u32 sys_rand_below(const u32 bound) {
+    return sys_rand32() % bound;
 }
 
 void urandom(void *buf, u32 n) {
     u8 *p = buf;
     while (n >= 4) {
-        const u32 r = rand32();
+        const u32 r = sys_rand32();
         p[0] = (u8) r;
         p[1] = (u8) (r >> 8);
         p[2] = (u8) (r >> 16);
@@ -33,7 +33,7 @@ void urandom(void *buf, u32 n) {
         n -= 4;
     }
     if (n) {
-        u32 r = rand32();
+        u32 r = sys_rand32();
         for (u32 i = 0; i < n; i++) {
             p[i] = (u8) r;
             r >>= 8;

@@ -1,10 +1,10 @@
 // process.c — process creation and execution
 
-#include "kernel/process.h"
-#include "kernel/mem/mmu.h"
-#include "kernel/mem/alloc.h"
-#include "kernel/logs.h"
 #include "kernel/cpu.h"
+#include "kernel/dev/mmu.h"
+#include "kernel/logs.h"
+#include "kernel/mem/alloc.h"
+#include "kernel/process.h"
 #include "utils.h"
 
 static pid_t next_pid = 1;

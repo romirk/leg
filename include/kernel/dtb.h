@@ -5,7 +5,6 @@
 // Spec: https://devicetree-specification.readthedocs.io/en/stable/
 
 #include "types.h"
-#include "bswap.h"
 
 // Allocator interface
 typedef void *(*dtb_alloc_fn)(u32 size);
@@ -17,6 +16,36 @@ typedef void *(*dtb_alloc_fn)(u32 size);
 #ifndef DTB_MAX_PROPS
 #define DTB_MAX_PROPS 1024
 #endif
+
+
+// DTB blob header — always at offset 0 in the DTB
+struct dtb_header {
+    u32 magic;             // must equal DTB_MAGIC
+    u32 totalsize;         // total size of the blob in bytes
+    u32 off_dt_struct;     // offset to structure block
+    u32 off_dt_strings;    // offset to strings block
+    u32 off_mem_rsvmap;    // offset to memory reservation block
+    u32 version;           // format version (current = 17)
+    u32 last_comp_version; // oldest backward-compatible version
+    u32 boot_cpuid_phys;   // physical CPU id of boot CPU
+    u32 size_dt_strings;   // size of strings block
+    u32 size_dt_struct;    // size of structure block
+};
+
+// one reserved memory region entry; list is terminated by a zero entry
+struct dtb_reserve_entry {
+    u64 address;
+    u64 size;
+};
+
+// token values used in the structure block
+enum dtb_token {
+    DTB_BEGIN_NODE = 0x1, // start of a node; followed by NUL-terminated name
+    DTB_END_NODE = 0x2,   // end of a node
+    DTB_PROP = 0x3,       // a property; followed by DTB_prop then data
+    DTB_NOP = 0x4,        // padding/no-op
+    DTB_END = 0x9,        // end of structure block
+};
 
 // Property value types (heuristically decoded or explicit)
 typedef enum : u8 {
@@ -32,7 +61,7 @@ typedef enum : u8 {
 // A parsed property
 typedef struct dtb_prop {
     const char    *name; // pointer into string block
-    const u8      *data; // pointer into raw FDT blob
+    const u8      *data; // pointer into raw DTB blob
     u32            len;  // byte length of data
     dtb_val_type_t type; // decoded type hint
 } dtb_prop_t;
@@ -72,8 +101,8 @@ typedef struct {
 typedef enum : int {
     DTB_OK = 0,
     DTB_ERR_NULL = -1,      // null pointer
-    DTB_ERR_MAGIC = -2,     // bad FDT magic
-    DTB_ERR_VERSION = -3,   // unsupported FDT version
+    DTB_ERR_MAGIC = -2,     // bad DTB magic
+    DTB_ERR_VERSION = -3,   // unsupported DTB version
     DTB_ERR_TRUNCATED = -4, // blob smaller than reported
     DTB_ERR_NOMEM = -5,     // allocator returned NULL
     DTB_ERR_OVERFLOW = -6,  // exceeded DTB_MAX_* limit
@@ -82,7 +111,7 @@ typedef enum : int {
 
 // API
 
-// Parse a raw FDT blob.  `blob` must remain valid for the lifetime of `tree`.
+// Parse a raw DTB blob.  `blob` must remain valid for the lifetime of `tree`.
 // All allocations go through `alloc` (e.g. early_malloc).
 dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_fn alloc);
 

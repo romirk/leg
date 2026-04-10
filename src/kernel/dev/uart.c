@@ -1,6 +1,5 @@
 #include "kernel/dev/uart.h"
 #include "kernel/tty.h"
-#include "types.h"
 
 static void wait_tx_complete() {
     while (*UARTFR & FR_BUSY)
@@ -77,6 +76,13 @@ char uart_getchar(void) {
     while (*UARTFR & (1 << 4))
         ; // RXFE: 1 = FIFO empty
     return (char) (*UARTDR & 0xFF);
+}
+int uart_puts(const char *s) {
+    char *p = s;
+    while (*p) {
+        uart_putchar(*p++);
+    }
+    return p - s;
 }
 
 void uart_irq_handler(void) {

@@ -5,6 +5,7 @@
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
+#include "kernel/dev/virtio.h"
 #include "types.h"
 #include "utils.h"
 
@@ -34,7 +35,7 @@ void handle_irq(void) {
     } else if (id == UART_IRQ) {
         uart_irq_handler();
     } else if (kbd_irq && id == kbd_irq) {
-        kbd_virtio_irq_handler();
+        virtio_irq_handler();
     }
 
     GICC_EOIR = id;

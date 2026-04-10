@@ -16,12 +16,12 @@
 #define DIM_GREEN    0x00006600u
 #define FAINT_GREEN  0x00003300u
 
-static struct {
-    u32  y;      // current head row
+static struct _d {
+    u8  y;      // current head row
+    u8  len;    // trail length
+    bool active; // whether the drop is on-screen
     u32  speed;  // frames between advances
     u32  tick;   // frame counter
-    u32  len;    // trail length
-    bool active; // whether the drop is on-screen
 } drops[FB_COLS];
 
 static char grid[FB_COLS][FB_ROWS];
@@ -42,7 +42,6 @@ static u32 fade_color(u32 dist) {
     return FB_BLACK;
 }
 
-[[gnu::noinline]]
 static void init_drop(u32 col) {
     drops[col].y = 0;
     drops[col].speed = 1 + rand32() % 3;
@@ -51,10 +50,7 @@ static void init_drop(u32 col) {
     drops[col].active = true;
 }
 
-void matrix(void) {
-    rng_seed((u32) get_ticks());
-    fb_clear(FB_BLACK);
-
+static void init_drops(void) {
     // stagger initial drops
     for (u32 c = 0; c < FB_COLS; c++) {
         init_drop(c);
@@ -63,6 +59,12 @@ void matrix(void) {
         for (u32 r = 0; r < FB_ROWS; r++)
             grid[c][r] = rand_char();
     }
+}
+void matrix(void) {
+    rng_seed((u32) get_ticks());
+    fb_clear(FB_BLACK);
+
+    init_drops();
 
     loop {
         // ReSharper disable once CppDFAEndlessLoop

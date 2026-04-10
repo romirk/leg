@@ -1,28 +1,31 @@
 #include "kernel/kmain.h"
 
-#include "kernel/mem/bump.h"
-#include "kernel/logs.h"
-#include "kernel/mem/alloc.h"
-#include "utils.h"
-#include "bswap.h"
-
-#include "kernel/exceptions.h"
 #include "kernel/dev/fb.h"
 #include "kernel/dev/fwcfg.h"
 #include "kernel/dev/gic.h"
-#include "main.h"
-#include "kernel/process.h"
 #include "kernel/dev/kbd.h"
-#include "kernel/dev/uart.h"
 #include "kernel/dev/rng.h"
-#include "kernel/fdt.h"
+#include "kernel/dev/uart.h"
+#include "kernel/dev/virtio.h"
 #include "kernel/dtb.h"
+#include "kernel/exceptions.h"
+#include "kernel/logs.h"
+#include "kernel/mem/alloc.h"
+#include "kernel/mem/bump.h"
+#include "kernel/process.h"
+#include "libc/bswap.h"
+
+#include "main.h"
+#include "types.h"
+#include "utils.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 
 [[noreturn, gnu::used]]
 void kmain(void *dtb) {
-    auto  header = (struct fdt_header *) dtb;
+    uart_puts("kernel: booting...\n");
+
+    auto  header = (struct dtb_header *) dtb;
     u32   dtb_size = bswap32(header->totalsize);
     void *heap_base = align((u8 *) dtb + dtb_size, 16);
     early_malloc_init(heap_base, EARLY_HEAP_SIZE);
@@ -41,7 +44,7 @@ void kmain(void *dtb) {
             u32 seed = 0;
             for (u32 i = 0; i + 4 <= seed_prop->len; i += 4)
                 seed ^= be32_read(seed_prop->data + i);
-            rng_seed(seed);
+            sys_rng_seed(seed);
         }
     }
 

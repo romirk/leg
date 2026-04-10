@@ -1,11 +1,11 @@
 // fw-cfg — QEMU firmware configuration interface (MMIO)
 
 #include "kernel/dev/fwcfg.h"
-#include "kernel/mem/mmu.h"
+#include "kernel/dev/memory.h"
+#include "kernel/dev/mmu.h"
 #include "kernel/logs.h"
+#include "libc/bswap.h"
 #include "libc/string.h"
-#include "bswap.h"
-#include "utils.h"
 
 static void fwcfg_select(u16 sel) {
     // QEMU applies DEVICE_BIG_ENDIAN (bswap on LE guests),
@@ -54,12 +54,13 @@ void fwcfg_dma_write(u16 selector, const void *buf, u32 len) {
         asm volatile("dmb");
 }
 
+[[gnu::noinline]]
 void fwcfg_init(void) {
     fwcfg_select(FWCFG_SIG_SEL);
     char sig[4];
     fwcfg_read(sig, 4);
     if (sig[0] != 'Q' || sig[1] != 'E' || sig[2] != 'M' || sig[3] != 'U')
-        panic("fw-cfg: bad signature");
+        err("fw-cfg: bad signature");
     dbg("fw-cfg OK");
 }
 

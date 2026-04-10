@@ -3,8 +3,8 @@
 #ifndef UART_H
 #define UART_H
 
-#define UART0_PHYSICAL 0x09000000
-#define UART0_BASE     UART0_PHYSICAL
+#include "memory.h"
+
 #define UART_REG(off)  (volatile u32 *) (UART0_BASE + (off))
 
 // GIC interrupt ID: SPI 1 → GIC ID 33
@@ -52,5 +52,7 @@ void uart_irq_handler(void);
 
 void uart_putchar(char c);
 char uart_getchar(void);
+
+int uart_puts(const char *s);
 
 #endif // UART_H

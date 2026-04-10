@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-#define RTC_BASE 0x09010000
+
 
 u64 rtc_ticks(void);
 

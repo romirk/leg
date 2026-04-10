@@ -2,10 +2,13 @@
 // C23, clang/GCC extensions, no libc dependency
 
 #include "kernel/dtb.h"
-#include "kernel/fdt.h"
+
+#include "libc/bswap.h"
 #include "libc/builtins.h"
 #include "libc/stdio.h"
 #include "libc/string.h"
+
+#define DTB_MAGIC 0xd00dfeed
 
 // internal state threaded through the recursive descent parser
 typedef struct {
@@ -82,7 +85,7 @@ static dtb_val_type_t guess_type(const char *name, const u8 *data, u32 len) {
 
 // Recursive descent parser
 static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_node_t **out_node) {
-    // cur points past FDT_BEGIN_NODE token — read NUL-terminated name
+    // cur points past DTB_BEGIN_NODE token — read NUL-terminated name
     const auto name = (const char *) cur;
     const u32  name_offset = (u32) cur - (u32) p->struct_block;
     u32        name_len = 0;
@@ -110,13 +113,13 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
             if (!in_struct(p, scan, 4)) break;
             const u32 tok = be32_read(scan);
             scan += 4;
-            if (tok == FDT_NOP) continue;
-            if (tok == FDT_END_NODE) {
+            if (tok == DTB_NOP) continue;
+            if (tok == DTB_END_NODE) {
                 if (depth == 0) break;
                 --depth;
                 continue;
             }
-            if (tok == FDT_BEGIN_NODE) {
+            if (tok == DTB_BEGIN_NODE) {
                 ++depth;
                 while (in_struct(p, scan, 1) && *scan != 0)
                     ++scan;
@@ -125,7 +128,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                 scan = p->struct_block + ((off + 3) & ~(u32) 3);
                 continue;
             }
-            if (tok == FDT_PROP) {
+            if (tok == DTB_PROP) {
                 if (!in_struct(p, scan, 8)) break;
                 u32 plen = be32_read(scan);
                 scan += 8;
@@ -134,7 +137,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                 if (depth == 0) ++prop_count;
                 continue;
             }
-            if (tok == FDT_END) break;
+            if (tok == DTB_END) break;
         }
     }
 
@@ -152,13 +155,13 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
         const u32 tok = be32_read(cur);
         cur += 4;
 
-        if (tok == FDT_NOP) {
+        if (tok == DTB_NOP) {
             continue;
         }
-        if (tok == FDT_END_NODE) {
+        if (tok == DTB_END_NODE) {
             break;
         }
-        if (tok == FDT_PROP) {
+        if (tok == DTB_PROP) {
             if (!in_struct(p, cur, 8)) return nullptr;
             const u32 plen = be32_read(cur);
             const u32 nameoff = be32_read(cur + 4);
@@ -184,7 +187,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
             else if ((strcmp(pname, "phandle") == 0 || strcmp(pname, "linux,phandle") == 0) &&
                      plen == 4)
                 node->phandle = be32_read(pdata);
-        } else if (tok == FDT_BEGIN_NODE) {
+        } else if (tok == DTB_BEGIN_NODE) {
             dtb_node_t *child = nullptr;
             cur = parse_node(p, cur, node, &child);
             if (!cur) return nullptr;
@@ -196,7 +199,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                     sib = sib->next_sibling;
                 sib->next_sibling = child;
             }
-        } else if (tok == FDT_END) {
+        } else if (tok == DTB_END) {
             break;
         }
     }
@@ -240,9 +243,9 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_
 
     const u8 *raw = blob;
 
-    if (blob_len < sizeof(struct fdt_header)) return DTB_ERR_TRUNCATED;
+    if (blob_len < sizeof(struct dtb_header)) return DTB_ERR_TRUNCATED;
 
-    if (be32_read(raw) != FDT_MAGIC) return DTB_ERR_MAGIC;
+    if (be32_read(raw) != DTB_MAGIC) return DTB_ERR_MAGIC;
 
     u32 totalsize = be32_read(raw + 4);
     u32 off_struct = be32_read(raw + 8);
@@ -280,11 +283,11 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_
     while (true) {
         if (!in_struct(&p, cur, 4)) return DTB_ERR_CORRUPT;
         u32 tok = be32_read(cur);
-        if (tok == FDT_NOP) {
+        if (tok == DTB_NOP) {
             cur += 4;
             continue;
         }
-        if (tok == FDT_BEGIN_NODE) {
+        if (tok == DTB_BEGIN_NODE) {
             cur += 4;
             break;
         }

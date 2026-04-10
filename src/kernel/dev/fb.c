@@ -1,12 +1,12 @@
 // fb.c — ramfb framebuffer driver + 8x8 text console
 
 #include "kernel/dev/fb.h"
-#include "kernel/dev/fwcfg.h"
-#include "kernel/mem/mmu.h"
-#include "kernel/mem/alloc.h"
-#include "kernel/logs.h"
-#include "bswap.h"
 #include "kernel/dev/fonts.h"
+#include "kernel/dev/fwcfg.h"
+#include "kernel/dev/mmu.h"
+#include "kernel/logs.h"
+#include "kernel/mem/alloc.h"
+#include "libc/bswap.h"
 
 // ramfb configuration written to fw-cfg "etc/ramfb" — all fields big-endian
 struct [[gnu::packed]] ramfb_cfg {

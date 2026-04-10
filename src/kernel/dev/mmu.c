@@ -1,105 +1,126 @@
-#include "kernel/mem/mmu.h"
+#include "kernel/dev/mmu.h"
 #include "kernel/cpu.h"
 #include "kernel/linker.h"
-#include "utils.h"
+#include "kernel/dev/memory.h"
 
-#define MB_SHIFT 20
-
-[[gnu::section(".tt")]] [[gnu::aligned(0x4000)]]
-translation_table kernel_translation_table;
-
-[[gnu::section(".tt")]]
-page_table kernel_page_table;
-
-[[gnu::section(".tt")]]
-page_table peripheral_page_table;
-
-[[gnu::section(".tt")]]
-page_table process_page_tables[8];
-
+#define MB_SHIFT  20
 #define MAX_PROCS 4
 
-[[gnu::section(".tt")]] [[gnu::aligned(0x4000)]]
+[[gnu::section(".tt"), gnu::aligned(0x4000)]]
+translation_table kernel_translation_table;
+
+[[gnu::section(".tt"), gnu::aligned(0x400)]]
+page_table devices_page_table;
+
+[[gnu::section(".tt"), gnu::aligned(0x4000)]]
 static translation_table proc_tables[MAX_PROCS];
 static bool              proc_table_used[MAX_PROCS];
 
 // offset of a kernel virtual symbol within the kernel image
 #define KRN_OFFSET(sym) ((u32) (sym) - (u32) kernel_main_beg)
+#define L2_IDX(virt)    (((virt) >> 12) & 0xFF)
+// Helper macro for L2 Small Page entries
+#define MAKE_L2_DEVICE(phys)                                                                       \
+    (l2_entry) {                                                                                   \
+        .small_page = {                                                                            \
+            .type = L2_SMALL_PAGE,                                                                 \
+            .address = (phys) >> 12,                                                               \
+            .ap_low = 0b10,                                                                        \
+            .type_ext = 0b000,                                                                     \
+            .bufferable = true,                                                                    \
+            .cacheable = false,                                                                    \
+        }                                                                                          \
+    }
 
 [[gnu::section(".startup.mmu")]]
 static void map_sections(void *dtb) {
-    const u32  kphys = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
-    const auto table = (l1_entry *) (kphys + KRN_OFFSET(kernel_translation_table));
+    const u32 kphys = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
 
-    // kernel section (flash) — identity map ROM so kboot can continue
+    const auto table = (l1_entry *) (kphys + KRN_OFFSET(kernel_translation_table));
+    const auto device_table = (l2_entry *) (kphys + KRN_OFFSET(devices_page_table));
+    const uptr devices_pt_phys = (uptr) &devices_page_table - KERNEL_VA + kphys;
+
+    table[DEVICE_VIRT_BLOCK >> MB_SHIFT] =
+        (l1_entry) {.page_table = {
+                        .type = L1_PAGE_TABLE,
+                        .address = devices_pt_phys >> 10, // Base address bits [31:10]
+                        .domain = 0,
+                    }};
+
+    l2_entry device_entry_template = {.small_page = {
+                                          .type = L2_XN_PAGE, // 0b11: Small Page + Execute Never
+                                          .bufferable = true,
+                                          .cacheable = false,
+                                          .ap_low = 0b10, // Privileged Read/Write
+                                      }};
+
+    // UART
+    device_entry_template.small_page.address = UART0_PHYSICAL >> 12;
+    device_table[L2_IDX(UART0_BASE)] = device_entry_template;
+
+    // GIC Distributor
+    device_entry_template.small_page.address = GICD_PHYSICAL >> 12;
+    device_table[L2_IDX(GICD_BASE)] = device_entry_template;
+
+    // GIC CPU Interface
+    device_entry_template.small_page.address = GICC_PHYSICAL >> 12;
+    device_table[L2_IDX(GICC_BASE)] = device_entry_template;
+
+    // RTC
+    device_entry_template.small_page.address = RTC_PHYSICAL >> 12;
+    device_table[L2_IDX(RTC_BASE)] = device_entry_template;
+
+    // FWCFG
+    device_entry_template.small_page.address = FWCFG_PHYSICAL >> 12;
+    device_table[L2_IDX(FWCFG_BASE)] = device_entry_template;
+
+    // Map 16KB of VirtIO MMIO space (4 consecutive 4KB pages)
+    for (int i = 0; i < 4; i++) {
+        uptr v_addr = VIRTIO_MMIO_BASE + (i * 0x1000);
+        uptr p_addr = VIRTIO_MMIO_PHYSICAL + (i * 0x1000);
+
+        device_entry_template.small_page.address = p_addr >> 12;
+        device_table[L2_IDX(v_addr)] = device_entry_template;
+    }
+
+    // Identity map ROM (first 1MB)
     table[0x000] = (l1_entry) {.section = {
                                    .type = L1_SECTION,
                                    .address = 0x000,
-                                   .access_perms = 0b10,
+                                   .ap_low = 0b10,
                                    .type_ext = 0b001,
                                    .bufferable = true,
                                    .cacheable = true,
                                }};
 
-    // kernel section (virtual 0xC00 → physical kphys)
-    table[(u32) kernel_main_beg >> MB_SHIFT] = (l1_entry) {.section = {
-                                                               .type = L1_SECTION,
-                                                               .address = kphys >> MB_SHIFT,
-                                                               .access_perms = 0b10,
-                                                               .type_ext = 0b001,
-                                                               .bufferable = true,
-                                                               .cacheable = true,
-                                                           }};
-
-    // UART
-    table[0x090] = (l1_entry) {.section = {
-                                   .type = L1_SECTION,
-                                   .address = 0x090,
-                                   .access_perms = 0b10,
-                                   .type_ext = 0b000,
-                                   .bufferable = true,
-                                   .cacheable = false,
-                               }};
-
-    // GIC
-    table[0x080] = (l1_entry) {.section = {
-                                   .type = L1_SECTION,
-                                   .address = 0x080,
-                                   .access_perms = 0b10,
-                                   .type_ext = 0b000,
-                                   .bufferable = true,
-                                   .cacheable = false,
-                               }};
-
+    // Kernel High-Half Mapping
+    table[KERNEL_VA >> MB_SHIFT] = (l1_entry) {.section = {
+                                                   .type = L1_SECTION,
+                                                   .address = kphys >> MB_SHIFT,
+                                                   .ap_low = 0b10,
+                                                   .type_ext = 0b001,
+                                                   .bufferable = true,
+                                                   .cacheable = true,
+                                               }};
     // DTB / early RAM — identity-map 4MB from DTB base
     const u32 dtb_section = (u32) dtb >> MB_SHIFT;
     for (u32 i = 0; i < 4; ++i) {
         table[dtb_section + i] = (l1_entry) {.section = {
                                                  .type = L1_SECTION,
                                                  .address = dtb_section + i,
-                                                 .access_perms = 0b10,
+                                                 .ap_low = 0b10,
                                                  .type_ext = 0b001,
                                                  .bufferable = true,
                                                  .cacheable = true,
                                              }};
     }
-
-    // VirtIO MMIO (0x0a000000–0x0a0FFFFF)
-    table[0x0a0] = (l1_entry) {.section = {
-                                   .type = L1_SECTION,
-                                   .address = 0x0a0,
-                                   .access_perms = 0b10,
-                                   .type_ext = 0b000,
-                                   .bufferable = true,
-                                   .cacheable = false,
-                               }};
 }
 
 void mmu_map_identity(u32 phys_mb, bool device) {
     kernel_translation_table[phys_mb] = (l1_entry) {.section = {
                                                         .type = L1_SECTION,
                                                         .address = phys_mb,
-                                                        .access_perms = 0b10,
+                                                        .ap_low = 0b10,
                                                         .type_ext = device ? 0b000 : 0b001,
                                                         .bufferable = true,
                                                         .cacheable = !device,
@@ -134,7 +155,7 @@ void mmu_map_section(translation_table *tt, u32 va_mb, u32 pa_mb, bool device) {
     (*tt)[va_mb] = (l1_entry) {.section = {
                                    .type = L1_SECTION,
                                    .address = pa_mb,
-                                   .access_perms = 0b11, // RW kernel+user
+                                   .ap_low = 0b11, // RW kernel+user
                                    .type_ext = device ? 0b000 : 0b001,
                                    .bufferable = true,
                                    .cacheable = !device,

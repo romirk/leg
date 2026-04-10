@@ -1,7 +1,8 @@
 #include "kernel/boot.h"
 
+#include "kernel/dev/memory.h"
+#include "kernel/dev/mmu.h"
 #include "kernel/linker.h"
-#include "kernel/mem/mmu.h"
 #include "types.h"
 
 [[gnu::section(".startup.boot")]] [[noreturn]]

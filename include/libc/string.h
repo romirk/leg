@@ -1,6 +1,7 @@
 #ifndef STRING_H
 #define STRING_H
-#include <stddef.h>
+
+#include "types.h"
 
 #define TOKEN_CONCAT_INT(x, y) x##y
 #define TOKEN_CONCAT(x, y)     TOKEN_CONCAT_INT(x, y)

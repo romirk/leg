@@ -91,12 +91,12 @@ static u32 svc_fb_putc(u32 r0, u32 r1, u32 r2, u32 r3) {
 
 static u32 svc_rand([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
                     [[maybe_unused]] u32 r3) {
-    return rand32();
+    return sys_rand32();
 }
 
 static u32 svc_rand_seed(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
                          [[maybe_unused]] u32 r3) {
-    rng_seed(r0);
+    sys_rng_seed(r0);
     return 0;
 }
 

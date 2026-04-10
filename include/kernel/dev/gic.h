@@ -1,10 +1,8 @@
 #ifndef GIC_H
 #define GIC_H
-#include "types.h"
 
-// GIC base addresses (ARM virt machine)
-#define GICD_BASE 0x08000000u
-#define GICC_BASE 0x08010000u
+#include "types.h"
+#include "memory.h"
 
 #define GICD_CTLR          (*(volatile u32 *) (GICD_BASE + 0x000))
 #define GICD_ISENABLER(n)  (*(volatile u32 *) (GICD_BASE + 0x100 + ((n) * 4)))
