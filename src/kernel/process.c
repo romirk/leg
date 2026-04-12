@@ -2,7 +2,6 @@
 
 #include "kernel/cpu.h"
 #include "kernel/dev/mmu.h"
-#include "kernel/dev/uart.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
 #include "kernel/process.h"
@@ -78,20 +77,7 @@ void process_exit([[maybe_unused]] struct process *p, [[maybe_unused]] const int
     poweroff();
 }
 
-static u32 sched_tick_count = 0;
-
-void sched_tick(void) {
-    if (!current_proc) return;
-    sched_tick_count++;
-    if (sched_tick_count == 10) {
-        uart_puts("sched: suspending\n");
-        current_proc->suspended = 1;
-    } else if (sched_tick_count == 20) {
-        uart_puts("sched: resuming\n");
-        current_proc->suspended = 0;
-        sched_tick_count = 0;
-    }
-}
+void sched_tick(void) {}
 
 [[gnu::naked]]
 void sys_exit_stub(void) {
@@ -119,7 +105,7 @@ void process_exec(struct process *p) {
                  "mov lr, %2       \n\t" // entry point into lr_svc
                  "movs pc, lr      \n\t" // Mode switch (PC=lr, CPSR=SPSR)
                  :
-                 : "r"(p->sp), "r"(sys_exit_stub), "r"((u32) PROC_CODE_VA)
+                 : "r"(p->sp), "r"(sys_exit_stub), "r"(PROC_CODE_VA)
                  : "memory");
 
     __builtin_unreachable();

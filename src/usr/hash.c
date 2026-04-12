@@ -41,6 +41,16 @@ static bool cmd_clear([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     return true;
 }
 
+static bool cmd_sleep(int argc, char **argv) {
+    if (argc < 2) {
+        printf("usage: sleep <s>\n");
+        return true;
+    }
+    u32 us = (u32)(atof(argv[1]) * 1000000.0);
+    sys_sleep(us);
+    return true;
+}
+
 static bool cmd_brot(int argc, char **argv) {
     double min_re, min_im, max_re, max_im;
 
@@ -74,8 +84,8 @@ static bool cmd_brot(int argc, char **argv) {
 }
 
 static const Command commands[] = {
-    {"exit", cmd_exit},   {"echo", cmd_echo}, {"matrix", cmd_matrix},
-    {"clear", cmd_clear}, {"brot", cmd_brot},
+    {"exit", cmd_exit},   {"echo", cmd_echo},   {"matrix", cmd_matrix},
+    {"clear", cmd_clear}, {"brot", cmd_brot},   {"sleep", cmd_sleep},
 };
 
 void hash_run(void) {
