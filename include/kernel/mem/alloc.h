@@ -33,13 +33,17 @@ typedef struct {
 
 // Initialize from DTB /memory node. reserved_end is the first usable byte after
 // all early-boot reservations (DTB blob, bump heap, etc.).
-void mm_init(uptr dtb_mem_base, u64 dtb_mem_size, uptr reserved_end);
+void mm_init(uptr mem_base, u64 mem_size, uptr reserved_end);
 
 // Allocate one 4KB physical page. Returns PA or 0 on OOM.
 uptr mm_page_alloc(void);
 
 // Allocate n contiguous physical pages. Returns base PA or 0 on OOM.
 uptr mm_page_alloc_n(u32 n);
+
+// Allocate n contiguous pages whose PA base is a multiple of align_pages pages.
+// Required for ARM 1 MB section descriptors: n = align_pages = 256 (1 MB / 4 KB).
+uptr mm_page_alloc_aligned(u32 n, u32 align_pages);
 
 // Free a single physical page. Returns MM_ERR_ALIGN/RANGE if invalid.
 mm_err_t mm_page_free(uptr pa);
@@ -53,6 +57,8 @@ void mm_stats(mm_stats_t *out);
 
 // General-purpose kernel heap. Always 8-byte aligned; returns NULL on failure.
 void *kmalloc(size_t size);
+void *kmalloc_aligned(size_t size, size_t alignment);
+
 // Like kmalloc but zero-initializes the returned block.
 void *kzalloc(size_t size);
 // Free a block previously returned by kmalloc/kzalloc/krealloc.

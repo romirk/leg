@@ -11,6 +11,7 @@
 #define KHEAP_ALIGN      8u
 #define KHEAP_MAGIC_FREE 0xCAFEu
 #define KHEAP_MAGIC_USED 0xBEEFu
+#define ALIGN_TAG        0xA11Fu
 
 // bitmap: 1 bit per page, 1 = allocated/reserved, 0 = free
 typedef u32 bm_word_t;
@@ -46,6 +47,11 @@ typedef struct {
     u32        reserved_pages;
     u32        next_hint; // roving start index for O(1) amortised alloc
 } phys_mm_t;
+
+typedef struct {
+    void *raw;
+    u32   tag;
+} align_meta_t;
 
 static phys_mm_t g_pmm;   // global physical memory manager
 static kheap_t   g_kheap; // global kernel heap
@@ -125,7 +131,7 @@ static void reserve_range(uptr base, uptr end) {
 }
 
 static kheap_hdr_t *hdr_of(void *ptr) {
-    return (kheap_hdr_t *) ((uptr *) ptr - HDR_SIZE);
+    return (kheap_hdr_t *) ((u8 *) ptr - HDR_SIZE);
 }
 
 static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
@@ -135,12 +141,12 @@ static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
     return h->magic == expected_magic;
 }
 
-void mm_init(const uptr dtb_mem_base, const u64 dtb_mem_size, const uptr reserved_end) {
-    ASSERT(dtb_mem_size > 0, "mm_init: no RAM info from DTB");
+void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end) {
+    ASSERT(mem_size > 0, "mm_init: no RAM info from DTB");
 
     // clamp to 32-bit PA space (ARMv7a)
-    const u64 end64 = (u64) dtb_mem_base + dtb_mem_size;
-    uptr      ram_base = dtb_mem_base;
+    const u64 end64 = (u64) mem_base + mem_size;
+    uptr      ram_base = mem_base;
     uptr      ram_end = (end64 > U32_MAX) ? U32_MAX & PAGE_MASK : (uptr) end64;
     ram_base = align_up(ram_base, PAGE_SIZE);
     ram_end = align_down(ram_end, PAGE_SIZE);
@@ -202,6 +208,34 @@ uptr mm_page_alloc_n(const u32 n) {
     return idx_to_pa(idx);
 }
 
+uptr mm_page_alloc_aligned(const u32 n, const u32 align_pages) {
+    if (n == 0 || align_pages == 0) return 0;
+    if (g_pmm.free_pages < n) return 0;
+
+    // Round up hint to the next aligned candidate.
+    const u32 hint_aligned = div_round_up(g_pmm.next_hint, align_pages) * align_pages;
+
+    // Two passes: from hint_aligned to end, then from 0 to hint_aligned.
+    for (u32 pass = 0; pass < 2; ++pass) {
+        const u32 start = (pass == 0) ? hint_aligned : 0;
+        const u32 end   = (pass == 0) ? g_pmm.total_pages : hint_aligned;
+
+        for (u32 idx = start; idx + n <= end; idx += align_pages) {
+            bool ok = true;
+            for (u32 i = 0; i < n; ++i) {
+                if (bm_test(g_pmm.bitmap, idx + i)) { ok = false; break; }
+            }
+            if (!ok) continue;
+            for (u32 i = 0; i < n; ++i)
+                bm_set(g_pmm.bitmap, idx + i);
+            g_pmm.free_pages -= n;
+            g_pmm.next_hint = (idx + n) % g_pmm.total_pages;
+            return idx_to_pa(idx);
+        }
+    }
+    return 0;
+}
+
 mm_err_t mm_page_free(const uptr pa) {
     if (!pa_aligned(pa)) return MM_ERR_ALIGN;
     if (!pa_in_range(pa)) return MM_ERR_RANGE;
@@ -260,7 +294,6 @@ void *kmalloc(size_t size) {
                 split->size = cur->size - size - HDR_SIZE;
                 split->next_free = cur->next_free;
                 cur->size = size;
-                cur->next_free = split;
                 if (prev)
                     prev->next_free = split;
                 else
@@ -282,15 +315,49 @@ void *kmalloc(size_t size) {
     return nullptr;
 }
 
+void *kmalloc_aligned(size_t size, size_t alignment) {
+    if (!size || !alignment || (alignment & (alignment - 1u))) return nullptr;
+
+    if (alignment < KHEAP_ALIGN) alignment = KHEAP_ALIGN;
+
+    // Extra space:
+    // - alignment padding
+    // - space to store original pointer
+    size_t total = size + alignment + sizeof(align_meta_t);
+
+    void *raw = kmalloc(total);
+    if (!raw) return nullptr;
+
+    uptr raw_addr = (uptr) raw;
+
+    // Align AFTER space for storing pointer
+    uptr aligned = align_up(raw_addr + sizeof(align_meta_t), alignment);
+
+    align_meta_t *meta = (align_meta_t *) (aligned - sizeof(align_meta_t));
+    meta->raw = raw;
+    meta->tag = ALIGN_TAG;
+
+    return (void *) aligned;
+}
+
 void *kzalloc(const size_t size) {
     void *p = kmalloc(size);
     if (p) memset(p, 0, size);
     return p;
 }
-
 void kfree(void *ptr) {
     if (!ptr) return;
 
+    align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
+    const uptr heap_base = (uptr) g_kheap.base;
+
+    if (meta->tag == ALIGN_TAG &&
+        (uptr) meta->raw >= heap_base &&
+        (uptr) meta->raw < heap_base + g_kheap.capacity) {
+        ptr = meta->raw;
+    }
+
+    // normal free path
     kheap_hdr_t *h = hdr_of(ptr);
     ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "kfree: invalid or double-free");
 
@@ -315,6 +382,7 @@ void kfree(void *ptr) {
     if (h->next_free) {
         kheap_hdr_t *next = h->next_free;
         const u8    *expected_next = (u8 *) h + HDR_SIZE + h->size;
+
         if ((u8 *) next == expected_next && next->magic == KHEAP_MAGIC_FREE) {
             h->size += HDR_SIZE + next->size;
             h->next_free = next->next_free;
@@ -325,6 +393,7 @@ void kfree(void *ptr) {
     // coalesce with previous
     if (prev) {
         const u8 *expected_h = (u8 *) prev + HDR_SIZE + prev->size;
+
         if ((u8 *) h == expected_h && prev->magic == KHEAP_MAGIC_FREE) {
             prev->size += HDR_SIZE + h->size;
             prev->next_free = h->next_free;
@@ -340,7 +409,17 @@ void *krealloc(void *ptr, const size_t size) {
         return nullptr;
     }
 
-    const kheap_hdr_t *h = hdr_of(ptr);
+    // resolve aligned allocation to its raw pointer before touching the header
+    align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
+    const uptr    heap_base = (uptr) g_kheap.base;
+    void         *raw = ptr;
+    if (meta->tag == ALIGN_TAG &&
+        (uptr) meta->raw >= heap_base &&
+        (uptr) meta->raw < heap_base + g_kheap.capacity) {
+        raw = meta->raw;
+    }
+
+    const kheap_hdr_t *h = hdr_of(raw);
     ASSERT(hdr_valid(h, KHEAP_MAGIC_USED), "krealloc: invalid pointer");
 
     const size_t rounded = (size + KHEAP_ALIGN - 1u) & ~(KHEAP_ALIGN - 1u);

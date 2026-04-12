@@ -1,20 +1,18 @@
 #include "kernel/dev/mmu.h"
 #include "kernel/cpu.h"
 #include "kernel/linker.h"
+#include "kernel/process.h"
 #include "kernel/dev/memory.h"
+#include "kernel/mem/alloc.h"
+#include "libc/builtins.h"
 
-#define MB_SHIFT  20
-#define MAX_PROCS 4
+#define MB_SHIFT 20
 
 [[gnu::section(".tt"), gnu::aligned(0x4000)]]
 translation_table kernel_translation_table;
 
 [[gnu::section(".tt"), gnu::aligned(0x400)]]
 page_table devices_page_table;
-
-[[gnu::section(".tt"), gnu::aligned(0x4000)]]
-static translation_table proc_tables[MAX_PROCS];
-static bool              proc_table_used[MAX_PROCS];
 
 // offset of a kernel virtual symbol within the kernel image
 #define KRN_OFFSET(sym) ((u32) (sym) - (u32) kernel_main_beg)
@@ -125,44 +123,35 @@ void mmu_map_identity(u32 phys_mb, bool device) {
                                                         .bufferable = true,
                                                         .cacheable = !device,
                                                     }};
-    asm volatile("mcr p15, 0, %0, c8, c7, 0\n\t" // invalidate TLB
-                 "dsb\n\tisb" ::"r"(0));
+    const uptr entry_va = (uptr) &kernel_translation_table[phys_mb];
+    asm volatile("mcr p15, 0, %0, c7, c10, 1\n\t" // DCCMVAC: clean D-cache entry to PoC
+                 "dsb\n\t"
+                 "mcr p15, 0, %0, c8, c7,  0\n\t" // TLBIALL: invalidate unified TLB
+                 "dsb\n\tisb" ::"r"(entry_va));
 }
 
-translation_table *mmu_alloc_proc_table(void) {
-    for (u32 i = 0; i < MAX_PROCS; i++) {
-        if (!proc_table_used[i]) {
-            proc_table_used[i] = true;
-            // clone kernel mappings into process table
-            for (u32 j = 0; j < 0x1000; j++)
-                proc_tables[i][j] = kernel_translation_table[j];
-            return &proc_tables[i];
-        }
-    }
-    return nullptr;
+l1_entry *mmu_alloc_proc_table(void) {
+    l1_entry *tt = kmalloc_aligned(PROC_TABLE_SIZE, PROC_TABLE_ALIGN);
+    if (tt) memset(tt, 0, PROC_TABLE_SIZE);
+    return tt;
 }
 
-void mmu_free_proc_table(translation_table *tt) {
-    for (u32 i = 0; i < MAX_PROCS; i++) {
-        if (&proc_tables[i] == tt) {
-            proc_table_used[i] = false;
-            return;
-        }
-    }
+void mmu_free_proc_table(l1_entry *tt) {
+    kfree(tt);
 }
 
-void mmu_map_section(translation_table *tt, u32 va_mb, u32 pa_mb, bool device) {
-    (*tt)[va_mb] = (l1_entry) {.section = {
-                                   .type = L1_SECTION,
-                                   .address = pa_mb,
-                                   .ap_low = 0b11, // RW kernel+user
-                                   .type_ext = device ? 0b000 : 0b001,
-                                   .bufferable = true,
-                                   .cacheable = !device,
-                               }};
+void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device) {
+    tt[va_mb] = (l1_entry) {.section = {
+                                .type = L1_SECTION,
+                                .address = pa_mb,
+                                .ap_low = 0b11, // RW kernel+user
+                                .type_ext = device ? 0b000 : 0b001,
+                                .bufferable = true,
+                                .cacheable = !device,
+                            }};
 }
 
-void mmu_set_proc_table(translation_table *tt) {
+void mmu_set_proc_table(l1_entry *tt) {
     u32 phys = virt_to_phys(tt);
     asm volatile("mcr p15, 0, %0, c2, c0, 0\n\t" // TTBR0 = process table
                  "mcr p15, 0, %0, c8, c7, 0\n\t" // invalidate entire TLB
@@ -177,12 +166,14 @@ void init_mmu(void *dtb) {
 
     const u32 kphys = ((u32) dtb & ~0xFFFFF) + KPHYS_OFFSET;
     auto      table = (l1_entry *) (kphys + KRN_OFFSET(kernel_translation_table));
-    asm("mcr p15, 0, %0, c2, c0, 0;" // TTBR0
-        "mcr p15, 0, %0, c2, c0, 1"  // TTBR1
-        ::"r"((void *) table));
+
+    // TTBCR.N=7: VA[31:25]==0 → TTBR0 (user [0, 0x02000000)); else → TTBR1 (kernel).
+    // Must be written before TTBR0/TTBR1 to establish the split before MMU enable.
+    asm("mcr p15, 0, %0, c2, c0, 2" ::"r"(TTBCR_N)); // TTBCR
+    asm("mcr p15, 0, %0, c2, c0, 1" ::"r"(table));   // TTBR1 = kernel table (16KB-aligned)
+    asm("mcr p15, 0, %0, c2, c0, 0" ::"r"(table));   // TTBR0 = kernel table until first process
 
     asm("mcr p15, 0, %0, c3, c0, 0" ::"r"(1)); // Domain Access Control Register
-    asm("mcr p15, 0, %0, c2, c0, 2" ::"r"(0)); // TTBCR = 0 (use TTBR0 for all)
 
     // flush caches and TLB before enabling MMU
     asm("mcr p15, 0, %0, c7,  c7, 0;" // invalidate I+D caches

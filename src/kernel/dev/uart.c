@@ -78,7 +78,7 @@ char uart_getchar(void) {
     return (char) (*UARTDR & 0xFF);
 }
 int uart_puts(const char *s) {
-    char *p = s;
+    const char *p = s;
     while (*p) {
         uart_putchar(*p++);
     }

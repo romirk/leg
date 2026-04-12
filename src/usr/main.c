@@ -1,6 +1,6 @@
 // user entry point
 
-#include "main.h"
+#include "usr/main.h"
 #include "usr/hash.h"
 
 int main() {

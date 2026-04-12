@@ -26,8 +26,9 @@ void handle_data_abort(void) {
     *UARTDR = 'A';
 }
 
-[[gnu::interrupt("IRQ")]]
-void handle_irq(void) {
+// Called from the handle_irq assembly trampoline in boot.s.
+// Normal C function (no interrupt attribute) — the trampoline manages context.
+void irq_dispatch(void) {
     const u32 id = GICC_IAR & 0x3FFu;
 
     if (id == TIMER_IRQ) {

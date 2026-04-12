@@ -5,7 +5,7 @@
 
 #include "memory.h"
 
-#define UART_REG(off)  (volatile u32 *) (UART0_BASE + (off))
+#define UART_REG(off) (volatile u32 *) (UART0_BASE + (off))
 
 // GIC interrupt ID: SPI 1 → GIC ID 33
 #define UART_IRQ 33

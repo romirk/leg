@@ -115,11 +115,20 @@ typedef l1_entry translation_table[0x1000];
 // L2 translation table
 typedef l2_entry page_table[0x100];
 
-// Table located at TTBR1
-extern translation_table kernel_translation_table;
+// TTBCR.N (3-bit field, range [0..7]): VA[31:32-N] == 0 → TTBR0 (user); else → TTBR1 (kernel).
+// N=7 → TTBR0 covers [0x00000000, 0x02000000) (32MB); TTBR1 covers [0x02000000, 0xFFFFFFFF].
+// User VAs [0x00000000, 0x01000000) fit entirely within TTBR0 range.
+// Kernel at 0xC0000000 and devices at 0xCF000000 are in TTBR1 range.
+#define TTBCR_N 7u
+// Number of 1MB sections in the process (TTBR0) L1 table: 2^(12-N).
+#define PROC_VA_MB (1u << (12u - TTBCR_N)) // 32
+// Required alignment for TTBR0 base with TTBCR_N (bytes): 2^(14-N).
+#define PROC_TABLE_ALIGN (1u << (14u - TTBCR_N)) // 128
+// Byte size of the process L1 table.
+#define PROC_TABLE_SIZE (PROC_VA_MB * sizeof(l1_entry)) // 128
 
-// Table located at TTBR0
-extern translation_table process_translation_table;
+// Table located at TTBR1 (kernel virtual address space).
+extern translation_table kernel_translation_table;
 
 // Configures the MMU and L1 translation table, ID-mapping flash, RAM, and UART address spaces.
 void init_mmu(void *dtb);
@@ -127,15 +136,15 @@ void init_mmu(void *dtb);
 // Map a 1MB physical section as identity (VA == PA). Flushes TLB.
 void mmu_map_identity(u32 phys_mb, bool device);
 
-// Allocate a process L1 table pre-cloned from the kernel table.
-translation_table *mmu_alloc_proc_table(void);
+// Allocate a process L1 table (PROC_VA_MB entries, zero-initialized).
+l1_entry *mmu_alloc_proc_table(void);
 
-void mmu_free_proc_table(translation_table *tt);
+void mmu_free_proc_table(l1_entry *tt);
 
-// Map a 1MB section at va_mb into a specific L1 table (not kernel_translation_table).
-void mmu_map_section(translation_table *tt, u32 va_mb, u32 pa_mb, bool device);
+// Map a 1MB section at va_mb into an L1 table.
+void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device);
 
-// Switch TTBR0 to a process table (physical address). Flushes TLB.
-void mmu_set_proc_table(translation_table *tt);
+// Switch TTBR0 to a process table (virtual address, converted to physical). Flushes TLB.
+void mmu_set_proc_table(l1_entry *tt);
 
 #endif // MEMORY_H

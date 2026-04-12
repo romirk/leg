@@ -15,9 +15,9 @@
 #include "kernel/process.h"
 #include "libc/bswap.h"
 
-#include "main.h"
 #include "types.h"
 #include "utils.h"
+#include "kernel/dev/rtc.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 
@@ -80,9 +80,10 @@ void kmain(void *dtb) {
     info("GIC: initialized");
 
     enable_interrupts();
-    info("kernel: interrupts enabled");
 
-    struct process *p = process_create(main);
+    timer_set_tick(300000, sched_tick); // 300ms tick
+
+    struct process *p = process_create();
 
     fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);
     fb_print("<uhhhhhhh>", FB_BLUE, FB_BLACK);

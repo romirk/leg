@@ -5,8 +5,6 @@
 
 #include "types.h"
 
-
-
 u64 rtc_ticks(void);
 
 void delay_us(u32 usec);

@@ -16,9 +16,9 @@
 #define DIM_GREEN    0x00006600u
 #define FAINT_GREEN  0x00003300u
 
-static struct _d {
-    u8  y;      // current head row
-    u8  len;    // trail length
+static struct {
+    u8   y;      // current head row
+    u8   len;    // trail length
     bool active; // whether the drop is on-screen
     u32  speed;  // frames between advances
     u32  tick;   // frame counter
@@ -60,6 +60,7 @@ static void init_drops(void) {
             grid[c][r] = rand_char();
     }
 }
+
 void matrix(void) {
     rng_seed((u32) get_ticks());
     fb_clear(FB_BLACK);

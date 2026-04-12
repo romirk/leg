@@ -17,7 +17,6 @@ typedef void *(*dtb_alloc_fn)(u32 size);
 #define DTB_MAX_PROPS 1024
 #endif
 
-
 // DTB blob header — always at offset 0 in the DTB
 struct dtb_header {
     u32 magic;             // must equal DTB_MAGIC
