@@ -2,8 +2,8 @@
 
 #include "kernel/mem/alloc.h"
 
-#include "utils.h"
 #include "libc/builtins.h"
+#include "utils.h"
 
 #define BM_BITS (sizeof(u32) * 8u)
 

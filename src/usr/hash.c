@@ -1,13 +1,13 @@
 #include "usr/hash.h"
 
-#include "usr/mandelbrot.h"
-#include "usr/matrix.h"
 #include "libc/display.h"
 #include "libc/stdio.h"
 #include "libc/stdlib.h"
 #include "libc/string.h"
 #include "libc/time.h"
 #include "types.h"
+#include "usr/mandelbrot.h"
+#include "usr/matrix.h"
 
 #define MAX_ARGS 16
 

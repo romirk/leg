@@ -1,11 +1,12 @@
 // process.c — process creation and execution
 
+#include "kernel/process.h"
+
 #include "kernel/cpu.h"
 #include "kernel/dev/blk.h"
 #include "kernel/dev/mmu.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
-#include "kernel/process.h"
 #include "libc/builtins.h"
 #include "utils.h"
 

@@ -3,8 +3,8 @@
 #ifndef LEG_FWCFG_H
 #define LEG_FWCFG_H
 
-#include "types.h"
 #include "memory.h"
+#include "types.h"
 
 // Register offsets (ARM virt: data=+0, selector=+8, DMA=+0x10)
 #define FWCFG_DATA   (*(volatile u8 *) (FWCFG_BASE + 0x00))

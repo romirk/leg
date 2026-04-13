@@ -3,8 +3,8 @@
 #ifndef LEG_PROCESS_H
 #define LEG_PROCESS_H
 
-#include "types.h"
 #include "dev/mmu.h"
+#include "types.h"
 
 // User virtual address layout
 #define PROC_STACK_VA_MB 0x001u                           // stack at VA 0x00100000

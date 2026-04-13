@@ -1,8 +1,8 @@
 #ifndef GIC_H
 #define GIC_H
 
-#include "types.h"
 #include "memory.h"
+#include "types.h"
 
 #define GICD_CTLR          (*(volatile u32 *) (GICD_BASE + 0x000))
 #define GICD_ISENABLER(n)  (*(volatile u32 *) (GICD_BASE + 0x100 + ((n) * 4)))

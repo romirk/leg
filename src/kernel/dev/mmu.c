@@ -1,9 +1,10 @@
 #include "kernel/dev/mmu.h"
+
 #include "kernel/cpu.h"
-#include "kernel/linker.h"
-#include "kernel/process.h"
 #include "kernel/dev/memory.h"
+#include "kernel/linker.h"
 #include "kernel/mem/alloc.h"
+#include "kernel/process.h"
 #include "libc/builtins.h"
 
 #define MB_SHIFT 20

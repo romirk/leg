@@ -1,11 +1,12 @@
 #include "kernel/kmain.h"
 
+#include "kernel/dev/blk.h"
 #include "kernel/dev/fb.h"
 #include "kernel/dev/fwcfg.h"
 #include "kernel/dev/gic.h"
-#include "kernel/dev/blk.h"
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/rng.h"
+#include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
 #include "kernel/dev/virtio.h"
 #include "kernel/dtb.h"
@@ -15,10 +16,8 @@
 #include "kernel/mem/bump.h"
 #include "kernel/process.h"
 #include "libc/bswap.h"
-
 #include "types.h"
 #include "utils.h"
-#include "kernel/dev/rtc.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
 

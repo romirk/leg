@@ -1,3 +1,5 @@
+#include "syscall.h"
+
 #include "kernel/cpu.h"
 #include "kernel/dev/blk.h"
 #include "kernel/dev/fb.h"
@@ -8,7 +10,6 @@
 #include "kernel/logs.h"
 #include "kernel/process.h"
 #include "kernel/tty.h"
-#include "syscall.h"
 #include "types.h"
 
 typedef u32 (*svc_handler_t)(u32 r0, u32 r1, u32 r2, u32 r3);
