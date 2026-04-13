@@ -33,19 +33,14 @@ else ()
     add_compile_definitions(LOG_DEBUG)
 endif ()
 
-option(NO_ANSI "Disable ANSI escape codes in output" OFF)
-if(NO_ANSI)
-    add_compile_definitions(NO_ANSI)
-endif ()
-
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # ── User binary ───────────────────────────────────────────────────────────────
 
 add_subdirectory(src/usr)
 
-set(USER_BIN     ${CMAKE_CURRENT_BINARY_DIR}/src/usr/user.bin)
-set(USER_IMAGE_S ${CMAKE_CURRENT_BINARY_DIR}/src/usr/user_image.s)
+set(USER_BIN  ${CMAKE_CURRENT_BINARY_DIR}/src/usr/user.bin)
+set(DISK_IMG  ${CMAKE_SOURCE_DIR}/data/disk.img)
 
 add_custom_command(
     OUTPUT  ${USER_BIN}
@@ -54,14 +49,13 @@ add_custom_command(
     COMMENT "Extracting user.bin"
 )
 
-add_custom_command(
-    OUTPUT  ${USER_IMAGE_S}
+add_custom_target(write_disk
     COMMAND ${CMAKE_COMMAND}
-            -DINPUT=${USER_BIN}
-            -DOUTPUT=${USER_IMAGE_S}
-            -P ${CMAKE_SOURCE_DIR}/cmake/embed_binary.cmake
+            -DBINARY=${USER_BIN}
+            -DDISK=${DISK_IMG}
+            -P ${CMAKE_SOURCE_DIR}/cmake/write_disk.cmake
     DEPENDS ${USER_BIN}
-    COMMENT "Generating user_image.s"
+    COMMENT "Writing user.bin to data/disk.img"
 )
 
 # ── Kernel binary ─────────────────────────────────────────────────────────────
@@ -72,9 +66,9 @@ file(GLOB_RECURSE LIBC_SOURCES   "src/libc/*.c")
 add_executable(${PROJECT_NAME}.elf
     ${KERNEL_SOURCES}
     ${LIBC_SOURCES}
-    ${USER_IMAGE_S}
     ${LINKER_SCRIPT}
 )
+add_dependencies(${PROJECT_NAME}.elf write_disk)
 target_link_options(${PROJECT_NAME}.elf PRIVATE -Wl,-T,${LINKER_SCRIPT})
 
 find_program(CLANG_FORMAT clang-format)

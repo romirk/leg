@@ -1,11 +1,11 @@
 // process.c — process creation and execution
 
 #include "kernel/cpu.h"
+#include "kernel/dev/blk.h"
 #include "kernel/dev/mmu.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
 #include "kernel/process.h"
-#include "kernel/user_image.h"
 #include "libc/builtins.h"
 #include "utils.h"
 
@@ -50,19 +50,25 @@ struct process *process_create(void) {
     // Zero the code pages so BSS (not covered by the binary) is clean.
     memset((void *) p->code_phys, 0, PROC_CODE_PAGES * PAGE_SIZE);
 
-    // Copy the user binary into the code pages.
-    const u32 image_size = (u32)(user_image_end - user_image_start);
-    ASSERT(image_size <= PROC_CODE_PAGES * PAGE_SIZE, "process: user image too large");
-    memcpy((void *) p->code_phys, user_image_start, image_size);
+    // Load the user binary from disk into the code pages.
+    const u32 sector_count = (PROC_CODE_PAGES * PAGE_SIZE) / 512u;
+    if (!blk_read(0, sector_count, (void *) p->code_phys)) {
+        err("process: failed to load user image from disk");
+        mm_page_free_n(p->code_phys, PROC_CODE_PAGES);
+        mm_page_free_n(p->stack_phys, PROC_STACK_PAGES);
+        mmu_free_proc_table(p->pgd);
+        kfree(p);
+        return nullptr;
+    }
 
     mmu_map_section(p->pgd, PROC_STACK_VA_MB, p->stack_phys >> 20, false);
-    mmu_map_section(p->pgd, PROC_CODE_VA_MB,  p->code_phys  >> 20, false);
+    mmu_map_section(p->pgd, PROC_CODE_VA_MB, p->code_phys >> 20, false);
 
     p->pid = next_pid++;
-    p->sp  = PROC_STACK_TOP - 16; // 16-byte aligned, safety gap from top
+    p->sp = PROC_STACK_TOP - 16; // 16-byte aligned, safety gap from top
 
-    info("process: pid=%d code phys=0x%p va=0x%p image=%u bytes",
-         p->pid, p->code_phys, PROC_CODE_VA, image_size);
+    info("process: pid=%d code phys=0x%p va=0x%p (%u sectors)", p->pid, p->code_phys, PROC_CODE_VA,
+         sector_count);
 
     return p;
 }
@@ -70,14 +76,17 @@ struct process *process_create(void) {
 [[noreturn]]
 void process_exit([[maybe_unused]] struct process *p, [[maybe_unused]] const int code) {
     info("process: pid=%d exited with code %d", p->pid, code);
-    mm_page_free_n(p->code_phys,  PROC_CODE_PAGES);
+    mm_page_free_n(p->code_phys, PROC_CODE_PAGES);
     mm_page_free_n(p->stack_phys, PROC_STACK_PAGES);
     mmu_free_proc_table(p->pgd);
     kfree(p);
+
+    warn("kernel: shutdown");
     poweroff();
 }
 
-void sched_tick(void) {}
+void sched_tick(void) {
+}
 
 [[gnu::naked]]
 void sys_exit_stub(void) {
