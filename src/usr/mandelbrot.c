@@ -67,6 +67,7 @@ static u32 palette_lookup(double t) {
 // Natural log via IEEE 754 bit extraction + atanh series for mantissa in [1,2).
 // Accurate to ~7 decimal places
 // Technique: https://math.stackexchange.com/a/977836
+[[gnu::const]]
 static double d_log(double x) {
     union {
         double d;
@@ -84,7 +85,7 @@ static double d_log(double x) {
 
 // Returns smooth (continuous) escape count, or 0.0 for in-set.
 // Smooth = iter + 1 - d_log(d_log(|z|)) / d_log(2), removing integer banding.
-[[gnu::pure]]
+[[gnu::const]]
 static double escape_time(double cr, double ci, int max_iter) {
     double zr = 0.0, zi = 0.0;
     for (int iter = 0; iter < max_iter; ++iter) {

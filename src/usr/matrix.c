@@ -33,6 +33,7 @@ static char rand_char(void) {
     return '!' + (r - 36);
 }
 
+[[gnu::const]]
 static u32 fade_color(u32 dist) {
     if (dist == 0) return BRIGHT_GREEN;
     if (dist == 1) return FB_GREEN;

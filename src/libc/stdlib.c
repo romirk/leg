@@ -34,7 +34,7 @@ char *itoa(i32 value, char *buffer, const u8 radix) {
     return buffer;
 }
 
-[[gnu::pure]]
+[[gnu::const]]
 u16 hex8(const u8 digit) {
     const int div = digit / 16, mod = digit % 16;
     return get_symbol(div) | get_symbol(mod) << 8;
@@ -60,6 +60,7 @@ char *hex32be(const u32 value, char str[9]) {
     return str;
 }
 
+[[gnu::pure]]
 double atof(const char *s) {
     double result = 0.0, frac = 1.0;
     bool   neg = false;
