@@ -13,7 +13,7 @@ void panic(char *msg) {
     void      *sp = &p;
     const auto stack_height = (void *) STACK_BOTTOM - sp;
 
-    printf("%p\n", sp);
+    kprintf("%p\n", sp);
     hexdump(sp, stack_height > 64 ? 64 : stack_height);
 
     poweroff();
