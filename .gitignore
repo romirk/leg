@@ -1,4 +1,5 @@
 cmake-build-*/
+data/
 build/
 .cache/
 *.dtb

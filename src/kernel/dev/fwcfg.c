@@ -54,7 +54,7 @@ void fwcfg_dma_write(u16 selector, const void *buf, u32 len) {
         asm volatile("dmb");
 }
 
-[[gnu::noinline]]
+
 void fwcfg_init(void) {
     fwcfg_select(FWCFG_SIG_SEL);
     char sig[4];

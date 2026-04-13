@@ -155,13 +155,13 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
         const u32 tok = be32_read(cur);
         cur += 4;
 
-        if (tok == DTB_NOP) {
+        switch (tok) {
+        case DTB_NOP:
             continue;
-        }
-        if (tok == DTB_END_NODE) {
-            break;
-        }
-        if (tok == DTB_PROP) {
+        case DTB_END_NODE:
+        case DTB_END:
+            goto done;
+        case DTB_PROP: {
             if (!in_struct(p, cur, 8)) return nullptr;
             const u32 plen = be32_read(cur);
             const u32 nameoff = be32_read(cur + 4);
@@ -187,7 +187,9 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
             else if ((strcmp(pname, "phandle") == 0 || strcmp(pname, "linux,phandle") == 0) &&
                      plen == 4)
                 node->phandle = be32_read(pdata);
-        } else if (tok == DTB_BEGIN_NODE) {
+            break;
+        }
+        case DTB_BEGIN_NODE: {
             dtb_node_t *child = nullptr;
             cur = parse_node(p, cur, node, &child);
             if (!cur) return nullptr;
@@ -199,11 +201,13 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                     sib = sib->next_sibling;
                 sib->next_sibling = child;
             }
-        } else if (tok == DTB_END) {
+            break;
+        }
+        default:
             break;
         }
     }
-
+done:
     *out_node = node;
     return cur;
 }

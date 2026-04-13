@@ -3,6 +3,7 @@
 #include "kernel/dev/fb.h"
 #include "kernel/dev/fwcfg.h"
 #include "kernel/dev/gic.h"
+#include "kernel/dev/blk.h"
 #include "kernel/dev/kbd.h"
 #include "kernel/dev/rng.h"
 #include "kernel/dev/uart.h"
@@ -68,6 +69,7 @@ void kmain(void *dtb) {
     pl011_setup(&uart, 24000000u);
     info("UART: initialized");
 
+    blk_init();
     kbd_init();
     info("kbd: initialized");
 

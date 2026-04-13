@@ -129,7 +129,7 @@ void ascii_output(const Config *config) {
     }
 }
 
-[[gnu::noinline]]
+
 int mandelbrot(double min_re, double min_im, double max_re, double max_im) {
     Config config = {.width = FB_WIDTH,
                      .height = FB_HEIGHT,

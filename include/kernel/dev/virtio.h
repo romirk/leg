@@ -12,6 +12,7 @@
 #define VIRTIO_MMIO_IRQ_BASE 48u
 
 #define VIRTIO_MAGIC        0x74726976u
+#define VIRTIO_DEVICE_BLOCK 2u
 #define VIRTIO_DEVICE_INPUT 18u
 
 // legacy (v1) register offsets
@@ -37,6 +38,7 @@
 #define VSTAT_DRIVER      2u
 #define VSTAT_DRIVER_OK   4u
 
+#define VDESC_F_NEXT  1u // descriptor chains to .next
 #define VDESC_F_WRITE 2u // device writes into buffer
 
 #define QUEUE_SIZE 16u
@@ -71,9 +73,9 @@ typedef struct {
     u32 value;
 } virtio_input_event_t;
 
-void setup_eventq(u32 base);
-void virtio_irq_handler(void);
+// Returns the MMIO base of the first virtio device matching device_id,
+// sets *out_irq to its GIC IRQ number, or returns 0 if not found.
+u32  virtio_find_device(u32 device_id, u32 *out_irq);
 void virtio_init(void);
-void kbd_init(void);
 
 #endif // LEG_VIRTIO_H

@@ -36,6 +36,10 @@
 
 // Debug
 #define SVC_UART_WRITE 13 // write buf directly to UART (bypasses framebuffer)
+
+// Block device
+#define SVC_BLK_READ  14 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
+#define SVC_BLK_WRITE 15 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
 // ─── Process ─────────────────────────────────────────────────────────────────
 
 [[noreturn, maybe_unused]]
@@ -149,6 +153,28 @@ static inline u32 sys_uart_write(const char *buf, u32 len) {
     register u32 r1 asm("r1") = len;
     asm volatile("svc #13" : "+r"(r0) : "r"(r1) : "r2", "r3", "ip", "lr", "cc", "memory");
     return r0;
+}
+
+// ─── Block device ─────────────────────────────────────────────────────────────
+
+[[maybe_unused]]
+static inline bool sys_blk_read(u64 sector, u32 count, void *buf) {
+    register u32 r0 asm("r0") = (u32) sector;
+    register u32 r1 asm("r1") = (u32) (sector >> 32);
+    register u32 r2 asm("r2") = count;
+    register u32 r3 asm("r3") = (u32) buf;
+    asm volatile("svc #14" : "+r"(r0) : "r"(r1), "r"(r2), "r"(r3) : "ip", "lr", "cc", "memory");
+    return (bool) r0;
+}
+
+[[maybe_unused]]
+static inline bool sys_blk_write(u64 sector, u32 count, const void *buf) {
+    register u32 r0 asm("r0") = (u32) sector;
+    register u32 r1 asm("r1") = (u32) (sector >> 32);
+    register u32 r2 asm("r2") = count;
+    register u32 r3 asm("r3") = (u32) buf;
+    asm volatile("svc #15" : "+r"(r0) : "r"(r1), "r"(r2), "r"(r3) : "ip", "lr", "cc", "memory");
+    return (bool) r0;
 }
 
 #endif // SYSCALL_H

@@ -11,6 +11,8 @@
 // GIC IRQ for the virtio-input device; 0 if no device found during kbd_init().
 extern u32 kbd_irq;
 
+void kbd_init(void);
+void kbd_irq_handler(void);
 void kbd_handle_char(char c);
 void handle_kbd_event(const virtio_input_event_t *ev);
 

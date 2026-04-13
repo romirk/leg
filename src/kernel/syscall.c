@@ -1,4 +1,5 @@
 #include "kernel/cpu.h"
+#include "kernel/dev/blk.h"
 #include "kernel/dev/fb.h"
 #include "kernel/dev/rng.h"
 #include "kernel/dev/rtc.h"
@@ -100,6 +101,18 @@ static u32 svc_rand_seed(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r
     return 0;
 }
 
+// ─── Block device ────────────────────────────────────────────────────────────
+
+static u32 svc_blk_read(u32 r0, u32 r1, u32 r2, u32 r3) {
+    u64 sector = (u64) r0 | ((u64) r1 << 32);
+    return blk_read(sector, r2, (void *) r3);
+}
+
+static u32 svc_blk_write(u32 r0, u32 r1, u32 r2, u32 r3) {
+    u64 sector = (u64) r0 | ((u64) r1 << 32);
+    return blk_write(sector, r2, (const void *) r3);
+}
+
 // ─── Debug ────────────────────────────────────────────────────────────────────
 
 static u32 svc_uart_write(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
@@ -126,6 +139,8 @@ static const svc_handler_t svc_handlers[] = {
     [SVC_RAND] = svc_rand,
     [SVC_RAND_SEED] = svc_rand_seed,
     [SVC_UART_WRITE] = svc_uart_write,
+    [SVC_BLK_READ] = svc_blk_read,
+    [SVC_BLK_WRITE] = svc_blk_write,
 };
 #define SVC_COUNT (sizeof(svc_handlers) / sizeof(*svc_handlers))
 
