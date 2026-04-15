@@ -14,6 +14,58 @@
 #define STR(X)        STR_HELPER(X)
 #endif
 
+// ─── SVC dispatch helpers ─────────────────────────────────────────────────────
+
+#define SVC0(N)                                                                                    \
+    ({                                                                                             \
+        register u32 _r0 asm("r0");                                                                \
+        asm volatile("svc #" STR(N) : "=r"(_r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");    \
+        _r0;                                                                                       \
+    })
+
+#define SVC1(N, a0)                                                                                \
+    ({                                                                                             \
+        register u32 _r0 asm("r0") = (u32) (a0);                                                   \
+        asm volatile("svc #" STR(N) : "+r"(_r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");    \
+        _r0;                                                                                       \
+    })
+
+#define SVC2(N, a0, a1)                                                                            \
+    ({                                                                                             \
+        register u32 _r0 asm("r0") = (u32) (a0);                                                   \
+        register u32 _r1 asm("r1") = (u32) (a1);                                                   \
+        asm volatile("svc #" STR(N)                                                                \
+                     : "+r"(_r0)                                                                   \
+                     : "r"(_r1)                                                                    \
+                     : "r2", "r3", "ip", "lr", "cc", "memory");                                    \
+        _r0;                                                                                       \
+    })
+
+#define SVC3(N, a0, a1, a2)                                                                        \
+    ({                                                                                             \
+        register u32 _r0 asm("r0") = (u32) (a0);                                                   \
+        register u32 _r1 asm("r1") = (u32) (a1);                                                   \
+        register u32 _r2 asm("r2") = (u32) (a2);                                                   \
+        asm volatile("svc #" STR(N)                                                                \
+                     : "+r"(_r0)                                                                   \
+                     : "r"(_r1), "r"(_r2)                                                          \
+                     : "r3", "ip", "lr", "cc", "memory");                                          \
+        _r0;                                                                                       \
+    })
+
+#define SVC4(N, a0, a1, a2, a3)                                                                    \
+    ({                                                                                             \
+        register u32 _r0 asm("r0") = (u32) (a0);                                                   \
+        register u32 _r1 asm("r1") = (u32) (a1);                                                   \
+        register u32 _r2 asm("r2") = (u32) (a2);                                                   \
+        register u32 _r3 asm("r3") = (u32) (a3);                                                   \
+        asm volatile("svc #" STR(N)                                                                \
+                     : "+r"(_r0)                                                                   \
+                     : "r"(_r1), "r"(_r2), "r"(_r3)                                                \
+                     : "ip", "lr", "cc", "memory");                                                \
+        _r0;                                                                                       \
+    })
+
 // ─── SVC numbers ─────────────────────────────────────────────────────────────
 
 // Process
@@ -21,234 +73,158 @@
 #define SVC_FORK   1 // → pid_t: child gets 0, parent gets child PID
 #define SVC_GETPID 2 // → pid_t: current process PID
 #define SVC_JOIN   3 // r0=pid → exit code, or -1 if pid not found
+#define SVC_EXEC   4
 
 // I/O
-#define SVC_WRITE      4
-#define SVC_READ       5
-#define SVC_GETCHAR    6
-#define SVC_GETCHAR_NB 7
+#define SVC_WRITE      5
+#define SVC_READ       6
+#define SVC_GETCHAR    7
+#define SVC_GETCHAR_NB 8
 
 // Timing
-#define SVC_SLEEP  7
-#define SVC_TICKS  8
-#define SVC_CNTFRQ 9
+#define SVC_SLEEP  9
+#define SVC_TICKS  10
+#define SVC_CNTFRQ 11
 
 // Framebuffer
-#define SVC_FB_CLEAR    10
-#define SVC_FB_PUTPIXEL 11
-#define SVC_FB_PUTC     12 // col_row = (col << 16) | row
+#define SVC_FB_CLEAR    12
+#define SVC_FB_PUTPIXEL 13
+#define SVC_FB_PUTC     14 // col_row = (col << 16) | row
 
 // RNG
-#define SVC_RAND      13
-#define SVC_RAND_SEED 14
+#define SVC_RAND      15
+#define SVC_RAND_SEED 16
 
 // Debug
-#define SVC_UART_WRITE 15 // write buf directly to UART (bypasses framebuffer)
+#define SVC_UART_WRITE 17 // write buf directly to UART (bypasses framebuffer)
 
 // Block device
-#define SVC_BLK_READ  16 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
-#define SVC_BLK_WRITE 17 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
+#define SVC_BLK_READ  18 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
+#define SVC_BLK_WRITE 19 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
 
 // Filesystem
-#define SVC_FS_BLOB_COUNT 18 // → u32 count
-#define SVC_FS_BLOB_INFO  19 // r0=index, r1=name_buf, r2=buf_size, r3=*size_out → name_len
+#define SVC_FS_BLOB_COUNT 20 // → u32 count
+#define SVC_FS_BLOB_INFO  21 // r0=index, r1=name_buf, r2=buf_size, r3=*size_out → name_len
 
 // ─── Process ─────────────────────────────────────────────────────────────────
 
 [[noreturn, maybe_unused]]
 static inline void sys_exit(int code) {
-    register int r0 asm("r0") = code;
-    asm volatile("svc #" STR(SVC_EXIT)::"r"(r0) : "r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    SVC1(SVC_EXIT, code);
     __builtin_unreachable();
 }
 
 // Returns child PID in parent, 0 in child.
 [[maybe_unused]]
 static inline u32 sys_fork(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_FORK) : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC0(SVC_FORK);
 }
 
 [[maybe_unused]]
 static inline u32 sys_getpid(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_GETPID) : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC0(SVC_GETPID);
+}
+
+[[maybe_unused]]
+static inline int sys_join(u32 pid) {
+    return (int) SVC1(SVC_JOIN, pid);
+}
+
+[[maybe_unused]]
+static inline u32 sys_exec(const char *name) {
+    return SVC1(SVC_EXEC, name);
 }
 
 // ─── I/O ─────────────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline u32 sys_write(const char *buf, u32 len) {
-    register u32 r0 asm("r0") = (u32) buf;
-    register u32 r1 asm("r1") = len;
-    asm volatile("svc #" STR(SVC_WRITE)
-                 : "+r"(r0)
-                 : "r"(r1)
-                 : "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC2(SVC_WRITE, buf, len);
 }
-
 [[maybe_unused]]
 static inline u32 sys_read(char *buf, u32 max) {
-    register u32 r0 asm("r0") = (u32) buf;
-    register u32 r1 asm("r1") = max;
-    asm volatile("svc #" STR(SVC_READ)
-                 : "+r"(r0)
-                 : "r"(r1)
-                 : "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC2(SVC_READ, buf, max);
 }
-
 [[maybe_unused]]
 static inline char sys_getchar(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_GETCHAR) : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return (char) r0;
+    return (char) SVC0(SVC_GETCHAR);
 }
-
 [[maybe_unused]]
 static inline char sys_getchar_nb(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_GETCHAR_NB)
-                 : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return (char) r0;
+    return (char) SVC0(SVC_GETCHAR_NB);
 }
 
 // ─── Timing ──────────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline void sys_sleep(u32 us) {
-    register u32 r0 asm("r0") = us;
-    asm volatile("svc #" STR(SVC_SLEEP) : "+r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    SVC1(SVC_SLEEP, us);
 }
-
 [[maybe_unused]]
 static inline void sys_ticks(u64 *out) {
-    register u32 r0 asm("r0") = (u32) out;
-    asm volatile("svc #" STR(SVC_TICKS) : "+r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    SVC1(SVC_TICKS, out);
 }
-
 [[maybe_unused]]
 static inline u32 sys_cntfrq(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_CNTFRQ) : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC0(SVC_CNTFRQ);
 }
 
 // ─── Framebuffer ─────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline void sys_fb_clear(u32 color) {
-    register u32 r0 asm("r0") = color;
-    asm volatile("svc #" STR(SVC_FB_CLEAR)
-                 : "+r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    SVC1(SVC_FB_CLEAR, color);
 }
-
 [[maybe_unused]]
 static inline void sys_fb_putpixel(u32 x, u32 y, u32 color) {
-    register u32 r0 asm("r0") = x;
-    register u32 r1 asm("r1") = y;
-    register u32 r2 asm("r2") = color;
-    asm volatile("svc #" STR(SVC_FB_PUTPIXEL)
-                 : "+r"(r0)
-                 : "r"(r1), "r"(r2)
-                 : "r3", "ip", "lr", "cc", "memory");
+    SVC3(SVC_FB_PUTPIXEL, x, y, color);
 }
-
 [[maybe_unused]]
 static inline void sys_fb_putc(u32 col_row, char c, u32 fg, u32 bg) {
-    register u32 r0 asm("r0") = col_row;
-    register u32 r1 asm("r1") = (u32) c;
-    register u32 r2 asm("r2") = fg;
-    register u32 r3 asm("r3") = bg;
-    asm volatile("svc #" STR(SVC_FB_PUTC)
-                 : "+r"(r0)
-                 : "r"(r1), "r"(r2), "r"(r3)
-                 : "ip", "lr", "cc", "memory");
+    SVC4(SVC_FB_PUTC, col_row, (u32) c, fg, bg);
 }
 
 // ─── RNG ─────────────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline u32 sys_rand(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_RAND) : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC0(SVC_RAND);
 }
-
 [[maybe_unused]]
 static inline void sys_rand_seed(u32 seed) {
-    register u32 r0 asm("r0") = seed;
-    asm volatile("svc #" STR(SVC_RAND_SEED)
-                 : "+r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    SVC1(SVC_RAND_SEED, seed);
 }
 
-// ─── Debug ────────────────────────────────────────────────────────────────────
+// ─── Debug ───────────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline u32 sys_uart_write(const char *buf, u32 len) {
-    register u32 r0 asm("r0") = (u32) buf;
-    register u32 r1 asm("r1") = len;
-    asm volatile("svc #" STR(SVC_UART_WRITE)
-                 : "+r"(r0)
-                 : "r"(r1)
-                 : "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC2(SVC_UART_WRITE, buf, len);
 }
 
 // ─── Block device ─────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline bool sys_blk_read(u64 sector, u32 count, void *buf) {
-    register u32 r0 asm("r0") = (u32) sector;
-    register u32 r1 asm("r1") = (u32) (sector >> 32);
-    register u32 r2 asm("r2") = count;
-    register u32 r3 asm("r3") = (u32) buf;
-    asm volatile("svc #" STR(SVC_BLK_READ)
-                 : "+r"(r0)
-                 : "r"(r1), "r"(r2), "r"(r3)
-                 : "ip", "lr", "cc", "memory");
-    return (bool) r0;
+    return (bool) SVC4(SVC_BLK_READ, (u32) sector, (u32) (sector >> 32), count, buf);
 }
-
 [[maybe_unused]]
 static inline bool sys_blk_write(u64 sector, u32 count, const void *buf) {
-    register u32 r0 asm("r0") = (u32) sector;
-    register u32 r1 asm("r1") = (u32) (sector >> 32);
-    register u32 r2 asm("r2") = count;
-    register u32 r3 asm("r3") = (u32) buf;
-    asm volatile("svc #" STR(SVC_BLK_WRITE)
-                 : "+r"(r0)
-                 : "r"(r1), "r"(r2), "r"(r3)
-                 : "ip", "lr", "cc", "memory");
-    return (bool) r0;
+    return (bool) SVC4(SVC_BLK_WRITE, (u32) sector, (u32) (sector >> 32), count, buf);
 }
 
 // ─── Filesystem ──────────────────────────────────────────────────────────────
 
 [[maybe_unused]]
 static inline u32 sys_fs_blob_count(void) {
-    register u32 r0 asm("r0");
-    asm volatile("svc #" STR(SVC_FS_BLOB_COUNT)
-                 : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC0(SVC_FS_BLOB_COUNT);
 }
 
 // Returns name length, or 0 if index is out of range.
 // name_buf receives a null-terminated name; size_out receives blob data size.
 [[maybe_unused]]
 static inline u32 sys_fs_blob_info(u32 index, char *name_buf, u32 name_buf_size, u32 *size_out) {
-    register u32 r0 asm("r0") = index;
-    register u32 r1 asm("r1") = (u32) name_buf;
-    register u32 r2 asm("r2") = name_buf_size;
-    register u32 r3 asm("r3") = (u32) size_out;
-    asm volatile("svc #" STR(SVC_FS_BLOB_INFO)
-                 : "+r"(r0)
-                 : "r"(r1), "r"(r2), "r"(r3)
-                 : "ip", "lr", "cc", "memory");
-    return r0;
+    return SVC4(SVC_FS_BLOB_INFO, index, name_buf, name_buf_size, size_out);
 }
 
 #endif // SYSCALL_H

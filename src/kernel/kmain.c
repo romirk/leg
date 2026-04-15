@@ -24,6 +24,7 @@
 #include "utils.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
+#define SCHED_INTERVAL  10000u
 
 [[noreturn, gnu::used]]
 void kmain(void *dtb) {
@@ -93,7 +94,7 @@ void kmain(void *dtb) {
     enable_interrupts();
 
 #ifndef DEBUG
-    timer_set_tick(300000, sched_tick); // 300ms tick
+    timer_set_tick(SCHED_INTERVAL, sched_tick); // 300ms tick
 
     fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);
     fb_print("<uhhhhhhh>", FB_BLUE, FB_BLACK);

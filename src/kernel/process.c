@@ -137,11 +137,11 @@ void process_exit(pid_t pid, const int code) {
     process_t *p = sched_get(pid);
     if (!p) {
         err("process_exit: no process with pid %d", pid);
-        poweroff();
     }
 
     int was_current = (p == current_proc);
     sched_remove(pid);
+    process_free(p);
 
     info("process: pid=%d exited with code %d", pid, code);
 
@@ -246,4 +246,41 @@ void process_exec(struct process *p) {
                  : "memory");
 
     __builtin_unreachable();
+}
+
+void process_replace(pid_t pid, struct process *new_process) {
+    process_t *p = sched_get(pid);
+    if (!p) {
+        err("process_replace: no process with pid %d", pid);
+    }
+
+    int was_current = (p == current_proc);
+    sched_remove(pid);
+    process_free(p);
+
+    new_process->pid = pid;
+
+    mmu_set_proc_table(p->pgd);
+
+    psr_t s = {
+        .M = usr,
+        .I = false,
+    };
+    write_spsr(s);
+
+    if (was_current) {
+        current_proc = p;
+    }
+    sched_add(p);
+
+    if (was_current) {
+        asm volatile("cps #31          \n\t" // System Mode
+                     "mov sp, %0       \n\t" // Set sp_usr
+                     "cps #19          \n\t" // Back to SVC Mode
+                     "mov lr, %1       \n\t" // entry point
+                     "movs pc, lr      \n\t" // Mode switch
+                     :
+                     : "r"(p->sp), "r"(p->entry)
+                     : "memory");
+    }
 }

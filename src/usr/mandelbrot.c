@@ -20,6 +20,9 @@
 
 #include "libc/cstring.h"
 #include "libc/display.h"
+#include "libc/stdio.h"
+#include "libc/stdlib.h"
+#include "libc/time.h"
 
 typedef struct {
     int    width;
@@ -113,7 +116,7 @@ static void putpixel(double smooth, int x, int y) {
     fb_putpixel(x, y, palette_lookup(t));
 }
 
-void ascii_output(const Config *config) {
+void draw(const Config *config) {
     double     fwidth   = config->ur_x - config->ll_x;
     double     fheight  = config->ur_y - config->ll_y;
     const auto max_iter = config->max_iter;
@@ -140,7 +143,39 @@ int mandelbrot(double min_re, double min_im, double max_re, double max_im) {
                      .ur_y     = max_im,
                      .max_iter = 1000};
 
-    ascii_output(&config);
+    draw(&config);
 
     return 0;
+}
+
+int main(int argc, char **argv) {
+    double min_re, min_im, max_re, max_im;
+
+    if (argc >= 5) {
+        min_re = atof(argv[1]);
+        min_im = atof(argv[2]);
+        max_re = atof(argv[3]);
+        max_im = atof(argv[4]);
+    } else {
+        constexpr double c_re = -.74364085;
+        constexpr double c_im = .13182733;
+        constexpr double d_re = .00012068;
+        constexpr double d_im = d_re * (600.0 / 800.0);
+        min_re                = c_re - d_re / 2;
+        max_re                = c_re + d_re / 2;
+        min_im                = c_im - d_im / 2;
+        max_im                = c_im + d_im / 2;
+    }
+
+    u64 t0 = get_ticks();
+    mandelbrot(min_re, min_im, max_re, max_im);
+    u64 dt   = get_ticks() - t0;
+    u32 freq = cntfrq();
+    u32 secs = (u32) (dt / freq);
+    u32 ms   = (u32) ((dt % freq) * 1000 / freq);
+    printf("brot: %d.", secs);
+    if (ms < 100) putchar('0');
+    if (ms < 10) putchar('0');
+    printf("%ds\n", ms);
+    return true;
 }

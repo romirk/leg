@@ -17,6 +17,9 @@ int sched_remove(pid_t pid);
 // Find a process by PID. Returns nullptr if not found.
 process_t *sched_get(pid_t pid);
 process_t *sched_pick_next(void);
+
+// Wake every process blocked in join() waiting for pid. Delivers exit_code into r0.
+void sched_wake_joiners(pid_t pid, int exit_code);
 // Called from the timer tick (IRQ context). Preempts the current process and
 // switches to the next runnable one (round-robin). No-ops if only one process.
 void sched_tick(void);

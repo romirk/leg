@@ -1,20 +1,11 @@
-#include "libc/cstring.h"
 #include "libc/stdio.h"
 #include "syscall.h"
+#include "usr/hash.h"
 #include "usr/mandelbrot.h"
 
 int main(void) {
-    auto pid = sys_fork();
-    if (pid == 0) {
-        loop {
-            // ReSharper disable once CppDFAEndlessLoop
-            sys_uart_write("ping\n", 5);
-            sys_sleep(1000000);
-        }
-    }
-    for (int i = 0; i < 5; i++) {
-        sys_uart_write("pong\n", 5);
-        sys_sleep(1500000);
-    }
+    mandelbrot(-2.0, -1.0, 1.0, 1.0);
+    sys_sleep(5000000);
+    // hash_run();
     return 0;
 }

@@ -42,6 +42,17 @@ process_t *sched_get(pid_t pid) {
     return nullptr;
 }
 
+void sched_wake_joiners(pid_t pid, int exit_code) {
+    for (u32 i = 0; i < MAX_PROCESSES; i++) {
+        process_t *p = procs[i];
+        if (p && p->join_target == pid) {
+            p->ctx.r[0]    = (u32) exit_code;
+            p->join_target = 0;
+            p->suspended   = 0;
+        }
+    }
+}
+
 process_t *sched_pick_next(void) {
     if (!current_proc) return nullptr;
 
@@ -96,7 +107,6 @@ void sched_tick(void) {
             // current_proc->suspended = 1;
             current_proc = p;
             mmu_set_proc_table(p->pgd);
-            info("sched_tick: switching to pid=%d", p->pid);
             return;
         }
     }

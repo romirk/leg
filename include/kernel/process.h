@@ -43,6 +43,7 @@ typedef struct process {
     u32       suspended; // non-zero while the process is suspended                             +84
     // ── fields below are not accessed from assembly ──────────────────────────
     u64       wake_tick;   // CNTPCT deadline for sleep; 0 = not sleeping
+    pid_t     join_target; // PID this process is waiting on (0 = not waiting)
     l2_entry *stack_pt;    // L2 table covering the stack's current L1 slot
     u32       stack_pages; // number of 4KB stack pages currently mapped
     uptr      heap_end;    // current top of heap (user VA), initially PROC_HEAP_START
@@ -65,5 +66,7 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr);
 // Map one additional 4KB page onto the bottom of the process stack.
 // Returns false on OOM.
 bool process_add_page(struct process *p);
+
+void process_replace(pid_t pid, struct process *new_process);
 
 #endif // LEG_PROCESS_H

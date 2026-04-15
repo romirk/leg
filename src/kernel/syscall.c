@@ -22,13 +22,11 @@ volatile u32 svc_saved_lr;
 
 // ─── Process ─────────────────────────────────────────────────────────────────
 
-static u32 svc_exit(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                    [[maybe_unused]] u32 r3) {
+static u32 svc_exit(u32 r0, u32, u32, u32) {
     process_exit(current_proc->pid, (int) r0);
 }
 
-static u32 svc_fork([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                    [[maybe_unused]] u32 r3) {
+static u32 svc_fork(u32, u32, u32, u32) {
     u32 sp_usr, cpsr;
     asm volatile("cps #0x1F \n\t" // System mode — shares user register bank
                  "mov %0, sp \n\t"
@@ -39,44 +37,55 @@ static u32 svc_fork([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_un
     return child ? child->pid : (u32) -1;
 }
 
-static u32 svc_getpid([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                      [[maybe_unused]] u32 r3) {
+static u32 svc_getpid(u32, u32, u32, u32) {
     return current_proc->pid;
 }
 
+static u32 svc_join(u32 r0, u32, u32, u32) {
+    pid_t target = r0;
+    if (!sched_get(target)) return (u32) -1;
+    current_proc->join_target = target;
+    current_proc->suspended   = 1;
+    return 0; // overwritten by sched_wake_joiners when target exits
+}
+
+static u32 svc_exec(u32 r0, u32, u32, u32) {
+    const auto name = (const char *) r0;
+    auto       p    = process_create(name);
+    if (!p) return (u32) -1;
+    process_replace(current_proc->pid, p);
+    return 0;
+}
 // ─── I/O ─────────────────────────────────────────────────────────────────────
 
-static u32 svc_write(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
+static u32 svc_write(u32 r0, u32 r1, u32, u32) {
     const char *buf = (const char *) r0;
     for (u32 i = 0; i < r1; i++)
         tty_putchar(buf[i]);
     return r1;
 }
 
-static u32 svc_read(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
+static u32 svc_read(u32 r0, u32 r1, u32, u32) {
     enable_interrupts();
     u32 n = tty_readline((char *) r0, r1);
     disable_interrupts();
     return n;
 }
 
-static u32 svc_getchar([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                       [[maybe_unused]] u32 r3) {
+static u32 svc_getchar(u32, u32, u32, u32) {
     enable_interrupts();
     char c = tty_getchar();
     disable_interrupts();
     return (u32) c;
 }
 
-static u32 svc_getchar_nb([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                          [[maybe_unused]] u32 r3) {
+static u32 svc_getchar_nb(u32, u32, u32, u32) {
     return (u32) tty_getchar_nb();
 }
 
 // ─── Timing ──────────────────────────────────────────────────────────────────
 
-static u32 svc_sleep(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                     [[maybe_unused]] u32 r3) {
+static u32 svc_sleep(u32 r0, u32, u32, u32) {
     u64 freq                = read_cntfrq();
     u64 deadline            = read_cntpct() + (u64) r0 * freq / 1000000u;
     current_proc->wake_tick = deadline;
@@ -85,26 +94,23 @@ static u32 svc_sleep(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
     return 0;
 }
 
-static u32 svc_ticks(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                     [[maybe_unused]] u32 r3) {
+static u32 svc_ticks(u32 r0, u32, u32, u32) {
     *(u64 *) r0 = rtc_ticks();
     return 0;
 }
 
-static u32 svc_cntfrq([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                      [[maybe_unused]] u32 r3) {
+static u32 svc_cntfrq(u32, u32, u32, u32) {
     return read_cntfrq();
 }
 
 // ─── Framebuffer ─────────────────────────────────────────────────────────────
 
-static u32 svc_fb_clear(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                        [[maybe_unused]] u32 r3) {
+static u32 svc_fb_clear(u32 r0, u32, u32, u32) {
     fb_clear(r0);
     return 0;
 }
 
-static u32 svc_fb_putpixel(u32 r0, u32 r1, u32 r2, [[maybe_unused]] u32 r3) {
+static u32 svc_fb_putpixel(u32 r0, u32 r1, u32 r2, u32) {
     fb_putpixel(r0, r1, r2);
     return 0;
 }
@@ -116,13 +122,11 @@ static u32 svc_fb_putc(u32 r0, u32 r1, u32 r2, u32 r3) {
 
 // ─── RNG ─────────────────────────────────────────────────────────────────────
 
-static u32 svc_rand([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                    [[maybe_unused]] u32 r3) {
+static u32 svc_rand(u32, u32, u32, u32) {
     return sys_rand32();
 }
 
-static u32 svc_rand_seed(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
-                         [[maybe_unused]] u32 r3) {
+static u32 svc_rand_seed(u32 r0, u32, u32, u32) {
     sys_rng_seed(r0);
     return 0;
 }
@@ -141,8 +145,7 @@ static u32 svc_blk_write(u32 r0, u32 r1, u32 r2, u32 r3) {
 
 // ─── Filesystem ──────────────────────────────────────────────────────────────
 
-static u32 svc_fs_blob_count([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1,
-                             [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
+static u32 svc_fs_blob_count(u32, u32, u32, u32) {
     return fs_blob_count();
 }
 
@@ -159,12 +162,12 @@ static u32 svc_fs_blob_info(u32 r0, u32 r1, u32 r2, u32 r3) {
         name_buf[i] = name[i];
     name_buf[copy_len] = '\0';
     if (size_out) *size_out = b->size;
-    return name_len;
+    return b->flags;
 }
 
 // ─── Debug ────────────────────────────────────────────────────────────────────
 
-static u32 svc_uart_write(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
+static u32 svc_uart_write(u32 r0, u32 r1, u32, u32) {
     const char *buf = (const char *) r0;
     for (u32 i = 0; i < r1; i++)
         uart_putchar(buf[i]);
@@ -177,6 +180,8 @@ static const svc_handler_t svc_handlers[] = {
     [SVC_EXIT]          = svc_exit,
     [SVC_FORK]          = svc_fork,
     [SVC_GETPID]        = svc_getpid,
+    [SVC_JOIN]          = svc_join,
+    [SVC_EXEC]          = svc_exec,
     [SVC_WRITE]         = svc_write,
     [SVC_READ]          = svc_read,
     [SVC_GETCHAR]       = svc_getchar,

@@ -62,7 +62,7 @@ static void init_drops(void) {
     }
 }
 
-void matrix(void) {
+int main(int, char **) {
     rng_seed((u32) get_ticks());
     fb_clear(FB_BLACK);
 
