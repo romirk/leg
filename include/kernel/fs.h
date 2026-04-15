@@ -10,6 +10,11 @@
 #define FS_MAGIC     0x4C454746u // "LEGF"
 #define FS_FLAG_EXEC 0x0001u     // blob is executable
 
+typedef enum : u16 {
+    FS_TYPE_BLOB,
+    FS_TYPE_EXECUTABLE,
+} fs_flag_t;
+
 // On-disk blob descriptor — 16 bytes, packed.
 // All offsets are relative to the start of the FS image.
 // Blob data offsets must be 512-byte aligned.

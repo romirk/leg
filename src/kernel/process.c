@@ -39,7 +39,7 @@ static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
     return pt;
 }
 
-struct process *process_create(void) {
+struct process *process_create(char *name) {
     struct process *p = kmalloc_aligned(sizeof(*p), 0x4000);
     if (!p) {
         err("process: OOM for struct");
@@ -54,9 +54,9 @@ struct process *process_create(void) {
     }
 
     // ── Load LLF from filesystem ─────────────────────────────────────────────
-    const fs_blob_t *blob = fs_find("init");
-    if (!blob) {
-        err("process: 'init' not found in filesystem");
+    const fs_blob_t *blob = fs_find(name);
+    if (!blob || blob->flags != FS_TYPE_EXECUTABLE) {
+        err("process: executable '%s' not found in filesystem", name);
         process_free(p);
         return nullptr;
     }

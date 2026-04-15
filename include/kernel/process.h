@@ -53,7 +53,7 @@ struct process {
 extern struct process *current_proc;
 
 // Allocate a process, map its stack and code, and load the user binary.
-struct process *process_create(void);
+struct process *process_create(char *name);
 
 // Switch to the process page table and jump to its entry. Never returns.
 [[noreturn]]

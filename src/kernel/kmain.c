@@ -92,7 +92,7 @@ void kmain(void *dtb) {
 
     timer_set_tick(300000, sched_tick); // 300ms tick
 
-    struct process *p = process_create();
+    struct process *p = process_create("init");
 
     fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);
     fb_print("<uhhhhhhh>", FB_BLUE, FB_BLACK);
