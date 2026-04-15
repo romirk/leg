@@ -1,39 +1,26 @@
-#ifndef STRING_H
-#define STRING_H
+//
+// Created by Romir Kulshrestha on 14/04/2026.
+//
+
+#ifndef LEG_STRING_H
+#define LEG_STRING_H
 
 #include "types.h"
 
-#define TOKEN_CONCAT_INT(x, y) x##y
-#define TOKEN_CONCAT(x, y)     TOKEN_CONCAT_INT(x, y)
-#define UNIQUE(tok)            TOKEN_CONCAT(tok, __COUNTER__)
+typedef struct {
+    u32   len;
+    char *str;
+} str_t;
 
-#define STR_SWITCH_BEGIN(str)                                                                      \
-    do {                                                                                           \
-        const auto _switch_str = (str);                                                            \
-        if (false) __builtin_unreachable();
-#define STR_SWITCH_CASE(val)           else if (!strcmp(_switch_str, val))
-#define STR_SWITCH_STARTS_WITH(val, n) else if (!strncmp(_switch_str, val, n))
-#define STR_SWITCH_DEFAULT(val)        else
-#define STR_SWITCH_END                                                                             \
-    }                                                                                              \
-    while (false)
+str_t *str_new(const char *);
+str_t *str_dup(const str_t *);
+void   str_free(str_t *);
+char  *into_char(const str_t *);
 
-int strlen(const char *s);
+u32 str_cpy(str_t *dest, const str_t *src);
+u32 str_cat(str_t *dest, const str_t *src);
+u32 str_cmp(const str_t *, const str_t *);
 
-int strcmp(const char *s1, const char *s2);
+u32 str_trim(str_t *);
 
-int strncmp(const char *s1, const char *s2, size_t n);
-
-char *strcpy(char *dest, const char *src);
-
-// Split line into whitespace-delimited tokens in-place.
-// Writes pointers into argv (up to max_argc) and null-terminates each token.
-// Returns the number of tokens found.
-int str_split(char *line, char **argv, int max_argc);
-
-// Trim leading and trailing whitespace in-place.
-// Null-terminates after the last non-whitespace character.
-// Returns a pointer to the first non-whitespace character.
-char *trim(char *s);
-
-#endif // STRING_H
+#endif // LEG_STRING_H

@@ -39,4 +39,12 @@ bool fs_read(const fs_blob_t *blob, void *buf);
 [[gnu::pure]]
 u32 fs_blob_count(void);
 
+// Returns the i-th blob descriptor, or nullptr if out of range.
+[[gnu::pure]]
+const fs_blob_t *fs_blob_at(u32 i);
+
+// Returns the null-terminated name of a blob.
+[[gnu::pure]]
+const char *fs_blob_name(const fs_blob_t *blob);
+
 #endif // LEG_FS_H

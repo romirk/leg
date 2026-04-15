@@ -144,6 +144,16 @@ void mmu_free_proc_table(l1_entry *tt);
 // Map a 1MB section at va_mb into an L1 table.
 void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device);
 
+// Allocate a zeroed L2 page table (256 × 4KB small-page entries, 1KB-aligned).
+l2_entry *mmu_alloc_l2_table(void);
+void      mmu_free_l2_table(l2_entry *pt);
+
+// Install an L2 table into the L1 entry for va_mb.
+void mmu_attach_l2(l1_entry *tt, u32 va_mb, l2_entry *pt);
+
+// Map one 4KB page: va and pa must be PAGE_SIZE-aligned.
+void mmu_map_page(l2_entry *pt, u32 va, u32 pa);
+
 // Switch TTBR0 to a process table (virtual address, converted to physical). Flushes TLB.
 void mmu_set_proc_table(l1_entry *tt);
 

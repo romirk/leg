@@ -31,9 +31,10 @@ typedef struct {
     uptr heap_used;
 } mm_stats_t;
 
-// Initialize from DTB /memory node. reserved_end is the first usable byte after
-// all early-boot reservations (DTB blob, bump heap, etc.).
-void mm_init(uptr mem_base, u64 mem_size, uptr reserved_end);
+// Initialize from DTB /memory node.
+// reserved_end: first usable physical byte after early-boot reservations (bitmap placed here).
+// heap_va:      virtual address where the kernel heap starts (must be mapped, >= KERNEL_VA).
+void mm_init(uptr mem_base, u64 mem_size, uptr reserved_end, void *heap_va);
 
 // Allocate one 4KB physical page. Returns PA or 0 on OOM.
 uptr mm_page_alloc(void);

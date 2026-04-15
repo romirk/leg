@@ -92,15 +92,17 @@ static void map_sections(void *dtb) {
                                    .cacheable = true,
                                }};
 
-    // Kernel High-Half Mapping
-    table[KERNEL_VA >> MB_SHIFT] = (l1_entry) {.section = {
-                                                   .type = L1_SECTION,
-                                                   .address = kphys >> MB_SHIFT,
-                                                   .ap_low = 0b10,
-                                                   .type_ext = 0b001,
-                                                   .bufferable = true,
-                                                   .cacheable = true,
-                                               }};
+    // Kernel High-Half Mapping — 4MB covers code, BSS, and heap
+    for (u32 i = 0; i < 4; i++) {
+        table[(KERNEL_VA >> MB_SHIFT) + i] = (l1_entry) {.section = {
+                                                             .type = L1_SECTION,
+                                                             .address = (kphys >> MB_SHIFT) + i,
+                                                             .ap_low = 0b10,
+                                                             .type_ext = 0b001,
+                                                             .bufferable = true,
+                                                             .cacheable = true,
+                                                         }};
+    }
     // DTB / early RAM — identity-map 4MB from DTB base
     const u32 dtb_section = (u32) dtb >> MB_SHIFT;
     for (u32 i = 0; i < 4; ++i) {
@@ -150,6 +152,36 @@ void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device) {
                                 .bufferable = true,
                                 .cacheable = !device,
                             }};
+}
+
+l2_entry *mmu_alloc_l2_table(void) {
+    l2_entry *pt = kmalloc_aligned(sizeof(page_table), 0x400); // 1KB-aligned
+    if (pt) memset(pt, 0, sizeof(page_table));
+    return pt;
+}
+
+void mmu_free_l2_table(l2_entry *pt) {
+    kfree(pt);
+}
+
+void mmu_attach_l2(l1_entry *tt, u32 va_mb, l2_entry *pt) {
+    u32 phys = virt_to_phys(pt);
+    tt[va_mb] = (l1_entry) {.page_table = {
+                                .type = L1_PAGE_TABLE,
+                                .address = phys >> 10,
+                                .domain = 0,
+                            }};
+}
+
+void mmu_map_page(l2_entry *pt, u32 va, u32 pa) {
+    pt[L2_IDX(va)] = (l2_entry) {.small_page = {
+                                     .type = L2_SMALL_PAGE,
+                                     .address = pa >> 12,
+                                     .ap_low = 0b11, // RW kernel+user
+                                     .type_ext = 0b001,
+                                     .bufferable = true,
+                                     .cacheable = true,
+                                 }};
 }
 
 void mmu_set_proc_table(l1_entry *tt) {

@@ -34,8 +34,8 @@ static u32 div_round_up(u32 a, u32 b) {
     return (a + b - 1u) / b;
 }
 
-[[noreturn]]
-void panic(char *msg);
+[[noreturn, gnu::format(printf, 1, 2)]]
+void panic(const char *fmt, ...);
 
 #define ASSERT(cond, msg)                                                                          \
     do {                                                                                           \

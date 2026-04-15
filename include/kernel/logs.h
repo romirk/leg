@@ -1,9 +1,13 @@
 #ifndef LOGS_H
 #define LOGS_H
 
+#include <stdarg.h>
+
 // Kernel-only print functions — write directly to UART, bypass tty/fb.
-int  kprint(const char *s);
+int kprint(const char *s);
+[[gnu::format(printf, 1, 2)]]
 void kprintf(const char *fmt, ...);
+void vkprintf(const char *fmt, va_list args);
 
 // stringify macros
 #define STR_HELPER(X) #X

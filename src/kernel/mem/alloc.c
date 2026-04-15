@@ -2,6 +2,7 @@
 
 #include "kernel/mem/alloc.h"
 
+#include "kernel/dev/memory.h"
 #include "libc/builtins.h"
 #include "utils.h"
 
@@ -141,7 +142,7 @@ static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
     return h->magic == expected_magic;
 }
 
-void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end) {
+void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end, void *heap_va) {
     ASSERT(mem_size > 0, "mm_init: no RAM info from DTB");
 
     // clamp to 32-bit PA space (ARMv7a)
@@ -171,15 +172,17 @@ void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end) {
     memset(g_pmm.bitmap, 0, bitmap_bytes);
 
     const uptr bitmap_end = bitmap_pa + bitmap_bytes;
-    const uptr heap_pa = align_up(bitmap_end, PAGE_SIZE);
 
     reserve_range(bitmap_pa, bitmap_end); // bitmap
+
+    // Reserve the physical pages backing the kernel heap VA range.
+    const uptr heap_pa = virt_to_phys(heap_va);
     reserve_range(heap_pa, heap_pa + KHEAP_SIZE);
 
-    g_kheap.base = (u8 *) heap_pa;
+    g_kheap.base = (u8 *) heap_va;
     g_kheap.capacity = KHEAP_SIZE;
     g_kheap.used = 0;
-    const auto h = (kheap_hdr_t *) heap_pa;
+    const auto h = (kheap_hdr_t *) heap_va;
     h->magic = KHEAP_MAGIC_FREE;
     h->size = KHEAP_SIZE - HDR_SIZE;
     h->next_free = nullptr;
@@ -218,12 +221,15 @@ uptr mm_page_alloc_aligned(const u32 n, const u32 align_pages) {
     // Two passes: from hint_aligned to end, then from 0 to hint_aligned.
     for (u32 pass = 0; pass < 2; ++pass) {
         const u32 start = (pass == 0) ? hint_aligned : 0;
-        const u32 end   = (pass == 0) ? g_pmm.total_pages : hint_aligned;
+        const u32 end = (pass == 0) ? g_pmm.total_pages : hint_aligned;
 
         for (u32 idx = start; idx + n <= end; idx += align_pages) {
             bool ok = true;
             for (u32 i = 0; i < n; ++i) {
-                if (bm_test(g_pmm.bitmap, idx + i)) { ok = false; break; }
+                if (bm_test(g_pmm.bitmap, idx + i)) {
+                    ok = false;
+                    break;
+                }
             }
             if (!ok) continue;
             for (u32 i = 0; i < n; ++i)
@@ -349,10 +355,9 @@ void kfree(void *ptr) {
     if (!ptr) return;
 
     align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
-    const uptr heap_base = (uptr) g_kheap.base;
+    const uptr    heap_base = (uptr) g_kheap.base;
 
-    if (meta->tag == ALIGN_TAG &&
-        (uptr) meta->raw >= heap_base &&
+    if (meta->tag == ALIGN_TAG && (uptr) meta->raw >= heap_base &&
         (uptr) meta->raw < heap_base + g_kheap.capacity) {
         ptr = meta->raw;
     }
@@ -413,8 +418,7 @@ void *krealloc(void *ptr, const size_t size) {
     align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
     const uptr    heap_base = (uptr) g_kheap.base;
     void         *raw = ptr;
-    if (meta->tag == ALIGN_TAG &&
-        (uptr) meta->raw >= heap_base &&
+    if (meta->tag == ALIGN_TAG && (uptr) meta->raw >= heap_base &&
         (uptr) meta->raw < heap_base + g_kheap.capacity) {
         raw = meta->raw;
     }

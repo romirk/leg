@@ -45,4 +45,10 @@ static inline u32 virt_to_phys(const void *va) {
     return v;
 }
 
+// Convert a kernel-heap physical address back to its virtual address.
+[[gnu::pure]]
+static inline void *phys_to_virt(u32 pa) {
+    return (void *) (pa - kernel_phys_base + KERNEL_VA);
+}
+
 #endif // LEG_MEMORY_H

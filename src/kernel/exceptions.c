@@ -22,7 +22,11 @@ void handle_boot_exception(void) {
 
 [[gnu::interrupt("ABORT")]]
 void handle_data_abort(void) {
-    *UARTDR = 'A';
+    u32 dfar, dfsr, pc;
+    asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(dfar));
+    asm volatile("mrc p15, 0, %0, c5, c0, 0" : "=r"(dfsr));
+    asm volatile("mov %0, lr" : "=r"(pc)); // lr_abt = faulting PC + 8
+    panic("data abort: fa=%p fs=%p pc=%p", (void *) dfar, (void *) dfsr, (void *) (pc - 8));
 }
 
 // Called from the handle_irq assembly trampoline in boot.s.

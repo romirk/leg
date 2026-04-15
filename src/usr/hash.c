@@ -1,10 +1,11 @@
 #include "usr/hash.h"
 
+#include "libc/cstring.h"
 #include "libc/display.h"
 #include "libc/stdio.h"
 #include "libc/stdlib.h"
-#include "libc/string.h"
 #include "libc/time.h"
+#include "syscall.h"
 #include "types.h"
 #include "usr/mandelbrot.h"
 #include "usr/matrix.h"
@@ -31,12 +32,12 @@ static bool cmd_echo(int argc, char **argv) {
     return true;
 }
 
-static bool cmd_matrix([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+static bool cmd_matrix(int, char **) {
     matrix();
     return true;
 }
 
-static bool cmd_clear([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+static bool cmd_clear(int, char **) {
     fb_clear(FB_BLACK);
     return true;
 }
@@ -46,8 +47,21 @@ static bool cmd_sleep(int argc, char **argv) {
         printf("usage: sleep <s>\n");
         return true;
     }
-    u32 us = (u32)(atof(argv[1]) * 1000000.0);
+    u32 us = (u32) (atof(argv[1]) * 1000000.0);
     sys_sleep(us);
+    return true;
+}
+
+[[gnu::noinline]]
+static bool cmd_ls(int, char **) {
+    u32  count = sys_fs_blob_count();
+    char name[64];
+    for (u32 i = 0; i < count; i++) {
+        u32 size = 0;
+        sys_fs_blob_info(i, name, sizeof(name), &size);
+        printf("%s  %u\n", name, size);
+    }
+    printf("%u blobs\n", count);
     return true;
 }
 
@@ -84,8 +98,8 @@ static bool cmd_brot(int argc, char **argv) {
 }
 
 static const Command commands[] = {
-    {"exit", cmd_exit},   {"echo", cmd_echo},   {"matrix", cmd_matrix},
-    {"clear", cmd_clear}, {"brot", cmd_brot},   {"sleep", cmd_sleep},
+    {"exit", cmd_exit}, {"echo", cmd_echo},   {"matrix", cmd_matrix}, {"clear", cmd_clear},
+    {"brot", cmd_brot}, {"sleep", cmd_sleep}, {"ls", cmd_ls},
 };
 
 void hash_run(void) {

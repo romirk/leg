@@ -16,8 +16,10 @@ int print(const char *);
 
 int puts(const char *);
 
+[[gnu::format(printf, 1, 2)]]
 void printf(const char *, ...);
 
+[[gnu::format(printf, 1, 2)]]
 void pprintf(const char *, ...);
 
 void hexdump(const void *, u32);

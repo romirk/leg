@@ -11,6 +11,8 @@
 #include "kernel/dev/virtio.h"
 #include "kernel/dtb.h"
 #include "kernel/exceptions.h"
+#include "kernel/fs.h"
+#include "kernel/linker.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
 #include "kernel/mem/bump.h"
@@ -55,7 +57,8 @@ void kmain(void *dtb) {
     info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
 
     const u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
-    mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end);
+    void     *kheap_va = (void *) align_up((uptr) bss_end, PAGE_SIZE);
+    mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end, kheap_va);
     early_malloc_reset();
 
     fwcfg_init();
@@ -69,6 +72,11 @@ void kmain(void *dtb) {
     info("UART: initialized");
 
     blk_init();
+    if (!fs_mount(0)) {
+        err("kernel: failed to mount filesystem");
+        goto halt;
+    }
+
     kbd_init();
     info("kbd: initialized");
 

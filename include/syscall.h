@@ -40,6 +40,11 @@
 // Block device
 #define SVC_BLK_READ  14 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
 #define SVC_BLK_WRITE 15 // r0=sector_lo, r1=sector_hi, r2=count, r3=buf → bool
+
+// Filesystem
+#define SVC_FS_BLOB_COUNT 16 // → u32 count
+#define SVC_FS_BLOB_INFO                                                                           \
+    17 // r0=index, r1=name_buf, r2=name_buf_size, r3=*u32 size_out → name_len (0 = OOB)
 // ─── Process ─────────────────────────────────────────────────────────────────
 
 [[noreturn, maybe_unused]]
@@ -175,6 +180,27 @@ static inline bool sys_blk_write(u64 sector, u32 count, const void *buf) {
     register u32 r3 asm("r3") = (u32) buf;
     asm volatile("svc #15" : "+r"(r0) : "r"(r1), "r"(r2), "r"(r3) : "ip", "lr", "cc", "memory");
     return (bool) r0;
+}
+
+// ─── Filesystem ──────────────────────────────────────────────────────────────
+
+[[maybe_unused]]
+static inline u32 sys_fs_blob_count(void) {
+    register u32 r0 asm("r0");
+    asm volatile("svc #16" : "=r"(r0)::"r1", "r2", "r3", "ip", "lr", "cc", "memory");
+    return r0;
+}
+
+// Returns name length, or 0 if index is out of range.
+// name_buf receives a null-terminated name; size_out receives blob data size.
+[[maybe_unused]]
+static inline u32 sys_fs_blob_info(u32 index, char *name_buf, u32 name_buf_size, u32 *size_out) {
+    register u32 r0 asm("r0") = index;
+    register u32 r1 asm("r1") = (u32) name_buf;
+    register u32 r2 asm("r2") = name_buf_size;
+    register u32 r3 asm("r3") = (u32) size_out;
+    asm volatile("svc #17" : "+r"(r0) : "r"(r1), "r"(r2), "r"(r3) : "ip", "lr", "cc", "memory");
+    return r0;
 }
 
 #endif // SYSCALL_H

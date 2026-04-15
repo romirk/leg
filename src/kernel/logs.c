@@ -37,10 +37,7 @@ static void kprint_ptr(const void *ptr) {
     kprint(buf);
 }
 
-void kprintf(const char *fmt, ...) {
-    va_list args;
-    va_start(args);
-
+void vkprintf(const char *fmt, va_list args) {
     char c;
     while ((c = *fmt++)) {
         if (c != '%') {
@@ -85,6 +82,12 @@ void kprintf(const char *fmt, ...) {
                 break;
         }
     }
+}
+
+void kprintf(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vkprintf(fmt, args);
     va_end(args);
 }
 

@@ -7,13 +7,20 @@
 #include "types.h"
 
 // User virtual address layout
-#define PROC_STACK_VA_MB 0x001u                           // stack at VA 0x00100000
-#define PROC_STACK_PAGES 256u                             // 1 MB of physical pages
-#define PROC_STACK_TOP   ((PROC_STACK_VA_MB + 1u) << 20) // 0x00200000, initial SP
+#define PROC_USER_VA_TOP 0x02000000u // top of TTBR0 space (TTBCR.N=7)
 
-#define PROC_CODE_VA_MB  0x004u                           // code at VA 0x00400000
-#define PROC_CODE_PAGES  256u                             // 1 MB of physical pages
-#define PROC_CODE_VA     (PROC_CODE_VA_MB << 20)          // 0x00400000, entry point
+// Stack: grows downward from just below the top, one guard page left unmapped
+#define PROC_STACK_GUARD      0x1000u                               // one unmapped page at ceiling
+#define PROC_STACK_TOP        (PROC_USER_VA_TOP - PROC_STACK_GUARD) // 0x01FFF000, initial SP
+#define PROC_STACK_INIT_PAGES 4u // pages mapped at process creation
+
+// Code: starts at 1MB so null-deref (0x0) faults cleanly
+#define PROC_CODE_VA_MB 0x001u
+#define PROC_CODE_VA    (PROC_CODE_VA_MB << 20) // 0x00100000, entry point
+#define PROC_CODE_MAX   (1u << 20)              // max code size (1 MB)
+
+// Heap: immediately follows the code region, grows upward
+#define PROC_HEAP_START (PROC_CODE_VA + PROC_CODE_MAX) // 0x00200000
 
 #define MAX_PROCS 4
 
@@ -30,19 +37,22 @@ typedef struct {
 } cpu_ctx_t;
 
 struct process {
-    pid_t     pid;
-    l1_entry *pgd;        // TTBR0 L1 table (PROC_VA_MB entries, user VA only)
-    u32       sp;         // initial stack pointer (user VA)
-    u32       stack_phys; // physical base of stack (for cleanup)
-    u32       code_phys;  // physical base of user code pages (for cleanup)  +16
-    cpu_ctx_t ctx;        // saved register state (filled on IRQ preemption)  +20
-    u32       suspended;  // non-zero while the process is suspended           +88
+    pid_t     pid;       //                                                    +0
+    l1_entry *pgd;       // TTBR0 L1 table                                    +4
+    uptr      sp;        // current stack pointer (user VA)                   +8
+    uptr      entry;     // VA entry point (from LLF header)                  +12
+    cpu_ctx_t ctx;       // saved register state (filled on IRQ preemption)   +20
+    u32       suspended; // non-zero while the process is suspended            +88
+    // ── fields below are not accessed from assembly ──────────────────────────
+    l2_entry *stack_pt;    // L2 table covering the stack's current L1 slot
+    u32       stack_pages; // number of 4KB stack pages currently mapped
+    uptr      heap_end;    // current top of heap (user VA), initially PROC_HEAP_START
 };
 
 // Currently executing process (set by process_exec).
 extern struct process *current_proc;
 
-// Allocate a process, map its stack, and load the user binary into code pages.
+// Allocate a process, map its stack and code, and load the user binary.
 struct process *process_create(void);
 
 // Switch to the process page table and jump to its entry. Never returns.
@@ -52,7 +62,11 @@ void process_exec(struct process *p);
 [[noreturn]]
 void process_exit(struct process *p, int code);
 
-// Called from the timer tick: increments tick count, suspends at 10, resumes at 20.
+// Map one additional 4KB page onto the bottom of the process stack.
+// Returns false on OOM.
+bool process_add_page(struct process *p);
+
+// Called from the timer tick.
 void sched_tick(void);
 
 #endif // LEG_PROCESS_H

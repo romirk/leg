@@ -5,7 +5,7 @@
 #include "kernel/dev/mmu.h"
 #include "kernel/logs.h"
 #include "libc/bswap.h"
-#include "libc/string.h"
+#include "libc/cstring.h"
 
 static void fwcfg_select(u16 sel) {
     // QEMU applies DEVICE_BIG_ENDIAN (bswap on LE guests),
@@ -53,7 +53,6 @@ void fwcfg_dma_write(u16 selector, const void *buf, u32 len) {
     while (dma_cmd.control != 0)
         asm volatile("dmb");
 }
-
 
 void fwcfg_init(void) {
     fwcfg_select(FWCFG_SIG_SEL);

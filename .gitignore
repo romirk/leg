@@ -7,3 +7,4 @@ build/
 .idea/
 *.pf
 /compile_commands.json
+.venv/

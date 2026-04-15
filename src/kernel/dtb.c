@@ -5,8 +5,8 @@
 
 #include "libc/bswap.h"
 #include "libc/builtins.h"
+#include "libc/cstring.h"
 #include "libc/stdio.h"
-#include "libc/string.h"
 
 #define DTB_MAGIC 0xd00dfeed
 
@@ -156,55 +156,55 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
         cur += 4;
 
         switch (tok) {
-        case DTB_NOP:
-            continue;
-        case DTB_END_NODE:
-        case DTB_END:
-            goto done;
-        case DTB_PROP: {
-            if (!in_struct(p, cur, 8)) return nullptr;
-            const u32 plen = be32_read(cur);
-            const u32 nameoff = be32_read(cur + 4);
-            cur += 8;
+            case DTB_NOP:
+                continue;
+            case DTB_END_NODE:
+            case DTB_END:
+                goto done;
+            case DTB_PROP: {
+                if (!in_struct(p, cur, 8)) return nullptr;
+                const u32 plen = be32_read(cur);
+                const u32 nameoff = be32_read(cur + 4);
+                cur += 8;
 
-            if (nameoff >= p->string_size) return nullptr;
-            const char *pname = p->string_block + nameoff;
-            const u8   *pdata = cur;
-            u32         off = (u32) cur - (u32) p->struct_block;
-            cur = p->struct_block + ((off + plen + 3) & ~(u32) 3);
+                if (nameoff >= p->string_size) return nullptr;
+                const char *pname = p->string_block + nameoff;
+                const u8   *pdata = cur;
+                u32         off = (u32) cur - (u32) p->struct_block;
+                cur = p->struct_block + ((off + plen + 3) & ~(u32) 3);
 
-            if (node->prop_count >= prop_count) return nullptr;
-            dtb_prop_t *pr = &props[node->prop_count++];
-            pr->name = pname;
-            pr->data = pdata;
-            pr->len = plen;
-            pr->type = guess_type(pname, pdata, plen);
+                if (node->prop_count >= prop_count) return nullptr;
+                dtb_prop_t *pr = &props[node->prop_count++];
+                pr->name = pname;
+                pr->data = pdata;
+                pr->len = plen;
+                pr->type = guess_type(pname, pdata, plen);
 
-            if (strcmp(pname, "#address-cells") == 0 && plen == 4)
-                node->address_cells = be32_read(pdata);
-            else if (strcmp(pname, "#size-cells") == 0 && plen == 4)
-                node->size_cells = be32_read(pdata);
-            else if ((strcmp(pname, "phandle") == 0 || strcmp(pname, "linux,phandle") == 0) &&
-                     plen == 4)
-                node->phandle = be32_read(pdata);
-            break;
-        }
-        case DTB_BEGIN_NODE: {
-            dtb_node_t *child = nullptr;
-            cur = parse_node(p, cur, node, &child);
-            if (!cur) return nullptr;
-            if (!node->children) {
-                node->children = child;
-            } else {
-                dtb_node_t *sib = node->children;
-                while (sib->next_sibling)
-                    sib = sib->next_sibling;
-                sib->next_sibling = child;
+                if (strcmp(pname, "#address-cells") == 0 && plen == 4)
+                    node->address_cells = be32_read(pdata);
+                else if (strcmp(pname, "#size-cells") == 0 && plen == 4)
+                    node->size_cells = be32_read(pdata);
+                else if ((strcmp(pname, "phandle") == 0 || strcmp(pname, "linux,phandle") == 0) &&
+                         plen == 4)
+                    node->phandle = be32_read(pdata);
+                break;
             }
-            break;
-        }
-        default:
-            break;
+            case DTB_BEGIN_NODE: {
+                dtb_node_t *child = nullptr;
+                cur = parse_node(p, cur, node, &child);
+                if (!cur) return nullptr;
+                if (!node->children) {
+                    node->children = child;
+                } else {
+                    dtb_node_t *sib = node->children;
+                    while (sib->next_sibling)
+                        sib = sib->next_sibling;
+                    sib->next_sibling = child;
+                }
+                break;
+            }
+            default:
+                break;
         }
     }
 done:

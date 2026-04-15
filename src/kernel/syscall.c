@@ -7,9 +7,11 @@
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
 #include "kernel/exceptions.h"
+#include "kernel/fs.h"
 #include "kernel/logs.h"
 #include "kernel/process.h"
 #include "kernel/tty.h"
+#include "libc/cstring.h"
 #include "types.h"
 
 typedef u32 (*svc_handler_t)(u32 r0, u32 r1, u32 r2, u32 r3);
@@ -114,6 +116,29 @@ static u32 svc_blk_write(u32 r0, u32 r1, u32 r2, u32 r3) {
     return blk_write(sector, r2, (const void *) r3);
 }
 
+// ─── Filesystem ──────────────────────────────────────────────────────────────
+
+static u32 svc_fs_blob_count([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1,
+                             [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
+    return fs_blob_count();
+}
+
+static u32 svc_fs_blob_info(u32 r0, u32 r1, u32 r2, u32 r3) {
+    const fs_blob_t *b = fs_blob_at(r0);
+    if (!b) return 0;
+    const char *name = fs_blob_name(b);
+    char       *name_buf = (char *) r1;
+    u32         buf_size = r2;
+    u32        *size_out = (u32 *) r3;
+    u32         name_len = (u32) strlen(name);
+    u32         copy_len = name_len < buf_size - 1 ? name_len : buf_size - 1;
+    for (u32 i = 0; i < copy_len; i++)
+        name_buf[i] = name[i];
+    name_buf[copy_len] = '\0';
+    if (size_out) *size_out = b->size;
+    return name_len;
+}
+
 // ─── Debug ────────────────────────────────────────────────────────────────────
 
 static u32 svc_uart_write(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unused]] u32 r3) {
@@ -142,6 +167,8 @@ static const svc_handler_t svc_handlers[] = {
     [SVC_UART_WRITE] = svc_uart_write,
     [SVC_BLK_READ] = svc_blk_read,
     [SVC_BLK_WRITE] = svc_blk_write,
+    [SVC_FS_BLOB_COUNT] = svc_fs_blob_count,
+    [SVC_FS_BLOB_INFO] = svc_fs_blob_info,
 };
 #define SVC_COUNT (sizeof(svc_handlers) / sizeof(*svc_handlers))
 

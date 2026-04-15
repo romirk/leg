@@ -39,23 +39,17 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_subdirectory(src/usr)
 
-set(USER_BIN  ${CMAKE_CURRENT_BINARY_DIR}/src/usr/user.bin)
+set(USER_ELF  ${CMAKE_CURRENT_BINARY_DIR}/src/usr/user.elf)
 set(DISK_IMG  ${CMAKE_SOURCE_DIR}/data/disk.img)
-
-add_custom_command(
-    OUTPUT  ${USER_BIN}
-    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:user.elf> ${USER_BIN}
-    DEPENDS user.elf
-    COMMENT "Extracting user.bin"
-)
 
 add_custom_target(write_disk
     COMMAND ${CMAKE_COMMAND}
-            -DBINARY=${USER_BIN}
+            -DELF=${USER_ELF}
             -DDISK=${DISK_IMG}
+            -DMKFS=${CMAKE_SOURCE_DIR}/legfs/mkfs.py
             -P ${CMAKE_SOURCE_DIR}/cmake/write_disk.cmake
-    DEPENDS ${USER_BIN}
-    COMMENT "Writing user.bin to data/disk.img"
+    DEPENDS ${USER_ELF}
+    COMMENT "Packing user.bin into LEGF filesystem image"
 )
 
 # ── Kernel binary ─────────────────────────────────────────────────────────────
