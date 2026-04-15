@@ -30,7 +30,7 @@ static dtb_node_t *alloc_node(parser_t *p) {
     dtb_node_t *n = &p->node_pool[p->node_used++];
     memset(n, 0, sizeof(*n));
     n->address_cells = 2;
-    n->size_cells = 1;
+    n->size_cells    = 1;
     return n;
 }
 
@@ -44,7 +44,7 @@ static dtb_prop_t *alloc_props(parser_t *p, u32 count) {
 // Bounds-checked access
 static bool in_struct(const parser_t *p, const u8 *ptr, u32 len) {
     const u32 base = (u32) p->struct_block;
-    const u32 end = base + p->struct_size;
+    const u32 end  = base + p->struct_size;
     const u32 addr = (u32) ptr;
     return addr >= base && addr + len <= end && addr + len >= addr;
 }
@@ -86,28 +86,28 @@ static dtb_val_type_t guess_type(const char *name, const u8 *data, u32 len) {
 // Recursive descent parser
 static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_node_t **out_node) {
     // cur points past DTB_BEGIN_NODE token — read NUL-terminated name
-    const auto name = (const char *) cur;
+    const auto name        = (const char *) cur;
     const u32  name_offset = (u32) cur - (u32) p->struct_block;
-    u32        name_len = 0;
+    u32        name_len    = 0;
     while (in_struct(p, cur + name_len, 1) && cur[name_len] != 0)
         ++name_len;
     const u32 padded = (name_offset + name_len + 1 + 3) & ~(u32) 3;
-    cur = p->struct_block + padded;
+    cur              = p->struct_block + padded;
 
     dtb_node_t *node = alloc_node(p);
     if (!node) return nullptr;
 
-    node->name = name;
+    node->name   = name;
     node->parent = parent;
     if (parent) {
         node->address_cells = parent->address_cells;
-        node->size_cells = parent->size_cells;
+        node->size_cells    = parent->size_cells;
     }
 
     // Count props (look-ahead) to batch-allocate
     u32 prop_count = 0;
     {
-        const u8 *scan = cur;
+        const u8 *scan  = cur;
         u32       depth = 0;
         while (true) {
             if (!in_struct(p, scan, 4)) break;
@@ -125,7 +125,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                     ++scan;
                 ++scan;
                 const u32 off = (u32) scan - (u32) p->struct_block;
-                scan = p->struct_block + ((off + 3) & ~(u32) 3);
+                scan          = p->struct_block + ((off + 3) & ~(u32) 3);
                 continue;
             }
             if (tok == DTB_PROP) {
@@ -133,7 +133,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                 u32 plen = be32_read(scan);
                 scan += 8;
                 u32 off = (u32) scan - (u32) p->struct_block;
-                scan = p->struct_block + ((off + plen + 3) & ~(u32) 3);
+                scan    = p->struct_block + ((off + plen + 3) & ~(u32) 3);
                 if (depth == 0) ++prop_count;
                 continue;
             }
@@ -146,7 +146,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
         props = alloc_props(p, prop_count);
         if (!props) return nullptr;
     }
-    node->props = props;
+    node->props      = props;
     node->prop_count = 0;
 
     // Main parse loop
@@ -163,22 +163,22 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
                 goto done;
             case DTB_PROP: {
                 if (!in_struct(p, cur, 8)) return nullptr;
-                const u32 plen = be32_read(cur);
+                const u32 plen    = be32_read(cur);
                 const u32 nameoff = be32_read(cur + 4);
                 cur += 8;
 
                 if (nameoff >= p->string_size) return nullptr;
                 const char *pname = p->string_block + nameoff;
                 const u8   *pdata = cur;
-                u32         off = (u32) cur - (u32) p->struct_block;
-                cur = p->struct_block + ((off + plen + 3) & ~(u32) 3);
+                u32         off   = (u32) cur - (u32) p->struct_block;
+                cur               = p->struct_block + ((off + plen + 3) & ~(u32) 3);
 
                 if (node->prop_count >= prop_count) return nullptr;
                 dtb_prop_t *pr = &props[node->prop_count++];
-                pr->name = pname;
-                pr->data = pdata;
-                pr->len = plen;
-                pr->type = guess_type(pname, pdata, plen);
+                pr->name       = pname;
+                pr->data       = pdata;
+                pr->len        = plen;
+                pr->type       = guess_type(pname, pdata, plen);
 
                 if (strcmp(pname, "#address-cells") == 0 && plen == 4)
                     node->address_cells = be32_read(pdata);
@@ -191,7 +191,7 @@ static const u8 *parse_node(parser_t *p, const u8 *cur, dtb_node_t *parent, dtb_
             }
             case DTB_BEGIN_NODE: {
                 dtb_node_t *child = nullptr;
-                cur = parse_node(p, cur, node, &child);
+                cur               = parse_node(p, cur, node, &child);
                 if (!cur) return nullptr;
                 if (!node->children) {
                     node->children = child;
@@ -221,12 +221,12 @@ static void extract_memory(dtb_tree_t *tree, dtb_node_t *root) {
         if (dt && (dt->len == 0 || strcmp((const char *) dt->data, "memory") != 0)) continue;
         const dtb_prop_t *reg = dtb_get_prop(n, "reg");
         if (!reg) continue;
-        u32 ac = root->address_cells;
-        u32 sc = root->size_cells;
+        u32 ac          = root->address_cells;
+        u32 sc          = root->size_cells;
         u32 entry_bytes = (ac + sc) * 4;
-        u32 entries = reg->len / entry_bytes;
+        u32 entries     = reg->len / entry_bytes;
         for (u32 i = 0; i < entries && tree->memory_count < 8; ++i) {
-            const u8 *p = reg->data + i * entry_bytes;
+            const u8 *p    = reg->data + i * entry_bytes;
             u64       base = 0, size = 0;
             for (u32 c = 0; c < ac; ++c)
                 base = (base << 32) | be32_read(p + c * 4);
@@ -251,12 +251,12 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_
 
     if (be32_read(raw) != DTB_MAGIC) return DTB_ERR_MAGIC;
 
-    u32 totalsize = be32_read(raw + 4);
-    u32 off_struct = be32_read(raw + 8);
-    u32 off_strings = be32_read(raw + 12);
-    u32 boot_cpuid = be32_read(raw + 28);
+    u32 totalsize    = be32_read(raw + 4);
+    u32 off_struct   = be32_read(raw + 8);
+    u32 off_strings  = be32_read(raw + 12);
+    u32 boot_cpuid   = be32_read(raw + 28);
     u32 size_strings = be32_read(raw + 32);
-    u32 size_struct = be32_read(raw + 36);
+    u32 size_struct  = be32_read(raw + 36);
 
     if (totalsize > blob_len) return DTB_ERR_TRUNCATED;
     if (off_struct + size_struct > totalsize) return DTB_ERR_TRUNCATED;
@@ -269,17 +269,17 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_
     if (!node_pool || !prop_pool) return DTB_ERR_NOMEM;
 
     parser_t p = {
-        .blob = raw,
-        .blob_len = blob_len,
+        .blob         = raw,
+        .blob_len     = blob_len,
         .struct_block = raw + off_struct,
         .string_block = (const char *) (raw + off_strings),
-        .struct_size = size_struct,
-        .string_size = size_strings,
-        .alloc = alloc,
-        .node_pool = node_pool,
-        .node_used = 0,
-        .prop_pool = prop_pool,
-        .prop_used = 0,
+        .struct_size  = size_struct,
+        .string_size  = size_strings,
+        .alloc        = alloc,
+        .node_pool    = node_pool,
+        .node_used    = 0,
+        .prop_pool    = prop_pool,
+        .prop_used    = 0,
     };
 
     // Find first BEGIN_NODE
@@ -299,7 +299,7 @@ dtb_err_t dtb_parse(const void *blob, u32 blob_len, dtb_tree_t *tree, dtb_alloc_
     }
 
     dtb_node_t *root = nullptr;
-    cur = parse_node(&p, cur, nullptr, &root);
+    cur              = parse_node(&p, cur, nullptr, &root);
     if (!cur || !root) return DTB_ERR_CORRUPT;
 
     tree->root = root;
@@ -341,7 +341,7 @@ dtb_node_t *dtb_find_node(const dtb_tree_t *tree, const char *path) {
             path = sep + 1;
             continue;
         }
-        cur = find_in_children(cur, path, seg_len);
+        cur  = find_in_children(cur, path, seg_len);
         path = *sep ? sep + 1 : sep;
     }
     return cur;
@@ -431,8 +431,8 @@ bool dtb_reg_entry(const dtb_node_t *node, u32 index, u64 *base, u64 *size) {
     const dtb_prop_t *reg = dtb_get_prop(node, "reg");
     if (!reg) return false;
 
-    u32 ac = node->parent ? node->parent->address_cells : 2;
-    u32 sc = node->parent ? node->parent->size_cells : 1;
+    u32 ac          = node->parent ? node->parent->address_cells : 2;
+    u32 sc          = node->parent ? node->parent->size_cells : 1;
     u32 entry_bytes = (ac + sc) * 4;
     if (entry_bytes == 0 || (index + 1) * entry_bytes > reg->len) return false;
 
@@ -476,8 +476,8 @@ static void dump_prop(const dtb_prop_t *p, u32 depth) {
             printf("\"%s\"", (const char *) p->data);
             break;
         case DTB_VAL_STRINGS: {
-            auto        s = (const char *) p->data;
-            const char *end = s + p->len;
+            auto        s     = (const char *) p->data;
+            const char *end   = s + p->len;
             bool        first = true;
             while (s < end) {
                 if (!first) printf(", ");

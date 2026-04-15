@@ -19,8 +19,8 @@
 
 [[maybe_unused]]
 static void gic_cpu_init(void) {
-    GICC_PMR = 0xFFu; // allow all priorities
-    GICC_CTLR = 0x1u; // enable CPU interface
+    GICC_PMR  = 0xFFu; // allow all priorities
+    GICC_CTLR = 0x1u;  // enable CPU interface
 }
 
 [[maybe_unused]]

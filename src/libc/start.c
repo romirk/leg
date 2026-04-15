@@ -6,9 +6,11 @@
 
 #include "syscall.h"
 
+#ifndef KERNEL
 extern int main(void);
 
 [[gnu::section(".text.entry"), gnu::noreturn]]
 void _user_entry(void) {
     sys_exit(main());
 }
+#endif

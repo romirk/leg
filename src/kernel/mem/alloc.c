@@ -73,7 +73,7 @@ static bool bm_test(const bm_word_t *bm, u32 bit) {
 static u32 bm_find_free_run(const bm_word_t *bm, const u32 total_bits, const u32 start_bit,
                             const u32 n) {
     u32 run_start = start_bit;
-    u32 run_len = 0;
+    u32 run_len   = 0;
     for (u32 i = start_bit; i < total_bits; ++i) {
         if (!bm_test(bm, i)) {
             if (run_len == 0) run_start = i;
@@ -118,7 +118,7 @@ static bool pa_aligned(const uptr pa) {
 // called only during init; no double-reserve check
 static void reserve_range(uptr base, uptr end) {
     base = align_down(base, PAGE_SIZE);
-    end = align_up(end, PAGE_SIZE);
+    end  = align_up(end, PAGE_SIZE);
     if (base < g_pmm.ram_base) base = g_pmm.ram_base;
     if (end > g_pmm.ram_end) end = g_pmm.ram_end;
     for (uptr pa = base; pa < end; pa += PAGE_SIZE) {
@@ -137,7 +137,7 @@ static kheap_hdr_t *hdr_of(void *ptr) {
 
 static bool hdr_valid(const kheap_hdr_t *h, u32 expected_magic) {
     const uptr haddr = (uptr) h;
-    const uptr base = (uptr) g_kheap.base;
+    const uptr base  = (uptr) g_kheap.base;
     if (haddr < base || haddr + HDR_SIZE > base + g_kheap.capacity) return false;
     return h->magic == expected_magic;
 }
@@ -146,23 +146,23 @@ void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end, v
     ASSERT(mem_size > 0, "mm_init: no RAM info from DTB");
 
     // clamp to 32-bit PA space (ARMv7a)
-    const u64 end64 = (u64) mem_base + mem_size;
+    const u64 end64    = (u64) mem_base + mem_size;
     uptr      ram_base = mem_base;
-    uptr      ram_end = (end64 > U32_MAX) ? U32_MAX & PAGE_MASK : (uptr) end64;
-    ram_base = align_up(ram_base, PAGE_SIZE);
-    ram_end = align_down(ram_end, PAGE_SIZE);
+    uptr      ram_end  = (end64 > U32_MAX) ? U32_MAX & PAGE_MASK : (uptr) end64;
+    ram_base           = align_up(ram_base, PAGE_SIZE);
+    ram_end            = align_down(ram_end, PAGE_SIZE);
 
     ASSERT(ram_end > ram_base, "mm_init: degenerate RAM range");
 
     const uptr bitmap_pa = align_up(reserved_end, PAGE_SIZE);
 
-    g_pmm.ram_base = ram_base;
-    g_pmm.ram_end = ram_end;
-    g_pmm.total_pages = (ram_end - ram_base) >> PAGE_SHIFT;
-    g_pmm.next_hint = 0;
-    g_pmm.free_pages = g_pmm.total_pages;
+    g_pmm.ram_base       = ram_base;
+    g_pmm.ram_end        = ram_end;
+    g_pmm.total_pages    = (ram_end - ram_base) >> PAGE_SHIFT;
+    g_pmm.next_hint      = 0;
+    g_pmm.free_pages     = g_pmm.total_pages;
     g_pmm.reserved_pages = 0;
-    g_pmm.bitmap_words = div_round_up(g_pmm.total_pages, BM_BITS);
+    g_pmm.bitmap_words   = div_round_up(g_pmm.total_pages, BM_BITS);
 
     const size_t bitmap_bytes = g_pmm.bitmap_words * sizeof(bm_word_t);
 
@@ -179,13 +179,13 @@ void mm_init(const uptr mem_base, const u64 mem_size, const uptr reserved_end, v
     const uptr heap_pa = virt_to_phys(heap_va);
     reserve_range(heap_pa, heap_pa + KHEAP_SIZE);
 
-    g_kheap.base = (u8 *) heap_va;
-    g_kheap.capacity = KHEAP_SIZE;
-    g_kheap.used = 0;
-    const auto h = (kheap_hdr_t *) heap_va;
-    h->magic = KHEAP_MAGIC_FREE;
-    h->size = KHEAP_SIZE - HDR_SIZE;
-    h->next_free = nullptr;
+    g_kheap.base      = (u8 *) heap_va;
+    g_kheap.capacity  = KHEAP_SIZE;
+    g_kheap.used      = 0;
+    const auto h      = (kheap_hdr_t *) heap_va;
+    h->magic          = KHEAP_MAGIC_FREE;
+    h->size           = KHEAP_SIZE - HDR_SIZE;
+    h->next_free      = nullptr;
     g_kheap.free_list = h;
 }
 
@@ -221,7 +221,7 @@ uptr mm_page_alloc_aligned(const u32 n, const u32 align_pages) {
     // Two passes: from hint_aligned to end, then from 0 to hint_aligned.
     for (u32 pass = 0; pass < 2; ++pass) {
         const u32 start = (pass == 0) ? hint_aligned : 0;
-        const u32 end = (pass == 0) ? g_pmm.total_pages : hint_aligned;
+        const u32 end   = (pass == 0) ? g_pmm.total_pages : hint_aligned;
 
         for (u32 idx = start; idx + n <= end; idx += align_pages) {
             bool ok = true;
@@ -274,12 +274,12 @@ bool mm_page_is_allocated(const uptr pa) {
 void mm_stats(mm_stats_t *out) {
     if (!out) return;
     const uptr heap_base = (uptr) g_kheap.base;
-    out->total_pages = g_pmm.total_pages;
-    out->free_pages = g_pmm.free_pages;
-    out->reserved_pages = g_pmm.reserved_pages;
-    out->heap_base = heap_base;
-    out->heap_end = heap_base + g_kheap.capacity;
-    out->heap_used = g_kheap.used;
+    out->total_pages     = g_pmm.total_pages;
+    out->free_pages      = g_pmm.free_pages;
+    out->reserved_pages  = g_pmm.reserved_pages;
+    out->heap_base       = heap_base;
+    out->heap_end        = heap_base + g_kheap.capacity;
+    out->heap_used       = g_kheap.used;
 }
 
 void *kmalloc(size_t size) {
@@ -287,7 +287,7 @@ void *kmalloc(size_t size) {
     size = (size + KHEAP_ALIGN - 1u) & ~(KHEAP_ALIGN - 1u);
 
     kheap_hdr_t *prev = nullptr;
-    kheap_hdr_t *cur = g_kheap.free_list;
+    kheap_hdr_t *cur  = g_kheap.free_list;
 
     while (cur) {
         ASSERT(cur->magic == KHEAP_MAGIC_FREE, "kmalloc: heap corruption (bad free-list magic)");
@@ -296,10 +296,10 @@ void *kmalloc(size_t size) {
             if (cur->size >= size + HDR_SIZE + KHEAP_MIN_SPLIT) {
                 // split: carve a free block from the tail
                 const auto split = (kheap_hdr_t *) ((u8 *) cur + HDR_SIZE + size);
-                split->magic = KHEAP_MAGIC_FREE;
-                split->size = cur->size - size - HDR_SIZE;
+                split->magic     = KHEAP_MAGIC_FREE;
+                split->size      = cur->size - size - HDR_SIZE;
                 split->next_free = cur->next_free;
-                cur->size = size;
+                cur->size        = size;
                 if (prev)
                     prev->next_free = split;
                 else
@@ -310,13 +310,13 @@ void *kmalloc(size_t size) {
                 else
                     g_kheap.free_list = cur->next_free;
             }
-            cur->magic = KHEAP_MAGIC_USED;
+            cur->magic     = KHEAP_MAGIC_USED;
             cur->next_free = nullptr;
             g_kheap.used += cur->size;
             return (u8 *) cur + HDR_SIZE;
         }
         prev = cur;
-        cur = cur->next_free;
+        cur  = cur->next_free;
     }
     return nullptr;
 }
@@ -340,8 +340,8 @@ void *kmalloc_aligned(size_t size, size_t alignment) {
     uptr aligned = align_up(raw_addr + sizeof(align_meta_t), alignment);
 
     align_meta_t *meta = (align_meta_t *) (aligned - sizeof(align_meta_t));
-    meta->raw = raw;
-    meta->tag = ALIGN_TAG;
+    meta->raw          = raw;
+    meta->tag          = ALIGN_TAG;
 
     return (void *) aligned;
 }
@@ -354,7 +354,7 @@ void *kzalloc(const size_t size) {
 void kfree(void *ptr) {
     if (!ptr) return;
 
-    align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
+    align_meta_t *meta      = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
     const uptr    heap_base = (uptr) g_kheap.base;
 
     if (meta->tag == ALIGN_TAG && (uptr) meta->raw >= heap_base &&
@@ -371,10 +371,10 @@ void kfree(void *ptr) {
 
     // insert in address order (enables coalescing)
     kheap_hdr_t *prev = nullptr;
-    kheap_hdr_t *cur = g_kheap.free_list;
+    kheap_hdr_t *cur  = g_kheap.free_list;
     while (cur && cur < h) {
         prev = cur;
-        cur = cur->next_free;
+        cur  = cur->next_free;
     }
 
     h->next_free = cur;
@@ -385,13 +385,13 @@ void kfree(void *ptr) {
 
     // coalesce with next
     if (h->next_free) {
-        kheap_hdr_t *next = h->next_free;
+        kheap_hdr_t *next          = h->next_free;
         const u8    *expected_next = (u8 *) h + HDR_SIZE + h->size;
 
         if ((u8 *) next == expected_next && next->magic == KHEAP_MAGIC_FREE) {
             h->size += HDR_SIZE + next->size;
             h->next_free = next->next_free;
-            next->magic = 0xDEADu; // poison absorbed header
+            next->magic  = 0xDEADu; // poison absorbed header
         }
     }
 
@@ -402,7 +402,7 @@ void kfree(void *ptr) {
         if ((u8 *) h == expected_h && prev->magic == KHEAP_MAGIC_FREE) {
             prev->size += HDR_SIZE + h->size;
             prev->next_free = h->next_free;
-            h->magic = 0xDEADu;
+            h->magic        = 0xDEADu;
         }
     }
 }
@@ -415,9 +415,9 @@ void *krealloc(void *ptr, const size_t size) {
     }
 
     // resolve aligned allocation to its raw pointer before touching the header
-    align_meta_t *meta = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
+    align_meta_t *meta      = (align_meta_t *) ((u8 *) ptr - sizeof(align_meta_t));
     const uptr    heap_base = (uptr) g_kheap.base;
-    void         *raw = ptr;
+    void         *raw       = ptr;
     if (meta->tag == ALIGN_TAG && (uptr) meta->raw >= heap_base &&
         (uptr) meta->raw < heap_base + g_kheap.capacity) {
         raw = meta->raw;

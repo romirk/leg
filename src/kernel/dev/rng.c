@@ -25,10 +25,10 @@ void urandom(void *buf, u32 n) {
     u8 *p = buf;
     while (n >= 4) {
         const u32 r = sys_rand32();
-        p[0] = (u8) r;
-        p[1] = (u8) (r >> 8);
-        p[2] = (u8) (r >> 16);
-        p[3] = (u8) (r >> 24);
+        p[0]        = (u8) r;
+        p[1]        = (u8) (r >> 8);
+        p[2]        = (u8) (r >> 16);
+        p[3]        = (u8) (r >> 24);
         p += 4;
         n -= 4;
     }

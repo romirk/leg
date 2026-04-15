@@ -32,7 +32,7 @@ static u32 cursor_row;
 void fb_init(void) {
     constexpr u32 fb_bytes = FB_WIDTH * FB_HEIGHT * FB_BPP;
     constexpr u32 fb_pages = (fb_bytes + PAGE_SIZE - 1) / PAGE_SIZE;
-    fb_phys = mm_page_alloc_n(fb_pages);
+    fb_phys                = mm_page_alloc_n(fb_pages);
     if (!fb_phys) {
         warn("fb: page alloc failed");
         return;
@@ -40,7 +40,7 @@ void fb_init(void) {
 
     // identity-map all sections covering the framebuffer
     const u32 first_section = fb_phys >> 20;
-    const u32 last_section = (fb_phys + fb_bytes - 1) >> 20;
+    const u32 last_section  = (fb_phys + fb_bytes - 1) >> 20;
     for (u32 s = first_section; s <= last_section; s++)
         mmu_map_identity(s, false);
 
@@ -54,10 +54,10 @@ void fb_init(void) {
     }
 
     static struct ramfb_cfg cfg;
-    cfg.addr = bswap64(fb_phys);
+    cfg.addr   = bswap64(fb_phys);
     cfg.fourcc = bswap32(DRM_FORMAT_XRGB8888);
-    cfg.flags = 0;
-    cfg.width = bswap32(FB_WIDTH);
+    cfg.flags  = 0;
+    cfg.width  = bswap32(FB_WIDTH);
     cfg.height = bswap32(FB_HEIGHT);
     cfg.stride = bswap32(FB_STRIDE);
 
@@ -88,12 +88,12 @@ void fb_clear(const u32 color) {
 
 static void draw_glyph(const u32 cx, const u32 cy, const u8 ch, const u32 fg, const u32 bg) {
     const u8 *glyph = &FONT[ch * 8];
-    u32       px = cx * FONT_W;
-    u32       py = cy * FONT_H;
+    u32       px    = cx * FONT_W;
+    u32       py    = cy * FONT_H;
     for (u32 row = 0; row < FONT_H; row++) {
         u8 bits = glyph[row];
         for (u32 col = 0; col < FONT_W; col++) {
-            u32 color = (bits & (0x80 >> col)) ? fg : bg;
+            u32 color                                 = (bits & (0x80 >> col)) ? fg : bg;
             fb_base[(py + row) * FB_WIDTH + px + col] = color;
         }
     }
@@ -101,7 +101,7 @@ static void draw_glyph(const u32 cx, const u32 cy, const u8 ch, const u32 fg, co
 
 static void scroll_up(const u32 bg) {
     u32 row_pixels = FONT_H * FB_WIDTH;
-    u32 total = (FB_HEIGHT - FONT_H) * FB_WIDTH;
+    u32 total      = (FB_HEIGHT - FONT_H) * FB_WIDTH;
     for (u32 i = 0; i < total; i++)
         fb_base[i] = fb_base[i + row_pixels];
     u32 start = total;

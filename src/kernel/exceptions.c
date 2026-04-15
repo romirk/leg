@@ -54,16 +54,16 @@ void handle_fiq(void) {
 
 void enable_interrupts(void) {
     auto cpsr = read_cpsr();
-    cpsr.I = false;
-    cpsr.A = false;
-    cpsr.F = false;
+    cpsr.I    = false;
+    cpsr.A    = false;
+    cpsr.F    = false;
     write_cpsr(cpsr);
 }
 
 void disable_interrupts(void) {
     auto cpsr = read_cpsr();
-    cpsr.I = true;
-    cpsr.A = true;
-    cpsr.F = true;
+    cpsr.I    = true;
+    cpsr.A    = true;
+    cpsr.F    = true;
     write_cpsr(cpsr);
 }

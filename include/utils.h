@@ -12,8 +12,8 @@
 [[maybe_unused]]
 static void swap(char *a, char *b) {
     const auto t = *a;
-    *a = *b;
-    *b = t;
+    *a           = *b;
+    *b           = t;
 }
 
 [[gnu::const, maybe_unused]]

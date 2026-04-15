@@ -21,11 +21,11 @@ static void fwcfg_read(void *buf, u32 len) {
 
 // control flags written to fwcfg_dma_access.control (big-endian to device)
 typedef enum {
-    FWCFG_DMA_ERROR = 1 << 0, // set by device on error
-    FWCFG_DMA_READ = 1 << 1,
-    FWCFG_DMA_SKIP = 1 << 2,
+    FWCFG_DMA_ERROR  = 1 << 0, // set by device on error
+    FWCFG_DMA_READ   = 1 << 1,
+    FWCFG_DMA_SKIP   = 1 << 2,
     FWCFG_DMA_SELECT = 1 << 3, // select a file by embedding selector in bits [31:16]
-    FWCFG_DMA_WRITE = 1 << 4,
+    FWCFG_DMA_WRITE  = 1 << 4,
 } fwcfg_dma_ctrl_t;
 
 // DMA command descriptor written to FWCFG_DMA_LO; all fields big-endian
@@ -41,7 +41,7 @@ void fwcfg_dma_write(u16 selector, const void *buf, u32 len) {
     u32 buf_phys = virt_to_phys(buf);
 
     dma_cmd.control = bswap32(((u32) selector << 16) | FWCFG_DMA_SELECT | FWCFG_DMA_WRITE);
-    dma_cmd.length = bswap32(len);
+    dma_cmd.length  = bswap32(len);
     dma_cmd.address = bswap64(buf_phys);
 
     u32 dma_phys = virt_to_phys((void *) &dma_cmd);

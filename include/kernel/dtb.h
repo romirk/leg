@@ -40,21 +40,21 @@ struct dtb_reserve_entry {
 // token values used in the structure block
 enum dtb_token {
     DTB_BEGIN_NODE = 0x1, // start of a node; followed by NUL-terminated name
-    DTB_END_NODE = 0x2,   // end of a node
-    DTB_PROP = 0x3,       // a property; followed by DTB_prop then data
-    DTB_NOP = 0x4,        // padding/no-op
-    DTB_END = 0x9,        // end of structure block
+    DTB_END_NODE   = 0x2, // end of a node
+    DTB_PROP       = 0x3, // a property; followed by DTB_prop then data
+    DTB_NOP        = 0x4, // padding/no-op
+    DTB_END        = 0x9, // end of structure block
 };
 
 // Property value types (heuristically decoded or explicit)
 typedef enum : u8 {
-    DTB_VAL_EMPTY = 0,   // no data
-    DTB_VAL_U32 = 1,     // single big-endian u32
-    DTB_VAL_U64 = 2,     // two big-endian u32s → u64
-    DTB_VAL_STRING = 3,  // null-terminated string
+    DTB_VAL_EMPTY   = 0, // no data
+    DTB_VAL_U32     = 1, // single big-endian u32
+    DTB_VAL_U64     = 2, // two big-endian u32s → u64
+    DTB_VAL_STRING  = 3, // null-terminated string
     DTB_VAL_STRINGS = 4, // stringlist (multiple NUL-terminated)
-    DTB_VAL_BYTES = 5,   // raw byte array
-    DTB_VAL_CELLS = 6,   // array of big-endian u32 cells
+    DTB_VAL_BYTES   = 5, // raw byte array
+    DTB_VAL_CELLS   = 6, // array of big-endian u32 cells
 } dtb_val_type_t;
 
 // A parsed property
@@ -98,14 +98,14 @@ typedef struct {
 
 // Error codes
 typedef enum : int {
-    DTB_OK = 0,
-    DTB_ERR_NULL = -1,      // null pointer
-    DTB_ERR_MAGIC = -2,     // bad DTB magic
-    DTB_ERR_VERSION = -3,   // unsupported DTB version
+    DTB_OK            = 0,
+    DTB_ERR_NULL      = -1, // null pointer
+    DTB_ERR_MAGIC     = -2, // bad DTB magic
+    DTB_ERR_VERSION   = -3, // unsupported DTB version
     DTB_ERR_TRUNCATED = -4, // blob smaller than reported
-    DTB_ERR_NOMEM = -5,     // allocator returned NULL
-    DTB_ERR_OVERFLOW = -6,  // exceeded DTB_MAX_* limit
-    DTB_ERR_CORRUPT = -7,   // structural inconsistency
+    DTB_ERR_NOMEM     = -5, // allocator returned NULL
+    DTB_ERR_OVERFLOW  = -6, // exceeded DTB_MAX_* limit
+    DTB_ERR_CORRUPT   = -7, // structural inconsistency
 } dtb_err_t;
 
 // API

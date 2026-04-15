@@ -57,11 +57,14 @@ add_custom_target(write_disk
 file(GLOB_RECURSE KERNEL_SOURCES "src/kernel/*.*")
 file(GLOB_RECURSE LIBC_SOURCES   "src/libc/*.c")
 
+
+
 add_executable(${PROJECT_NAME}.elf
     ${KERNEL_SOURCES}
     ${LIBC_SOURCES}
     ${LINKER_SCRIPT}
 )
+target_compile_definitions(${PROJECT_NAME}.elf PRIVATE KERNEL)
 add_dependencies(${PROJECT_NAME}.elf write_disk)
 target_link_options(${PROJECT_NAME}.elf PRIVATE -Wl,-T,${LINKER_SCRIPT})
 

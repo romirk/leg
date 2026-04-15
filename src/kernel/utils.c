@@ -15,8 +15,8 @@ void panic(const char *fmt, ...) {
     va_end(ap);
     kprint("\n");
 
-    void      *p = nullptr;
-    void      *sp = &p;
+    void      *p            = nullptr;
+    void      *sp           = &p;
     const auto stack_height = (void *) STACK_BOTTOM - sp;
     kprintf("sp=%p\n", sp);
     hexdump(sp, stack_height > 64 ? 64 : stack_height);

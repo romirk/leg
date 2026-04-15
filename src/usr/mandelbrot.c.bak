@@ -34,8 +34,8 @@ typedef struct {
 
 char cnt2char(int value, int max_iter) {
     const char *symbols = "MW2a_. ";
-    int         ns = strlen(symbols);
-    int         idx = (int) ((double) value / max_iter * (ns - 1));
+    int         ns      = strlen(symbols);
+    int         idx     = (int) ((double) value / max_iter * (ns - 1));
     return symbols[idx];
 }
 
@@ -73,10 +73,10 @@ static double d_log(double x) {
         double d;
         u64    u;
     } b;
-    b.d = x;
-    int e = (int) ((b.u >> 52) & 0x7FFu) - 1023;
-    b.u = (b.u & 0x000FFFFFFFFFFFFFULL) | 0x3FF0000000000000ULL; // m in [1,2)
-    double t = (b.d - 1.0) / (b.d + 1.0);                        // atanh argument in [0, 1/3)
+    b.d       = x;
+    int e     = (int) ((b.u >> 52) & 0x7FFu) - 1023;
+    b.u       = (b.u & 0x000FFFFFFFFFFFFFULL) | 0x3FF0000000000000ULL; // m in [1,2)
+    double t  = (b.d - 1.0) / (b.d + 1.0);                             // atanh argument in [0, 1/3)
     double t2 = t * t;
     double ln_m =
         2.0 * t * (1.0 + t2 * (1.0 / 3.0 + t2 * (1.0 / 5.0 + t2 * (1.0 / 7.0 + t2 / 9.0))));
@@ -91,13 +91,13 @@ static double escape_time(double cr, double ci, int max_iter) {
     for (int iter = 0; iter < max_iter; ++iter) {
         double zr2 = zr * zr, zi2 = zi * zi;
         if (zr2 + zi2 > 4.0) {
-            double log_zn = d_log(zr2 + zi2) * 0.5;         // ln(|z|)
-            double nu = d_log(log_zn) / 0.6931471805599453; // log2(d_log(|z|))
+            double log_zn = d_log(zr2 + zi2) * 0.5;             // ln(|z|)
+            double nu     = d_log(log_zn) / 0.6931471805599453; // log2(d_log(|z|))
             return (double) iter + 1.0 - nu;
         }
         double tmp = zr2 - zi2 + cr;
-        zi = 2.0 * zr * zi + ci;
-        zr = tmp;
+        zi         = 2.0 * zr * zi + ci;
+        zr         = tmp;
     }
     return 0.0;
 }
@@ -109,21 +109,21 @@ static void putpixel(double smooth, int x, int y) {
     }
     // Cycle the palette every 32 iterations
     double t = smooth / 32.0;
-    t = t - (int) t; // fractional part → [0, 1)
+    t        = t - (int) t; // fractional part → [0, 1)
     fb_putpixel(x, y, palette_lookup(t));
 }
 
 void ascii_output(const Config *config) {
-    double     fwidth = config->ur_x - config->ll_x;
-    double     fheight = config->ur_y - config->ll_y;
+    double     fwidth   = config->ur_x - config->ll_x;
+    double     fheight  = config->ur_y - config->ll_y;
     const auto max_iter = config->max_iter;
 
     fb_clear(FB_BLACK);
 
     for (int y = 0; y < config->height; ++y) {
         for (int x = 0; x < config->width; ++x) {
-            double real = config->ll_x + x * fwidth / config->width;
-            double imag = config->ur_y - y * fheight / config->height;
+            double real   = config->ll_x + x * fwidth / config->width;
+            double imag   = config->ur_y - y * fheight / config->height;
             double smooth = escape_time(real, imag, max_iter);
             putpixel(smooth, x, y);
         }
@@ -131,13 +131,13 @@ void ascii_output(const Config *config) {
 }
 
 int mandelbrot(double min_re, double min_im, double max_re, double max_im) {
-    Config config = {.width = FB_WIDTH,
-                     .height = FB_HEIGHT,
-                     .png = false,
-                     .ll_x = min_re,
-                     .ll_y = min_im,
-                     .ur_x = max_re,
-                     .ur_y = max_im,
+    Config config = {.width    = FB_WIDTH,
+                     .height   = FB_HEIGHT,
+                     .png      = false,
+                     .ll_x     = min_re,
+                     .ll_y     = min_im,
+                     .ur_x     = max_re,
+                     .ur_y     = max_im,
                      .max_iter = 1000};
 
     ascii_output(&config);

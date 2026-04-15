@@ -7,8 +7,8 @@
 #define LLF_VERSION 0x00010000u // version 1.0.0
 
 typedef enum : u32 {
-    LLF_SEG_NULL = 0,   // unused / invalid
-    LLF_SEG_LOAD = 1,   // normal loadable segment (CODE/DATA)
+    LLF_SEG_NULL   = 0, // unused / invalid
+    LLF_SEG_LOAD   = 1, // normal loadable segment (CODE/DATA)
     LLF_SEG_NOBITS = 2, // BSS (NOLOAD)
 
     LLF_SEG_MAX

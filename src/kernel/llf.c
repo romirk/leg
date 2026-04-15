@@ -21,10 +21,10 @@ static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
 // va need not be page-aligned; already-mapped pages (e.g. code/BSS overlap) are skipped.
 static bool map_pages(l1_entry *pgd, u32 va, u32 memsz) {
     const u32 page_base = va & ~(PAGE_SIZE - 1u);
-    const u32 pages = (va - page_base + memsz + PAGE_SIZE - 1) / PAGE_SIZE;
+    const u32 pages     = (va - page_base + memsz + PAGE_SIZE - 1) / PAGE_SIZE;
     for (u32 i = 0; i < pages; i++) {
         u32       page_va = page_base + i * PAGE_SIZE;
-        l2_entry *pt = get_or_alloc_l2(pgd, page_va >> 20);
+        l2_entry *pt      = get_or_alloc_l2(pgd, page_va >> 20);
         if (!pt) return false;
         if (pt[L2_IDX(page_va)].type != L2_INVALID) continue; // already mapped
         uptr pa = mm_page_alloc();

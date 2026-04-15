@@ -8,7 +8,6 @@
 #include "kernel/dev/rng.h"
 #include "kernel/dev/rtc.h"
 #include "kernel/dev/uart.h"
-#include "kernel/dev/virtio.h"
 #include "kernel/dtb.h"
 #include "kernel/exceptions.h"
 #include "kernel/fs.h"
@@ -17,8 +16,11 @@
 #include "kernel/mem/alloc.h"
 #include "kernel/mem/bump.h"
 #include "kernel/process.h"
+#include "kernel/scheduler.h"
+#include "kernel/scheduler.h"
 #include "libc/bswap.h"
 #include "types.h"
+#include "usr/main.h"
 #include "utils.h"
 
 #define EARLY_HEAP_SIZE 0x20000 // 128KB
@@ -27,8 +29,8 @@
 void kmain(void *dtb) {
     uart_puts("kernel: booting...\n");
 
-    auto  header = (struct dtb_header *) dtb;
-    u32   dtb_size = bswap32(header->totalsize);
+    auto  header    = (struct dtb_header *) dtb;
+    u32   dtb_size  = bswap32(header->totalsize);
     void *heap_base = align((u8 *) dtb + dtb_size, 16);
     early_malloc_init(heap_base, EARLY_HEAP_SIZE);
 
@@ -57,7 +59,7 @@ void kmain(void *dtb) {
     info("RAM: %p +%p", (void *) tree.memory[0].base, (void *) tree.memory[0].size);
 
     const u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
-    void     *kheap_va = (void *) align_up((uptr) bss_end, PAGE_SIZE);
+    void     *kheap_va     = (void *) align_up((uptr) bss_end, PAGE_SIZE);
     mm_init((u32) tree.memory[0].base, tree.memory[0].size, reserved_end, kheap_va);
     early_malloc_reset();
 
@@ -90,20 +92,24 @@ void kmain(void *dtb) {
 
     enable_interrupts();
 
+#ifndef DEBUG
     timer_set_tick(300000, sched_tick); // 300ms tick
-
-    info("kernel: creating init process...");
-    struct process *p = process_create("init");
 
     fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);
     fb_print("<uhhhhhhh>", FB_BLUE, FB_BLACK);
     fb_print("!\n\n\n", FB_WHITE, FB_BLACK);
 
+    info("kernel: creating init process...");
+    struct process *p = process_create("init");
     if (!p) {
-        err("failed to create main process");
+        err("failed to create init process");
         goto halt;
     }
     process_exec(p);
+#else
+    info("kernel: debug main");
+    main();
+#endif
 
 halt:
     warn("HALT");

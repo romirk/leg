@@ -6,8 +6,8 @@ static u8 *early_heap_ptr;
 
 void early_malloc_init(void *base, u32 size) {
     early_heap_base = (u8 *) base;
-    early_heap_end = early_heap_base + size;
-    early_heap_ptr = early_heap_base;
+    early_heap_end  = early_heap_base + size;
+    early_heap_ptr  = early_heap_base;
 }
 
 void *early_malloc(u32 size) {

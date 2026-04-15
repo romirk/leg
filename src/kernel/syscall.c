@@ -10,17 +10,38 @@
 #include "kernel/fs.h"
 #include "kernel/logs.h"
 #include "kernel/process.h"
+#include "kernel/scheduler.h"
 #include "kernel/tty.h"
 #include "libc/cstring.h"
 #include "types.h"
 
 typedef u32 (*svc_handler_t)(u32 r0, u32 r1, u32 r2, u32 r3);
 
+// Written by the SVC trampoline before calling svc_dispatch.
+volatile u32 svc_saved_lr;
+
 // ─── Process ─────────────────────────────────────────────────────────────────
 
 static u32 svc_exit(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
                     [[maybe_unused]] u32 r3) {
-    process_exit(current_proc, (int) r0);
+    process_exit(current_proc->pid, (int) r0);
+}
+
+static u32 svc_fork([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
+                    [[maybe_unused]] u32 r3) {
+    u32 sp_usr, cpsr;
+    asm volatile("cps #0x1F \n\t" // System mode — shares user register bank
+                 "mov %0, sp \n\t"
+                 "cps #0x13 \n\t" // back to SVC mode
+                 "mrs %1, spsr"   // spsr_svc = user CPSR
+                 : "=r"(sp_usr), "=r"(cpsr));
+    process_t *child = process_fork(svc_saved_lr, sp_usr, cpsr);
+    return child ? child->pid : (u32) -1;
+}
+
+static u32 svc_getpid([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
+                      [[maybe_unused]] u32 r3) {
+    return current_proc->pid;
 }
 
 // ─── I/O ─────────────────────────────────────────────────────────────────────
@@ -56,9 +77,11 @@ static u32 svc_getchar_nb([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1, [[ma
 
 static u32 svc_sleep(u32 r0, [[maybe_unused]] u32 r1, [[maybe_unused]] u32 r2,
                      [[maybe_unused]] u32 r3) {
-    enable_interrupts();
-    delay_us(r0);
-    disable_interrupts();
+    u64 freq                = read_cntfrq();
+    u64 deadline            = read_cntpct() + (u64) r0 * freq / 1000000u;
+    current_proc->wake_tick = deadline;
+    current_proc->suspended = 1;
+    // The SVC trampoline detects suspended=1 on return and performs the context switch.
     return 0;
 }
 
@@ -126,7 +149,7 @@ static u32 svc_fs_blob_count([[maybe_unused]] u32 r0, [[maybe_unused]] u32 r1,
 static u32 svc_fs_blob_info(u32 r0, u32 r1, u32 r2, u32 r3) {
     const fs_blob_t *b = fs_blob_at(r0);
     if (!b) return 0;
-    const char *name = fs_blob_name(b);
+    const char *name     = fs_blob_name(b);
     char       *name_buf = (char *) r1;
     u32         buf_size = r2;
     u32        *size_out = (u32 *) r3;
@@ -151,24 +174,26 @@ static u32 svc_uart_write(u32 r0, u32 r1, [[maybe_unused]] u32 r2, [[maybe_unuse
 // ─── Dispatch ────────────────────────────────────────────────────────────────
 
 static const svc_handler_t svc_handlers[] = {
-    [SVC_EXIT] = svc_exit,
-    [SVC_WRITE] = svc_write,
-    [SVC_READ] = svc_read,
-    [SVC_GETCHAR] = svc_getchar,
-    [SVC_GETCHAR_NB] = svc_getchar_nb,
-    [SVC_SLEEP] = svc_sleep,
-    [SVC_TICKS] = svc_ticks,
-    [SVC_CNTFRQ] = svc_cntfrq,
-    [SVC_FB_CLEAR] = svc_fb_clear,
-    [SVC_FB_PUTPIXEL] = svc_fb_putpixel,
-    [SVC_FB_PUTC] = svc_fb_putc,
-    [SVC_RAND] = svc_rand,
-    [SVC_RAND_SEED] = svc_rand_seed,
-    [SVC_UART_WRITE] = svc_uart_write,
-    [SVC_BLK_READ] = svc_blk_read,
-    [SVC_BLK_WRITE] = svc_blk_write,
+    [SVC_EXIT]          = svc_exit,
+    [SVC_FORK]          = svc_fork,
+    [SVC_GETPID]        = svc_getpid,
+    [SVC_WRITE]         = svc_write,
+    [SVC_READ]          = svc_read,
+    [SVC_GETCHAR]       = svc_getchar,
+    [SVC_GETCHAR_NB]    = svc_getchar_nb,
+    [SVC_SLEEP]         = svc_sleep,
+    [SVC_TICKS]         = svc_ticks,
+    [SVC_CNTFRQ]        = svc_cntfrq,
+    [SVC_FB_CLEAR]      = svc_fb_clear,
+    [SVC_FB_PUTPIXEL]   = svc_fb_putpixel,
+    [SVC_FB_PUTC]       = svc_fb_putc,
+    [SVC_RAND]          = svc_rand,
+    [SVC_RAND_SEED]     = svc_rand_seed,
+    [SVC_UART_WRITE]    = svc_uart_write,
+    [SVC_BLK_READ]      = svc_blk_read,
+    [SVC_BLK_WRITE]     = svc_blk_write,
     [SVC_FS_BLOB_COUNT] = svc_fs_blob_count,
-    [SVC_FS_BLOB_INFO] = svc_fs_blob_info,
+    [SVC_FS_BLOB_INFO]  = svc_fs_blob_info,
 };
 #define SVC_COUNT (sizeof(svc_handlers) / sizeof(*svc_handlers))
 

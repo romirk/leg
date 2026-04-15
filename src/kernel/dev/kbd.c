@@ -73,33 +73,33 @@ static u32                  g_virtio_base;
 static void setup_eventq(u32 base) {
     for (u32 i = 0; i < QUEUE_SIZE; i++) {
         g_desc[i] = (vq_desc_t) {
-            .addr = virt_to_phys(&g_events[i]),
-            .len = sizeof(virtio_input_event_t),
+            .addr  = virt_to_phys(&g_events[i]),
+            .len   = sizeof(virtio_input_event_t),
             .flags = VDESC_F_WRITE,
         };
         g_avail->ring[i] = (u16) i;
     }
     g_avail->flags = 0;
-    g_avail->idx = QUEUE_SIZE;
-    g_used->flags = 0;
-    g_used->idx = 0;
+    g_avail->idx   = QUEUE_SIZE;
+    g_used->flags  = 0;
+    g_used->idx    = 0;
 
     VMIO(base, VMIO_GUEST_PAGE_SIZE) = PAGE_SIZE;
-    VMIO(base, VMIO_QUEUE_SEL) = 0;
-    const u32 qmax = VMIO(base, VMIO_QUEUE_NUM_MAX);
-    VMIO(base, VMIO_QUEUE_NUM) = qmax < QUEUE_SIZE ? qmax : QUEUE_SIZE;
-    VMIO(base, VMIO_QUEUE_ALIGN) = PAGE_SIZE;
-    VMIO(base, VMIO_QUEUE_PFN) = virt_to_phys(g_queue_mem) >> 12;
+    VMIO(base, VMIO_QUEUE_SEL)       = 0;
+    const u32 qmax                   = VMIO(base, VMIO_QUEUE_NUM_MAX);
+    VMIO(base, VMIO_QUEUE_NUM)       = qmax < QUEUE_SIZE ? qmax : QUEUE_SIZE;
+    VMIO(base, VMIO_QUEUE_ALIGN)     = PAGE_SIZE;
+    VMIO(base, VMIO_QUEUE_PFN)       = virt_to_phys(g_queue_mem) >> 12;
 }
 
 void kbd_irq_handler(void) {
-    u32 isr = VMIO(g_virtio_base, VMIO_INT_STATUS);
+    u32 isr                           = VMIO(g_virtio_base, VMIO_INT_STATUS);
     VMIO(g_virtio_base, VMIO_INT_ACK) = isr;
     asm volatile("dsb" ::: "memory");
 
     while (g_last_used_idx != g_used->idx) {
         u32                   desc_id = g_used->ring[g_last_used_idx % QUEUE_SIZE].id;
-        virtio_input_event_t *ev = &g_events[desc_id];
+        virtio_input_event_t *ev      = &g_events[desc_id];
 
         handle_kbd_event(ev);
 
@@ -125,7 +125,7 @@ void kbd_init(void) {
     VMIO(base, VMIO_STATUS) = VSTAT_ACKNOWLEDGE | VSTAT_DRIVER;
 
     VMIO(base, VMIO_GUEST_FEAT_SEL) = 0;
-    VMIO(base, VMIO_GUEST_FEAT) = 0;
+    VMIO(base, VMIO_GUEST_FEAT)     = 0;
 
     setup_eventq(base);
     VMIO(base, VMIO_STATUS) = VSTAT_ACKNOWLEDGE | VSTAT_DRIVER | VSTAT_DRIVER_OK;

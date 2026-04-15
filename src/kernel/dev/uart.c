@@ -12,14 +12,14 @@ static void calculate_divisors(u32 *integer, u32 *fractional, const u32 base_clo
     const u32 div = 4 * base_clock / baudrate;
 
     *fractional = div & 0x3f;
-    *integer = div >> 6 & 0xffff;
+    *integer    = div >> 6 & 0xffff;
 }
 
 void pl011_setup(struct pl011 *dev, const u64 base_clock) {
     dev->base_address = UART0_BASE;
-    dev->base_clock = base_clock;
+    dev->base_clock   = base_clock;
 
-    dev->baudrate = 115200;
+    dev->baudrate  = 115200;
     dev->data_bits = 8;
     dev->stop_bits = 1;
 
@@ -28,7 +28,7 @@ void pl011_setup(struct pl011 *dev, const u64 base_clock) {
 }
 
 void pl011_reset(const struct pl011 *dev) {
-    const auto cr = *UARTCR;
+    const auto cr  = *UARTCR;
     auto       lcr = *UARTLCR_H;
     u32        ibrd, fbrd;
 

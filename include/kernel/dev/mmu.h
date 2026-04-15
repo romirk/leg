@@ -9,18 +9,18 @@
 
 // L1 entry type bits [1:0]
 typedef enum {
-    L1_INVALID = 0b00,
-    L1_PAGE_TABLE = 0b01, // points to an L2 page table
-    L1_SECTION = 0b10,    // maps a 1MB section directly
-    L1_PXN_SECTION = 0b11 // 1MB section with PXN set
+    L1_INVALID     = 0b00,
+    L1_PAGE_TABLE  = 0b01, // points to an L2 page table
+    L1_SECTION     = 0b10, // maps a 1MB section directly
+    L1_PXN_SECTION = 0b11  // 1MB section with PXN set
 } l1_descriptor;
 
 // L2 entry type bits [1:0]
 typedef enum {
-    L2_INVALID = 0b00,
+    L2_INVALID    = 0b00,
     L2_LARGE_PAGE = 0b01, // 64KB page
     L2_SMALL_PAGE = 0b10, // 4KB page
-    L2_XN_PAGE = 0b11     // 4KB page with XN set
+    L2_XN_PAGE    = 0b11  // 4KB page with XN set
 } l2_descriptor;
 
 // One 32-bit L1 translation table entry.
@@ -119,7 +119,7 @@ typedef l2_entry page_table[0x100];
 
 // TTBCR.N (3-bit field, range [0..7]): VA[31:32-N] == 0 → TTBR0 (user); else → TTBR1 (kernel).
 // Kernel at 0xC0000000 and devices at 0xCF000000 are in TTBR1 range.
-#define TTBCR_N 4u
+#define TTBCR_N 7u
 // Number of 1MB sections in the process (TTBR0) L1 table: 2^(12-N).
 constexpr u32 PROC_VA_MB = (1u << (12u - TTBCR_N));
 // Required alignment for TTBR0 base with TTBCR_N (bytes): 2^(14-N).

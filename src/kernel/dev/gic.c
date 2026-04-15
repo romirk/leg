@@ -2,14 +2,14 @@
 #include "kernel/cpu.h"
 
 void gic_enable_irq(u32 irq) {
-    u32 reg = irq / 32u;
-    u32 bit = 1u << (irq % 32u);
+    u32 reg             = irq / 32u;
+    u32 bit             = 1u << (irq % 32u);
     GICD_ISENABLER(reg) = bit;
 
     // route to CPU0
-    u32 idx = irq / 4u;
+    u32 idx   = irq / 4u;
     u32 shift = (irq % 4u) * 8u;
-    u32 cur = GICD_ITARGETSR(idx);
+    u32 cur   = GICD_ITARGETSR(idx);
     cur &= ~(0xFFu << shift);
     cur |= (0x01u << shift);
     GICD_ITARGETSR(idx) = cur;
@@ -20,7 +20,7 @@ void gic_enable_irq(u32 irq) {
 static u32 us_to_ticks(u32 usec) {
     // avoid 64-bit division: (freq / 1000) * (usec / 1000), ms-precision
     u32 freq_khz = read_cntfrq() / 1000u;
-    u32 ms = usec / 1000u;
+    u32 ms       = usec / 1000u;
     return freq_khz * (ms ? ms : 1u);
 }
 

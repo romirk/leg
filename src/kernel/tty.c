@@ -5,7 +5,7 @@
 #define LINE_BUF_SIZE 256u
 
 static char          g_line_buf[LINE_BUF_SIZE];
-static volatile u32  g_line_len = 0;
+static volatile u32  g_line_len   = 0;
 static volatile bool g_line_ready = false;
 static volatile u32  g_line_start = 0;
 
@@ -45,7 +45,7 @@ u32 tty_readline(char *buf, u32 max) {
 
     if (!g_line_len) {
         g_line_ready = false;
-        echo_chars = false;
+        echo_chars   = false;
         return 0;
     }
 
@@ -56,9 +56,9 @@ u32 tty_readline(char *buf, u32 max) {
     buf[n] = '\0';
 
     g_line_start = (g_line_start + g_line_len) % LINE_BUF_SIZE;
-    g_line_len = 0;
+    g_line_len   = 0;
     g_line_ready = false;
-    echo_chars = false;
+    echo_chars   = false;
     return n;
 }
 

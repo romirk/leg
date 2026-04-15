@@ -16,8 +16,8 @@ constexpr u32 PROC_STACK_TOP = PROC_USER_VA_TOP - PROC_STACK_GUARD; // initial S
 
 // Code: starts at 1MB so null-deref (0x0) faults cleanly
 #define PROC_CODE_VA_MB 0x001u
-constexpr u32 PROC_CODE_VA = (PROC_CODE_VA_MB << MB_SHIFT); // 0x00100000, entry point
-constexpr u32 PROC_CODE_MAX = (1u << MB_SHIFT);             // max code size (1 MB)
+constexpr u32 PROC_CODE_VA  = (PROC_CODE_VA_MB << MB_SHIFT); // 0x00100000, entry point
+constexpr u32 PROC_CODE_MAX = (1u << MB_SHIFT);              // max code size (1 MB)
 
 // Heap: immediately follows the code region, grows upward
 constexpr u32 PROC_HEAP_START = (PROC_CODE_VA + PROC_CODE_MAX);
@@ -34,37 +34,36 @@ typedef struct {
     u32 cpsr;  // user CPSR (spsr_irq at preemption)        (ctx+64)
 } cpu_ctx_t;
 
-struct process {
-    pid_t     pid;       //                                                    +0
-    l1_entry *pgd;       // TTBR0 L1 table                                    +4
-    uptr      sp;        // current stack pointer (user VA)                   +8
-    uptr      entry;     // VA entry point (from LLF header)                  +12
-    cpu_ctx_t ctx;       // saved register state (filled on IRQ preemption)   +20
-    u32       suspended; // non-zero while the process is suspended            +88
+typedef struct process {
+    pid_t     pid;       //                                                                     +0
+    l1_entry *pgd;       // TTBR0 L1 table                                                      +4
+    uptr      sp;        // current stack pointer (user VA)                                     +8
+    uptr      entry;     // VA entry point (from LLF header), non-zero denotes valid process    +12
+    cpu_ctx_t ctx;       // saved register state (filled on IRQ preemption)                     +16
+    u32       suspended; // non-zero while the process is suspended                             +84
     // ── fields below are not accessed from assembly ──────────────────────────
+    u64       wake_tick;   // CNTPCT deadline for sleep; 0 = not sleeping
     l2_entry *stack_pt;    // L2 table covering the stack's current L1 slot
     u32       stack_pages; // number of 4KB stack pages currently mapped
     uptr      heap_end;    // current top of heap (user VA), initially PROC_HEAP_START
-};
+} process_t;
 
-// Currently executing process (set by process_exec).
-extern struct process *current_proc;
-
-// Allocate a process, map its stack and code, and load the user binary.
-struct process *process_create(char *name);
+// Allocate a process, map its stack and code, and load the named binary from the filesystem.
+struct process *process_create(const char *name);
 
 // Switch to the process page table and jump to its entry. Never returns.
 [[noreturn]]
 void process_exec(struct process *p);
 
 [[noreturn]]
-void process_exit(struct process *p, int code);
+void process_exit(pid_t pid, int code);
+
+// Clone the current process. The child is added to the scheduler (suspended) and
+// will return 0 from fork; the parent receives the child's PID. Returns nullptr on OOM.
+process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr);
 
 // Map one additional 4KB page onto the bottom of the process stack.
 // Returns false on OOM.
 bool process_add_page(struct process *p);
-
-// Called from the timer tick.
-void sched_tick(void);
 
 #endif // LEG_PROCESS_H

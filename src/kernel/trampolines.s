@@ -11,12 +11,17 @@
 //   2. Interrupted kernel/SVC code: save volatile regs on IRQ stack, call
 //      irq_dispatch(), restore and return.
 //
-// struct process memory layout (offsets used below):
-//   +0   pid          +4  pgd          +8  sp (initial)
-//   +12  stack_phys   +16 entry
-//   +20  ctx.r[0..12] (52 bytes, ends at +72)
-//   +72  ctx.sp       +76 ctx.lr       +80 ctx.pc        +84 ctx.cpsr
-//   +88  suspended
+// struct process offsets (must match process.h):
+//   +0   pid
+//   +4   pgd
+//   +8   sp (initial)
+//   +12  entry
+//   +16  ctx.r[0..12]  (52 bytes)
+//   +68  ctx.sp
+//   +72  ctx.lr
+//   +76  ctx.pc
+//   +80  ctx.cpsr
+//   +84  suspended
 //
 .equ PROC_CTX,       16   // offsetof(struct process, ctx)
 .equ CTX_SP,         52   // offsetof(cpu_ctx_t, sp)
@@ -30,38 +35,37 @@ handle_irq:
     sub   lr, lr, #4              // lr_irq = faulting PC
 
     // Determine if we interrupted user mode.
-    // Use r0 as scratch (save/restore on IRQ stack; pop doesn't touch CPSR flags).
     push  {r0}
     mrs   r0, spsr
     and   r0, r0, #0x1F
     cmp   r0, #0x10               // usr = 0x10
-    pop   {r0}                    // restore r0 (CPSR flags from cmp preserved)
+    pop   {r0}
     bne   .Lirq_not_user
 
     // ── User-mode preemption ──────────────────────────────────────────────────
-    // r13_irq (banked SP_irq) used as scratch pointer — we switch to SVC for C calls.
-
+    // Load current_proc pointer directly — no bl, so lr_irq is still valid.
     ldr   r13, =current_proc
-    ldr   r13, [r13]              // r13_irq = process ptr
+    ldr   r13, [r13]              // r13_irq = current_proc ptr
+    cmp   r13, #0
+    beq   .Lirq_not_user          // no current process
+
     add   r13, r13, #PROC_CTX     // r13_irq = &ctx
 
     stm   r13, {r0-r12}           // ctx.r[0..12] = user r0-r12
 
-    // r0-r12 are now saved; use r0 as a stable (non-banked) copy of the ctx ptr.
-    // We can't use r13_irq after a mode switch — it becomes sp_usr in System mode.
     mov   r0, r13                 // r0 = &ctx (non-banked, survives mode switch)
 
-    // Save user SP/LR via System mode (shares user register banks)
+    // Save user SP/LR via System mode
     cps   #0x1F
-    str   sp, [r0, #CTX_SP]       // ctx.sp = sp_usr  (r0 = &ctx, sp = sp_sys = sp_usr)
-    str   lr, [r0, #CTX_LR]       // ctx.lr = lr_usr  (lr = lr_sys = lr_usr)
-    cps   #0x12                   // back to IRQ mode  (r13_irq = &ctx again)
+    str   sp, [r0, #CTX_SP]
+    str   lr, [r0, #CTX_LR]
+    cps   #0x12                   // back to IRQ mode
 
-    str   lr, [r13, #CTX_PC]      // ctx.pc = lr_irq (user PC, already adjusted)
+    str   lr, [r13, #CTX_PC]      // ctx.pc = lr_irq (already adjusted)
     mrs   r0, spsr
-    str   r0, [r13, #CTX_CPSR]    // ctx.cpsr = spsr_irq (user CPSR)
+    str   r0, [r13, #CTX_CPSR]
 
-    // Call irq_dispatch from SVC mode (uses the SVC stack)
+    // Call irq_dispatch from SVC mode
     cps   #0x13
     bl    irq_dispatch
 
@@ -117,16 +121,91 @@ handle_irq:
 //
 // Stack layout after push {r1-r12, lr}  (13 regs × 4 = 52 bytes):
 //   sp+0  = r1  ...  sp+44 = r12  sp+48 = lr_svc
+// Then push {r0} (4 bytes) + save lr_svc to svc_saved_lr + pop {r0}:
+//   no net stack change for the lr save
 // Then push {r12} (svc_num, 4 bytes) → sp 8-byte aligned before bl.
+//
+// svc_saved_lr is a global u32 written here so fork can read lr_svc from C.
 //
 // C signature:  u32 svc_dispatch(u32 r0, u32 r1, u32 r2, u32 r3, u32 svc_num);
 .global handle_svc
 handle_svc:
-    push {r1-r12, lr}           // save user r1-r12 and lr_svc; r0 stays as arg/retval
-    ldr  r12, [lr, #-4]         // r12 = SVC instruction word (lr_svc still valid)
-    and  r12, r12, #0xFFFFFF    // r12 = SVC number
-    push {r12}                  // 5th arg to svc_dispatch (stack, per AAPCS)
-    bl   svc_dispatch           // svc_dispatch(r0, r1, r2, r3, svc_num) → r0
-    add  sp,  sp,  #4           // pop svc_num
-    pop  {r1-r12, lr}           // restore user r1-r12 and lr_svc; r0 = return value
-    movs pc,  lr                // return to user, restore CPSR from SPSR_svc
+    push {r1-r12, lr}              // lr = lr_svc (return address in user code)
+    ldr  r12, [lr, #-4]           // r12 = SVC instruction word; lr still = lr_svc
+    and  r12, r12, #0xFFFFFF      // r12 = SVC number
+    push {r0}                      // save r0 (SVC first argument)
+    ldr  r0, =svc_saved_lr
+    str  lr, [r0]                  // svc_saved_lr = lr_svc
+    pop  {r0}                      // restore r0
+    push {r12}                     // 5th arg = svc_num; stack is 8-byte aligned here
+    bl   svc_dispatch
+    add  sp,  sp,  #4
+
+    // ── Blocking-syscall yield path ──────────────────────────────────────────
+    // If the syscall set current_proc->suspended, save the full user context
+    // from the SVC stack and hand off to the next runnable process.
+    // Stack right now: sp+0=r1 … sp+44=r12 sp+48=lr_svc (13 words = 52 bytes)
+    push  {r0, r1}
+    ldr   r0, =current_proc
+    ldr   r0, [r0]
+    ldr   r1, [r0, #PROC_SUSPENDED]
+    cmp   r1, #0
+    pop   {r0, r1}
+    bne   .Lsvc_yield
+
+    // ── Normal return ─────────────────────────────────────────────────────────
+    pop   {r1-r12, lr}
+    movs  pc, lr
+
+    // ── Yield: save context then switch ──────────────────────────────────────
+    // r0 = SVC return value; stack: sp+0=saved_r1 … sp+44=saved_r12 sp+48=lr_svc
+.Lsvc_yield:
+    // Get ctx pointer into r2, keeping r0 intact via push/pop
+    push  {r0}
+    ldr   r0, =current_proc
+    ldr   r0, [r0]
+    add   r2, r0, #PROC_CTX        // r2 = &ctx
+    pop   {r0}
+
+    str   r0, [r2]                  // ctx.r[0] = return value
+
+    // Save user sp/lr via System mode (r2 is non-banked, survives mode switch)
+    cps   #0x1F
+    str   sp, [r2, #CTX_SP]
+    str   lr, [r2, #CTX_LR]
+    cps   #0x13
+
+    // Save user CPSR (= spsr_svc)
+    mrs   r0, spsr
+    str   r0, [r2, #CTX_CPSR]
+
+    // Bulk-load saved r1-r12 from stack (skipping r2=ctx ptr) then stm into ctx.r[1..12].
+    // ldm: r0←sp+0(r1), r3←sp+4(r2), r4←sp+8(r3), …, lr←sp+44(r12)
+    // stm from ctx+4: r0→ctx.r[1], r3→ctx.r[2], …, lr→ctx.r[12]
+    ldm   sp, {r0, r3-r12, lr}
+    add   r2, r2, #4                // r2 = &ctx.r[1]
+    stm   r2, {r0, r3-r12, lr}     // ctx.r[1..12]
+    ldr   r0, [sp, #48]
+    str   r0, [r2, #56]             // ctx.pc = lr_svc  (r2=ctx+4, +56 → ctx+60=CTX_PC)
+    add   sp, sp, #52               // clean SVC frame
+
+    // Pick the next runnable process and switch to it
+    bl    sched_pick_next           // r0 = next or nullptr
+    cmp   r0, #0
+    beq   .Lsvc_no_next
+    bl    context_switch            // jumps to next; never returns here
+
+    // No other runnable process: spin in SVC mode until woken by sched_tick
+.Lsvc_no_next:
+    cpsie i
+.Lsvc_spin:
+    wfi
+    ldr   r0, =current_proc
+    ldr   r0, [r0]
+    ldr   r0, [r0, #PROC_SUSPENDED]
+    cmp   r0, #0
+    bne   .Lsvc_spin
+    cpsid i
+    ldr   r0, =current_proc
+    ldr   r0, [r0]
+    bl    context_switch            // restore our own (or newly-current) context

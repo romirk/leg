@@ -7,8 +7,6 @@
 
 u64 rtc_ticks(void);
 
-void delay_us(u32 usec);
-
 // periodic tick — fn is called every interval_us from IRQ context
 void timer_set_tick(u32 interval_us, void (*fn)(void));
 

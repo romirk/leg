@@ -14,12 +14,12 @@
 #endif
 
 typedef enum : int {
-    MM_OK = 0,
-    MM_ERR_OOM = -1,   // out of physical pages
+    MM_OK        = 0,
+    MM_ERR_OOM   = -1, // out of physical pages
     MM_ERR_ALIGN = -2, // address not page-aligned
     MM_ERR_RANGE = -3, // address outside managed RAM
     MM_ERR_INUSE = -4, // page already allocated
-    MM_ERR_FREE = -5,  // double-free
+    MM_ERR_FREE  = -5, // double-free
 } mm_err_t;
 
 typedef struct {

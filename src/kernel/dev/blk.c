@@ -33,16 +33,16 @@ static u8 g_queue_mem[2 * PAGE_SIZE];
 
 static void setup_requestq(u32 base) {
     g_avail->flags = 0;
-    g_avail->idx = 0;
-    g_used->flags = 0;
-    g_used->idx = 0;
+    g_avail->idx   = 0;
+    g_used->flags  = 0;
+    g_used->idx    = 0;
 
     VMIO(base, VMIO_GUEST_PAGE_SIZE) = PAGE_SIZE;
-    VMIO(base, VMIO_QUEUE_SEL) = 0;
-    const u32 qmax = VMIO(base, VMIO_QUEUE_NUM_MAX);
-    VMIO(base, VMIO_QUEUE_NUM) = qmax < QUEUE_SIZE ? qmax : QUEUE_SIZE;
-    VMIO(base, VMIO_QUEUE_ALIGN) = PAGE_SIZE;
-    VMIO(base, VMIO_QUEUE_PFN) = virt_to_phys(g_queue_mem) >> 12;
+    VMIO(base, VMIO_QUEUE_SEL)       = 0;
+    const u32 qmax                   = VMIO(base, VMIO_QUEUE_NUM_MAX);
+    VMIO(base, VMIO_QUEUE_NUM)       = qmax < QUEUE_SIZE ? qmax : QUEUE_SIZE;
+    VMIO(base, VMIO_QUEUE_ALIGN)     = PAGE_SIZE;
+    VMIO(base, VMIO_QUEUE_PFN)       = virt_to_phys(g_queue_mem) >> 12;
 }
 
 // Build a 3-descriptor chain at slots 0/1/2 and poll for completion.
@@ -51,27 +51,27 @@ static bool do_request(u32 type, u64 sector, u32 count, const void *buf) {
     static virtio_blk_req_hdr_t hdr;
     static u8                   status;
 
-    hdr = (virtio_blk_req_hdr_t) {.type = type, .sector = sector};
+    hdr    = (virtio_blk_req_hdr_t) {.type = type, .sector = sector};
     status = 0xFF; // sentinel — device overwrites with result
 
     // Desc 0: request header (device reads)
     g_desc[0] = (vq_desc_t) {
-        .addr = virt_to_phys(&hdr),
-        .len = sizeof(hdr),
+        .addr  = virt_to_phys(&hdr),
+        .len   = sizeof(hdr),
         .flags = VDESC_F_NEXT,
-        .next = 1,
+        .next  = 1,
     };
     // Desc 1: data buffer (device writes for IN, reads for OUT)
     g_desc[1] = (vq_desc_t) {
-        .addr = virt_to_phys(buf),
-        .len = count * 512u,
+        .addr  = virt_to_phys(buf),
+        .len   = count * 512u,
         .flags = (u16) ((type == VIRTIO_BLK_T_IN ? VDESC_F_WRITE : 0u) | VDESC_F_NEXT),
-        .next = 2,
+        .next  = 2,
     };
     // Desc 2: status byte (device always writes)
     g_desc[2] = (vq_desc_t) {
-        .addr = virt_to_phys(&status),
-        .len = 1,
+        .addr  = virt_to_phys(&status),
+        .len   = 1,
         .flags = VDESC_F_WRITE,
     };
 
@@ -109,7 +109,7 @@ void blk_init(void) {
     VMIO(base, VMIO_STATUS) = VSTAT_ACKNOWLEDGE | VSTAT_DRIVER;
 
     VMIO(base, VMIO_GUEST_FEAT_SEL) = 0;
-    VMIO(base, VMIO_GUEST_FEAT) = 0;
+    VMIO(base, VMIO_GUEST_FEAT)     = 0;
 
     setup_requestq(base);
     VMIO(base, VMIO_STATUS) = VSTAT_ACKNOWLEDGE | VSTAT_DRIVER | VSTAT_DRIVER_OK;

@@ -44,10 +44,10 @@ static u32 fade_color(u32 dist) {
 }
 
 static void init_drop(u32 col) {
-    drops[col].y = 0;
-    drops[col].speed = 1 + rand32() % 3;
-    drops[col].tick = 0;
-    drops[col].len = 8 + rand32() % (TRAIL_LEN + 1);
+    drops[col].y      = 0;
+    drops[col].speed  = 1 + rand32() % 3;
+    drops[col].tick   = 0;
+    drops[col].len    = 8 + rand32() % (TRAIL_LEN + 1);
     drops[col].active = true;
 }
 
@@ -55,7 +55,7 @@ static void init_drops(void) {
     // stagger initial drops
     for (u32 c = 0; c < FB_COLS; c++) {
         init_drop(c);
-        drops[c].y = rand32() % FB_ROWS;
+        drops[c].y      = rand32() % FB_ROWS;
         drops[c].active = (rand32() % 3) != 0;
         for (u32 r = 0; r < FB_ROWS; r++)
             grid[c][r] = rand_char();

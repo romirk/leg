@@ -28,8 +28,8 @@ u32 fs_blob_count(void) {
 
 bool fs_mount(const u32 start_sector) {
     g_blob_count = 0;
-    g_blobs = nullptr;
-    g_names = nullptr;
+    g_blobs      = nullptr;
+    g_names      = nullptr;
 
     // ── Pass 1: read first sector, validate header ────────────────────────────
     u8 hdr_buf[512];
@@ -46,7 +46,7 @@ bool fs_mount(const u32 start_sector) {
     }
 
     g_start_sector = start_sector;
-    g_blob_count = hdr->blob_count;
+    g_blob_count   = hdr->blob_count;
 
     if (g_blob_count == 0) {
         info("fs: mounted (empty) at sector %u", start_sector);
@@ -54,7 +54,7 @@ bool fs_mount(const u32 start_sector) {
     }
 
     // ── Pass 2: read header + full descriptor table ───────────────────────────
-    const u32 desc_end = sizeof(fs_header_t) + g_blob_count * sizeof(fs_blob_t);
+    const u32 desc_end  = sizeof(fs_header_t) + g_blob_count * sizeof(fs_blob_t);
     const u32 desc_secs = (desc_end + 511) / 512;
 
     u8 *desc_buf = kmalloc(desc_secs * 512);
@@ -88,8 +88,8 @@ bool fs_mount(const u32 start_sector) {
     }
 
     const u32 names_start = desc_end; // names immediately follow descriptor table
-    const u32 names_end = names_start + names_size;
-    const u32 names_secs = (names_end + 511) / 512;
+    const u32 names_end   = names_start + names_size;
+    const u32 names_secs  = (names_end + 511) / 512;
 
     u8 *name_buf = kmalloc(names_secs * 512);
     if (!name_buf) {
@@ -145,6 +145,6 @@ const fs_blob_t *fs_find(const char *name) {
 bool fs_read(const fs_blob_t *blob, void *buf) {
     // Blob offsets are 512-aligned (guaranteed by mkfs).
     const u32 sector = g_start_sector + blob->offset / 512;
-    const u32 count = (blob->size + 511) / 512;
+    const u32 count  = (blob->size + 511) / 512;
     return blk_read(sector, count, buf);
 }

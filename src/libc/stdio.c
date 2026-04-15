@@ -103,7 +103,7 @@ void printf(const char *fmt, ...) {
                 break;
             case 'n':
                 const auto ptr = va_arg(args, signed int *);
-                *ptr = n;
+                *ptr           = n;
                 break;
             default:
                 print("?%");
@@ -178,7 +178,7 @@ void pprintf(const char *fmt, ...) {
                 break;
             case 'n':
                 const auto ptr = va_arg(args, signed int *);
-                *ptr = n;
+                *ptr           = n;
                 break;
             default:
                 print("?%");

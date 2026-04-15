@@ -135,8 +135,8 @@ static void hexdump_buffer(const void *ptr, const u32 len) {
 
     char buffer[8 + 4 + (8 + 1) * 4 + 3 + 16 + 3 + 1];
     memset(buffer, ' ', sizeof(buffer));
-    buffer[sizeof(buffer) - 1] = '\0';
-    buffer[sizeof(buffer) - 2] = '|';
+    buffer[sizeof(buffer) - 1]  = '\0';
+    buffer[sizeof(buffer) - 2]  = '|';
     buffer[sizeof(buffer) - 21] = '|';
 
     for (u32 i = 0; i < len; i++) {
@@ -163,7 +163,7 @@ static void hexdump_buffer(const void *ptr, const u32 len) {
         const u8 b3 = (data & 0x00FF0000) >> 16;
         const u8 b4 = (data & 0xFF000000) >> 24;
 
-        buffer[start] = is_printable(b1) ? b1 : '.';
+        buffer[start]     = is_printable(b1) ? b1 : '.';
         buffer[start + 1] = is_printable(b2) ? b2 : '.';
         buffer[start + 2] = is_printable(b3) ? b3 : '.';
         buffer[start + 3] = is_printable(b4) ? b4 : '.';

@@ -5,15 +5,16 @@
 #include "kernel/cpu.h"
 #include "kernel/dev/memory.h"
 #include "kernel/dev/mmu.h"
+#include "kernel/exceptions.h"
 #include "kernel/fs.h"
 #include "kernel/llf.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
+#include "kernel/scheduler.h"
+#include "libc/builtins.h"
 #include "utils.h"
 
-static pid_t next_pid = 0;
-
-struct process *current_proc = nullptr;
+static pid_t next_pid = 1;
 
 // Walk the process L1 table and free every mapped page and L2 table.
 static void process_free(struct process *p) {
@@ -39,7 +40,7 @@ static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
     return pt;
 }
 
-struct process *process_create(char *name) {
+struct process *process_create(const char *name) {
     struct process *p = kmalloc_aligned(sizeof(*p), 0x4000);
     if (!p) {
         err("process: OOM for struct");
@@ -62,7 +63,7 @@ struct process *process_create(char *name) {
     }
 
     u32   llf_size = align_up(blob->size, 512);
-    void *llf_buf = kmalloc(llf_size);
+    void *llf_buf  = kmalloc(llf_size);
     if (!llf_buf) {
         err("process: OOM for LLF buffer");
         process_free(p);
@@ -95,8 +96,8 @@ struct process *process_create(char *name) {
     }
 
     // ── Finalise ─────────────────────────────────────────────────────────────
-    p->pid = next_pid++;
-    p->sp = PROC_STACK_TOP - 16;
+    p->pid      = next_pid++;
+    p->sp       = PROC_STACK_TOP - 16;
     p->heap_end = PROC_HEAP_START;
 
     info("process: pid=%d entry=0x%x stack_top=0x%x (%u stack pages)", p->pid, p->entry,
@@ -106,7 +107,7 @@ struct process *process_create(char *name) {
 }
 
 bool process_add_page(struct process *p) {
-    const u32 va = PROC_STACK_TOP - (p->stack_pages + 1) * PAGE_SIZE;
+    const u32 va    = PROC_STACK_TOP - (p->stack_pages + 1) * PAGE_SIZE;
     const u32 va_mb = va >> 20;
 
     // If the stack has crossed into a new 1MB slot, attach a fresh L2 table.
@@ -132,20 +133,98 @@ bool process_add_page(struct process *p) {
 }
 
 [[noreturn]]
-void process_exit(struct process *p, const int code) {
-    info("process: pid=%d exited with code %d", p->pid, code);
-    process_free(p);
-    warn("kernel: shutdown");
-    poweroff();
+void process_exit(pid_t pid, const int code) {
+    process_t *p = sched_get(pid);
+    if (!p) {
+        err("process_exit: no process with pid %d", pid);
+        poweroff();
+    }
+
+    int was_current = (p == current_proc);
+    sched_remove(pid);
+
+    info("process: pid=%d exited with code %d", pid, code);
+
+    if (was_current) {
+        auto next = sched_pick_next();
+        if (!next) {
+            warn("process_exit: no runnable processes remain; halting");
+            poweroff();
+        }
+        context_switch(next);
+        __builtin_unreachable();
+    }
+    limbo;
 }
 
-void sched_tick(void) {
+process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
+    process_t *parent = (process_t *) current_proc;
+
+    process_t *child = kmalloc_aligned(sizeof(*child), 0x4000);
+    if (!child) {
+        err("fork: OOM for struct");
+        return nullptr;
+    }
+
+    child->pgd = mmu_alloc_proc_table();
+    if (!child->pgd) {
+        err("fork: OOM for L1 table");
+        kfree(child);
+        return nullptr;
+    }
+
+    // Deep-copy all mapped user pages
+    for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
+        if (parent->pgd[mb].type != L1_PAGE_TABLE) continue;
+        l2_entry *src_pt = phys_to_virt((uptr) parent->pgd[mb].page_table.address << 10);
+        l2_entry *dst_pt = mmu_alloc_l2_table();
+        if (!dst_pt) {
+            err("fork: OOM for L2 table");
+            process_free(child);
+            return nullptr;
+        }
+        mmu_attach_l2(child->pgd, mb, dst_pt);
+        for (u32 i = 0; i < 256; i++) {
+            if (src_pt[i].type != L2_SMALL_PAGE) continue;
+            uptr src_pa = (uptr) src_pt[i].small_page.address << PAGE_SHIFT;
+            uptr dst_pa = mm_page_alloc();
+            if (!dst_pa) {
+                err("fork: OOM for page");
+                process_free(child);
+                return nullptr;
+            }
+            memcpy(phys_to_virt(dst_pa), phys_to_virt(src_pa), PAGE_SIZE);
+            mmu_map_page(dst_pt, (mb << 20) | (i << PAGE_SHIFT), dst_pa);
+        }
+    }
+
+    // Clone context; child returns 0 from fork, resumes at the SVC return address
+    child->ctx      = parent->ctx;
+    child->ctx.r[0] = 0;      // child's sys_fork() returns 0
+    child->ctx.pc   = lr_svc; // resume at instruction after svc
+    child->ctx.sp   = sp_usr;
+    child->ctx.cpsr = cpsr;
+
+    child->pid         = next_pid++;
+    child->entry       = parent->entry;
+    child->sp          = sp_usr;
+    child->heap_end    = parent->heap_end;
+    child->stack_pages = parent->stack_pages;
+    child->stack_pt    = nullptr; // not used post-fork
+    child->wake_tick   = 0;
+    child->suspended   = 0;
+
+    if (sched_add(child) < 0) {
+        process_free(child);
+        return nullptr;
+    }
+
+    info("fork: parent pid=%d → child pid=%d", parent->pid, child->pid);
+    return child;
 }
 
 [[noreturn]]
 void process_exec(struct process *p) {
-    current_proc = p;
-
     mmu_set_proc_table(p->pgd);
 
     psr_t s = {
@@ -153,6 +232,9 @@ void process_exec(struct process *p) {
         .I = false,
     };
     write_spsr(s);
+
+    current_proc = p;
+    sched_add(p);
 
     asm volatile("cps #31          \n\t" // System Mode
                  "mov sp, %0       \n\t" // Set sp_usr

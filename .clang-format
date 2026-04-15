@@ -45,7 +45,10 @@ AlignConsecutiveDeclarations:
   AcrossComments:   false
 
 AlignConsecutiveAssignments:
-  Enabled:          false   # too noisy in function bodies
+  Enabled:          true
+  AcrossEmptyLines: false
+  AcrossComments:   false
+  AlignFunctionPointers: false
 
 AlignTrailingComments:
   Kind:           Always
