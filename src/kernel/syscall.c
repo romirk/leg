@@ -51,9 +51,7 @@ static u32 svc_join(u32 r0, u32, u32, u32) {
 
 static u32 svc_exec(u32 r0, u32, u32, u32) {
     const auto name = (const char *) r0;
-    auto       p    = process_create(name);
-    if (!p) return (u32) -1;
-    process_replace(current_proc->pid, p);
+    process_replace(current_proc->pid, name);
     return 0;
 }
 // ─── I/O ─────────────────────────────────────────────────────────────────────
@@ -149,20 +147,19 @@ static u32 svc_fs_blob_count(u32, u32, u32, u32) {
     return fs_blob_count();
 }
 
-static u32 svc_fs_blob_info(u32 r0, u32 r1, u32 r2, u32 r3) {
-    const fs_blob_t *b = fs_blob_at(r0);
+static u32 svc_fs_blob_info(u32 loc, u32 name_buf_addr, u32 buf_size, u32 size_out) {
+    auto b = fs_blob_at(loc);
     if (!b) return 0;
-    const char *name     = fs_blob_name(b);
-    char       *name_buf = (char *) r1;
-    u32         buf_size = r2;
-    u32        *size_out = (u32 *) r3;
-    u32         name_len = (u32) strlen(name);
-    u32         copy_len = name_len < buf_size - 1 ? name_len : buf_size - 1;
-    for (u32 i = 0; i < copy_len; i++)
-        name_buf[i] = name[i];
+    auto       copy_len = buf_size - 1 < b->name_size ? buf_size - 1 : b->name_size;
+    const auto name_buf = (char *) name_buf_addr;
+
+    size_out = 0;
+    for (; size_out < copy_len; size_out++) {
+        name_buf[size_out] = fs_blob_name(b)[size_out];
+    }
     name_buf[copy_len] = '\0';
-    if (size_out) *size_out = b->size;
-    return b->flags;
+
+    return (u32) b;
 }
 
 // ─── Debug ────────────────────────────────────────────────────────────────────

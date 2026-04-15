@@ -87,31 +87,3 @@ void __aeabi_uldivmod(void) {
         "mov   r1, r5            \n" // q_hi   → r1
         "pop   {r4-r9, pc}       \n");
 }
-
-[[gnu::used]]
-void *__aeabi_memcpy4(void *dst, const void *src, size_t len) {
-    // This is just a wrapper around memcpy that checks for 4-byte alignment.
-    if (((uptr) dst % 4) != 0 || ((uptr) src % 4) != 0 || (len % 4) != 0) {
-        // If the pointers or length are not 4-byte aligned, we can't use this function.
-        // In a real implementation, we might want to handle this case more gracefully,
-        // but for simplicity we'll just return nullptr to indicate an error.
-        return nullptr;
-    }
-    return memcpy(dst, src, len);
-}
-
-[[gnu::used]]
-void *__aeabi_memcpy8(void *dst, const void *src, size_t len) {
-    if (((uptr) dst % 8) != 0 || ((uptr) src % 8) != 0) {
-        return nullptr;
-    }
-    return memcpy(dst, src, len);
-}
-
-[[gnu::used]]
-void *__aeabi_memclr4(void *dst, const size_t len) {
-    if (((uptr) dst % 4) != 0 || ((uptr) len % 4) != 0) {
-        return nullptr;
-    }
-    return memset(dst, 0, len);
-}

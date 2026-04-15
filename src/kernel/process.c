@@ -248,17 +248,18 @@ void process_exec(struct process *p) {
     __builtin_unreachable();
 }
 
-void process_replace(pid_t pid, struct process *new_process) {
-    process_t *p = sched_get(pid);
-    if (!p) {
+void process_replace(pid_t pid, char *name) {
+    process_t *old = sched_get(pid);
+    if (!old) {
         err("process_replace: no process with pid %d", pid);
     }
 
-    int was_current = (p == current_proc);
+    int was_current = (old == current_proc);
     sched_remove(pid);
-    process_free(p);
+    process_free(old);
 
-    new_process->pid = pid;
+    auto p = process_create(name);
+    p->pid = pid;
 
     mmu_set_proc_table(p->pgd);
 

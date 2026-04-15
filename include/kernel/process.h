@@ -67,6 +67,6 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr);
 // Returns false on OOM.
 bool process_add_page(struct process *p);
 
-void process_replace(pid_t pid, struct process *new_process);
+void process_replace(pid_t pid, char *name);
 
 #endif // LEG_PROCESS_H

@@ -82,6 +82,14 @@ static bool exec(char *name) {
     return true;
 }
 
+typedef struct [[gnu::packed]] {
+    u32 offset;      // byte offset of blob data from FS image start
+    u32 size;        // blob size in bytes
+    u32 name_offset; // byte offset of name within the name_data region
+    u16 name_size;   // name length in bytes (no null terminator on disk)
+    u16 flags;
+} fs_blob_t;
+
 int main(int, char **) {
     char  buf[256];
     char *argv[MAX_ARGS];
@@ -106,9 +114,10 @@ int main(int, char **) {
             auto blob_count = sys_fs_blob_count();
             for (u32 i = 0; i < blob_count; i++) {
                 char       name_buf[256];
-                u32        size  = 0;
-                const auto flags = sys_fs_blob_info(i, name_buf, sizeof(name_buf), &size);
-                if (flags == 1 && strcmp(argv[0], name_buf) == 0) {
+                u32        size = 0;
+                const auto blob =
+                    (fs_blob_t *) sys_fs_blob_info(i, name_buf, sizeof(name_buf), &size);
+                if (blob->flags == 0x0001u && strncmp(name_buf, argv[0], size) == 0) {
                     found = exec(name_buf);
                     if (found) break;
                 }
