@@ -7,8 +7,6 @@
 #include "kernel/process.h"
 #include "libc/builtins.h"
 
-#define MB_SHIFT 20
-
 [[gnu::section(".tt"), gnu::aligned(0x4000)]]
 translation_table kernel_translation_table;
 

@@ -49,11 +49,11 @@ bool llf_load(l1_entry *pgd, const void *buf, u32 buf_size, uptr *out_entry) {
     const llf_phdr_t *phdrs = (const llf_phdr_t *) ((const u8 *) buf + hdr->ph_off);
 
     for (u32 i = 0; i < hdr->ph_count; i++) {
-        const llf_phdr_t *ph = &phdrs[i];
-        if (ph->type == LLF_SEG_NULL) continue;
+        const llf_phdr_t ph = phdrs[i];
+        if (ph.type == LLF_SEG_NULL) continue;
 
-        if (!map_pages(pgd, ph->vaddr, ph->memsz)) {
-            err("llf: OOM mapping segment %u (va=0x%x, memsz=%u)", i, ph->vaddr, ph->memsz);
+        if (!map_pages(pgd, ph.vaddr, ph.memsz)) {
+            err("llf: OOM mapping segment %u (va=0x%x, memsz=%u)", i, ph.vaddr, ph.memsz);
             return false;
         }
     }
@@ -62,12 +62,12 @@ bool llf_load(l1_entry *pgd, const void *buf, u32 buf_size, uptr *out_entry) {
     mmu_set_proc_table(pgd);
 
     for (u32 i = 0; i < hdr->ph_count; i++) {
-        const llf_phdr_t *ph = &phdrs[i];
-        if (ph->type == LLF_SEG_NULL) continue;
+        const llf_phdr_t ph = phdrs[i];
+        if (ph.type == LLF_SEG_NULL) continue;
 
-        memset((void *) ph->vaddr, 0, ph->memsz);
-        if (ph->type == LLF_SEG_LOAD && ph->filesz > 0)
-            memcpy((void *) ph->vaddr, (const u8 *) buf + ph->offset, ph->filesz);
+        memset((void *) ph.vaddr, 0, ph.memsz);
+        if (ph.type == LLF_SEG_LOAD && ph.filesz > 0)
+            memcpy((void *) ph.vaddr, (const u8 *) buf + ph.offset, ph.filesz);
     }
 
     // Restore TTBR0 to the kernel table; process_exec will reinstall the process table.

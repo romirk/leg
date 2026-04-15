@@ -11,7 +11,7 @@
 ENTRY(_user_entry)
 
 MEMORY {
-    usr : ORIGIN = 0x00100000, LENGTH = 0x00100000
+    usr : ORIGIN = 0x00100000, LENGTH = 0x01000000
 }
 
 SECTIONS {

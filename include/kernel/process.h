@@ -7,22 +7,20 @@
 #include "types.h"
 
 // User virtual address layout
-#define PROC_USER_VA_TOP 0x02000000u // top of TTBR0 space (TTBCR.N=7)
+constexpr u32 PROC_USER_VA_TOP = (1 << (32 - TTBCR_N)); // 2^(32 - N)
 
 // Stack: grows downward from just below the top, one guard page left unmapped
-#define PROC_STACK_GUARD      0x1000u                               // one unmapped page at ceiling
-#define PROC_STACK_TOP        (PROC_USER_VA_TOP - PROC_STACK_GUARD) // 0x01FFF000, initial SP
-#define PROC_STACK_INIT_PAGES 4u // pages mapped at process creation
+#define PROC_STACK_GUARD      0x1000u // one unmapped page at ceiling
+#define PROC_STACK_INIT_PAGES 4u      // pages mapped at process creation
+constexpr u32 PROC_STACK_TOP = PROC_USER_VA_TOP - PROC_STACK_GUARD; // initial SP
 
 // Code: starts at 1MB so null-deref (0x0) faults cleanly
 #define PROC_CODE_VA_MB 0x001u
-#define PROC_CODE_VA    (PROC_CODE_VA_MB << 20) // 0x00100000, entry point
-#define PROC_CODE_MAX   (1u << 20)              // max code size (1 MB)
+constexpr u32 PROC_CODE_VA = (PROC_CODE_VA_MB << MB_SHIFT); // 0x00100000, entry point
+constexpr u32 PROC_CODE_MAX = (1u << MB_SHIFT);             // max code size (1 MB)
 
 // Heap: immediately follows the code region, grows upward
-#define PROC_HEAP_START (PROC_CODE_VA + PROC_CODE_MAX) // 0x00200000
-
-#define MAX_PROCS 4
+constexpr u32 PROC_HEAP_START = (PROC_CODE_VA + PROC_CODE_MAX);
 
 typedef u32 pid_t;
 

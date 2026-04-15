@@ -5,6 +5,8 @@
 
 #include "types.h"
 
+#define MB_SHIFT 20
+
 // L1 entry type bits [1:0]
 typedef enum {
     L1_INVALID = 0b00,
@@ -116,16 +118,14 @@ typedef l1_entry translation_table[0x1000];
 typedef l2_entry page_table[0x100];
 
 // TTBCR.N (3-bit field, range [0..7]): VA[31:32-N] == 0 → TTBR0 (user); else → TTBR1 (kernel).
-// N=7 → TTBR0 covers [0x00000000, 0x02000000) (32MB); TTBR1 covers [0x02000000, 0xFFFFFFFF].
-// User VAs [0x00000000, 0x01000000) fit entirely within TTBR0 range.
 // Kernel at 0xC0000000 and devices at 0xCF000000 are in TTBR1 range.
-#define TTBCR_N 7u
+#define TTBCR_N 4u
 // Number of 1MB sections in the process (TTBR0) L1 table: 2^(12-N).
-#define PROC_VA_MB (1u << (12u - TTBCR_N)) // 32
+constexpr u32 PROC_VA_MB = (1u << (12u - TTBCR_N));
 // Required alignment for TTBR0 base with TTBCR_N (bytes): 2^(14-N).
-#define PROC_TABLE_ALIGN (1u << (14u - TTBCR_N)) // 128
+constexpr u32 PROC_TABLE_ALIGN = (1u << (14u - TTBCR_N));
 // Byte size of the process L1 table.
-#define PROC_TABLE_SIZE (PROC_VA_MB * sizeof(l1_entry)) // 128
+constexpr u32 PROC_TABLE_SIZE = (PROC_VA_MB * sizeof(l1_entry));
 
 // Table located at TTBR1 (kernel virtual address space).
 extern translation_table kernel_translation_table;
