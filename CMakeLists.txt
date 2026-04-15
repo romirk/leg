@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(LINKER_SCRIPT      ${CMAKE_SOURCE_DIR}/linker.ld)
-set(USER_LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker_user.ld)
+set(USER_LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/src/usr/linker_user.ld)
 
 add_compile_options(-mfloat-abi=hard -mfpu=vfpv4)
 add_compile_options(-mcpu=${MCPU} -Wall -Wextra --target=${TARGET_ARCH} -ffreestanding -fbuiltin -flto)

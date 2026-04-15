@@ -65,7 +65,7 @@ void fb_init(void) {
 
     cursor_col = 0;
     cursor_row = 0;
-    info("fb: " STR(FB_WIDTH) "x" STR(FB_HEIGHT) " @ 0x%p", fb_phys);
+    info("fb: " STR(FB_WIDTH) "x" STR(FB_HEIGHT) " @ 0x%p", (void *) fb_phys);
 }
 
 void fb_putpixel(const u32 x, const u32 y, const u32 color) {

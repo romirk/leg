@@ -19,7 +19,7 @@ typedef struct {
     cmd_fn      fn;
 } Command;
 
-static bool cmd_exit([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+static bool cmd_exit(int, char **) {
     return false;
 }
 
@@ -97,10 +97,19 @@ static bool cmd_brot(int argc, char **argv) {
     return true;
 }
 
+static bool cmd_help(int, char **);
+
 static const Command commands[] = {
-    {"exit", cmd_exit}, {"echo", cmd_echo},   {"matrix", cmd_matrix}, {"clear", cmd_clear},
-    {"brot", cmd_brot}, {"sleep", cmd_sleep}, {"ls", cmd_ls},
+    {"brot", cmd_brot}, {"clear", cmd_clear}, {"echo", cmd_echo},     {"exit", cmd_exit},
+    {"help", cmd_help}, {"ls", cmd_ls},       {"matrix", cmd_matrix}, {"sleep", cmd_sleep},
 };
+
+static bool cmd_help(int, char **) {
+    for (u32 i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+        printf("%s\n", commands[i].name);
+    }
+    return true;
+}
 
 void hash_run(void) {
     char  buf[256];

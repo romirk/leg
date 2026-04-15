@@ -456,6 +456,7 @@ dtb_node_t *dtb_child_next(const dtb_node_t *child) {
     return child ? child->next_sibling : nullptr;
 }
 
+#ifdef DTB_DUMP
 // Tree dump
 static void print_indent(u32 depth) {
     for (u32 i = 0; i < depth; ++i)
@@ -528,3 +529,4 @@ static void dump_node(const dtb_node_t *node, u32 depth) {
 void dtb_dump(const dtb_tree_t *tree) {
     if (tree && tree->root) dump_node(tree->root, 0);
 }
+#endif

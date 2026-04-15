@@ -54,7 +54,7 @@ void kmain(void *dtb) {
         err("No memory nodes found in DTB");
         goto halt;
     }
-    info("RAM: %p +%p", (u32) tree.memory[0].base, (u32) tree.memory[0].size);
+    info("RAM: %p +%p", (void *) tree.memory[0].base, (void *) tree.memory[0].size);
 
     const u32 reserved_end = (u32) heap_base + EARLY_HEAP_SIZE;
     void     *kheap_va = (void *) align_up((uptr) bss_end, PAGE_SIZE);
@@ -92,6 +92,7 @@ void kmain(void *dtb) {
 
     timer_set_tick(300000, sched_tick); // 300ms tick
 
+    info("kernel: creating init process...");
     struct process *p = process_create("init");
 
     fb_print("\n\nWelcome to ", FB_WHITE, FB_BLACK);

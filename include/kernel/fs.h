@@ -13,17 +13,17 @@
 typedef enum : u16 {
     FS_TYPE_BLOB,
     FS_TYPE_EXECUTABLE,
-} fs_flag_t;
+} fs_flags_t;
 
 // On-disk blob descriptor — 16 bytes, packed.
 // All offsets are relative to the start of the FS image.
 // Blob data offsets must be 512-byte aligned.
 typedef struct [[gnu::packed]] {
-    u32 offset;      // byte offset of blob data from FS image start
-    u32 size;        // blob size in bytes
-    u32 name_offset; // byte offset of name within the name_data region
-    u16 name_size;   // name length in bytes (no null terminator on disk)
-    u16 flags;
+    u32        offset;      // byte offset of blob data from FS image start
+    u32        size;        // blob size in bytes
+    u32        name_offset; // byte offset of name within the name_data region
+    u16        name_size;   // name length in bytes (no null terminator on disk)
+    fs_flags_t flags;
 } fs_blob_t;
 
 // Mount the filesystem starting at disk sector `start_sector`.
