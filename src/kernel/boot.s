@@ -111,12 +111,12 @@ handle_reset:
 //   +72  ctx.sp       +76 ctx.lr       +80 ctx.pc        +84 ctx.cpsr
 //   +88  suspended
 //
-.equ PROC_CTX,       20   // offsetof(struct process, ctx)
+.equ PROC_CTX,       16   // offsetof(struct process, ctx)
 .equ CTX_SP,         52   // offsetof(cpu_ctx_t, sp)
 .equ CTX_LR,         56   // offsetof(cpu_ctx_t, lr)
 .equ CTX_PC,         60   // offsetof(cpu_ctx_t, pc)
 .equ CTX_CPSR,       64   // offsetof(cpu_ctx_t, cpsr)
-.equ PROC_SUSPENDED, 88   // offsetof(struct process, suspended)
+.equ PROC_SUSPENDED, 84   // offsetof(struct process, suspended)
 
 .global handle_irq
 handle_irq:
