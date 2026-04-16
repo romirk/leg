@@ -12,6 +12,7 @@
 #include "kernel/mem/alloc.h"
 #include "kernel/scheduler.h"
 #include "libc/builtins.h"
+#include "libc/cstring.h"
 #include "utils.h"
 
 static pid_t next_pid = 1;
@@ -40,6 +41,42 @@ static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
     return pt;
 }
 
+// Load an executable from the filesystem into pgd
+static bool load_user_image(l1_entry *pgd, const char *name, uptr *out_entry) {
+    const fs_blob_t *blob = fs_find(name);
+    if (!blob || blob->flags != FS_TYPE_EXECUTABLE) {
+        err("load_user_image: executable '%s' not found", name);
+        return false;
+    }
+    u32   llf_size = align_up(blob->size, 512);
+    void *buf      = kmalloc(llf_size);
+    if (!buf) {
+        err("load_user_image: OOM for LLF buffer");
+        return false;
+    }
+    bool ok = fs_read(blob, buf) && llf_load(pgd, buf, llf_size, out_entry);
+    kfree(buf);
+    return ok;
+}
+
+// Allocate PROC_STACK_INIT_PAGES stack pages into p->pgd
+// sets p->stack_pt and p->stack_pages
+static bool setup_initial_stack(struct process *p) {
+    p->stack_pt = get_or_alloc_l2(p->pgd, PROC_STACK_TOP >> 20);
+    if (!p->stack_pt) {
+        err("setup_initial_stack: OOM for stack L2 table");
+        return false;
+    }
+    p->stack_pages = 0;
+    for (u32 i = 0; i < PROC_STACK_INIT_PAGES; i++) {
+        if (!process_add_page(p)) {
+            err("setup_initial_stack: OOM for stack page %u", i);
+            return false;
+        }
+    }
+    return true;
+}
+
 struct process *process_create(const char *name) {
     struct process *p = kmalloc_aligned(sizeof(*p), 0x4000);
     if (!p) {
@@ -54,48 +91,16 @@ struct process *process_create(const char *name) {
         return nullptr;
     }
 
-    // ── Load LLF from filesystem ─────────────────────────────────────────────
-    const fs_blob_t *blob = fs_find(name);
-    if (!blob || blob->flags != FS_TYPE_EXECUTABLE) {
-        err("process: executable '%s' not found in filesystem", name);
+    if (!load_user_image(p->pgd, name, &p->entry)) {
         process_free(p);
         return nullptr;
     }
 
-    u32   llf_size = align_up(blob->size, 512);
-    void *llf_buf  = kmalloc(llf_size);
-    if (!llf_buf) {
-        err("process: OOM for LLF buffer");
+    if (!setup_initial_stack(p)) {
         process_free(p);
         return nullptr;
     }
 
-    bool ok = fs_read(blob, llf_buf) && llf_load(p->pgd, llf_buf, llf_size, &p->entry);
-    kfree(llf_buf);
-
-    if (!ok) {
-        process_free(p);
-        return nullptr;
-    }
-
-    // ── Stack ─────────────────────────────────────────────────────────────────
-    p->stack_pt = get_or_alloc_l2(p->pgd, PROC_STACK_TOP >> 20);
-    if (!p->stack_pt) {
-        err("process: OOM for stack L2 table");
-        process_free(p);
-        return nullptr;
-    }
-    p->stack_pages = 0;
-
-    for (u32 i = 0; i < PROC_STACK_INIT_PAGES; i++) {
-        if (!process_add_page(p)) {
-            err("process: OOM for initial stack page %u", i);
-            process_free(p);
-            return nullptr;
-        }
-    }
-
-    // ── Finalise ─────────────────────────────────────────────────────────────
     p->pid      = next_pid++;
     p->sp       = PROC_STACK_TOP - 16;
     p->heap_end = PROC_HEAP_START;
@@ -144,6 +149,8 @@ void process_exit(pid_t pid, const int code) {
     process_free(p);
 
     info("process: pid=%d exited with code %d", pid, code);
+
+    sched_wake_joiners(pid, code);
 
     if (was_current) {
         auto next = sched_pick_next();
@@ -249,39 +256,80 @@ void process_exec(struct process *p) {
 }
 
 void process_replace(pid_t pid, char *name) {
-    process_t *old = sched_get(pid);
-    if (!old) {
-        err("process_replace: no process with pid %d", pid);
+    process_t *p = sched_get(pid);
+    if (!p) {
+        err("process_replace: pid %d not found", pid);
+        return;
     }
 
-    int was_current = (old == current_proc);
-    sched_remove(pid);
-    process_free(old);
+    // name is a user-space pointer — copy it before the page tables die a horrible death.
+    char kname[64];
+    strcpy(kname, name);
 
-    auto p = process_create(name);
-    p->pid = pid;
-
-    mmu_set_proc_table(p->pgd);
-
-    psr_t s = {
-        .M = usr,
-        .I = false,
-    };
-    write_spsr(s);
-
-    if (was_current) {
-        current_proc = p;
+    // Load the new binary into a fresh address space.
+    l1_entry *new_pgd = mmu_alloc_proc_table();
+    if (!new_pgd) {
+        err("process_replace: OOM for pgd");
+        return;
     }
-    sched_add(p);
 
-    if (was_current) {
-        asm volatile("cps #31          \n\t" // System Mode
-                     "mov sp, %0       \n\t" // Set sp_usr
-                     "cps #19          \n\t" // Back to SVC Mode
-                     "mov lr, %1       \n\t" // entry point
-                     "movs pc, lr      \n\t" // Mode switch
-                     :
-                     : "r"(p->sp), "r"(p->entry)
-                     : "memory");
+    uptr entry = 0;
+    if (!load_user_image(new_pgd, kname, &entry)) {
+        err("process_replace: failed to load '%s'", kname);
+        mmu_free_proc_table(new_pgd);
+        return;
+    }
+
+    // Map initial stack pages into the new address space using a temporary
+    // process_t shell so process_add_page can drive the allocation loop.
+    process_t tmp = {.pgd = new_pgd, .stack_pt = nullptr, .stack_pages = 0};
+    if (!setup_initial_stack(&tmp)) {
+        err("process_replace: OOM for stack");
+        // Free pages already mapped into new_pgd before bailing.
+        for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
+            if (new_pgd[mb].type != L1_PAGE_TABLE) continue;
+            l2_entry *pt = phys_to_virt((uptr) new_pgd[mb].page_table.address << 10);
+            for (u32 i = 0; i < 256; i++) {
+                if (pt[i].type == L2_SMALL_PAGE)
+                    mm_page_free((uptr) pt[i].small_page.address << PAGE_SHIFT);
+            }
+            mmu_free_l2_table(pt);
+        }
+        mmu_free_proc_table(new_pgd);
+        return;
+    }
+
+    // Swap in the new address space, freeing the old one.
+    l1_entry *old_pgd = p->pgd;
+    p->pgd            = new_pgd;
+    p->entry          = entry;
+    p->sp             = PROC_STACK_TOP - 16;
+    p->heap_end       = PROC_HEAP_START;
+    p->stack_pt       = tmp.stack_pt;
+    p->stack_pages    = tmp.stack_pages;
+
+    // Set ctx for a clean entry: argc=0, argv=null, fresh sp.
+    memset(&p->ctx, sizeof(p->ctx), 0);
+    p->ctx.sp   = p->sp;
+    p->ctx.pc   = entry;
+    p->ctx.cpsr = 0x10u; // USR mode, IRQs enabled
+
+    info("process_replace: pid=%d → '%s' entry=%p", pid, kname, (void *) entry);
+
+    // Free old address space AFTER installing the new one.
+    for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
+        if (old_pgd[mb].type != L1_PAGE_TABLE) continue;
+        l2_entry *pt = phys_to_virt((uptr) old_pgd[mb].page_table.address << 10);
+        for (u32 i = 0; i < 256; i++) {
+            if (pt[i].type == L2_SMALL_PAGE)
+                mm_page_free((uptr) pt[i].small_page.address << PAGE_SHIFT);
+        }
+        mmu_free_l2_table(pt);
+    }
+    mmu_free_proc_table(old_pgd);
+
+    if (p == current_proc) {
+        context_switch(p);
+        __builtin_unreachable();
     }
 }

@@ -3,6 +3,7 @@
 //
 
 #include "syscall.h"
+
 int main(int, char **) {
     sys_exec("hash");
     return 0;

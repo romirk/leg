@@ -51,7 +51,7 @@ static bool cmd_ls(int, char **) {
     for (u32 i = 0; i < count; i++) {
         u32 size = 0;
         sys_fs_blob_info(i, name, sizeof(name), &size);
-        printf("%s  %u\n", name, size);
+        printf("%s\t\t%u\n", name, size);
     }
     printf("%u blobs\n", count);
     return true;

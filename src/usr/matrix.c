@@ -118,6 +118,6 @@ int main(int, char **) {
         }
 
         if (getchar_nb() == 'q') break;
-        delay_us(50000);
+        sys_sleep(50000);
     }
 }

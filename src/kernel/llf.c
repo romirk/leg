@@ -65,10 +65,19 @@ bool llf_load(l1_entry *pgd, const void *buf, u32 buf_size, uptr *out_entry) {
         const llf_phdr_t ph = phdrs[i];
         if (ph.type == LLF_SEG_NULL) continue;
 
-        memset((void *) ph.vaddr, 0, ph.memsz);
+        memset((void *) ph.vaddr, ph.memsz, 0);
         if (ph.type == LLF_SEG_LOAD && ph.filesz > 0)
             memcpy((void *) ph.vaddr, (const u8 *) buf + ph.offset, ph.filesz);
     }
+
+    // Clean D-cache and invalidate I-cache so freshly written code is visible
+    // to instruction fetches. Without this, a reused physical page still has
+    // the previous process's code in the I-cache.
+    asm volatile("mcr p15, 0, %0, c7, c10, 0 \n\t" // DCCIMVAC — clean+invalidate D-cache
+                 "mcr p15, 0, %0, c7, c5,  0 \n\t" // ICIALLU  — invalidate entire I-cache
+                 "dsb                          \n\t"
+                 "isb" ::"r"(0)
+                 : "memory");
 
     // Restore TTBR0 to the kernel table; process_exec will reinstall the process table.
     mmu_set_proc_table((l1_entry *) kernel_translation_table);

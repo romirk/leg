@@ -177,5 +177,5 @@ int main(int argc, char **argv) {
     if (ms < 100) putchar('0');
     if (ms < 10) putchar('0');
     printf("%ds\n", ms);
-    return true;
+    return 0;
 }

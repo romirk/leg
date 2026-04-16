@@ -60,7 +60,7 @@ add_custom_target(write_disk
 # ── Kernel binary ─────────────────────────────────────────────────────────────
 
 file(GLOB_RECURSE KERNEL_SOURCES "src/kernel/*.*")
-file(GLOB_RECURSE LIBC_SOURCES "src/libc/*.c")
+file(GLOB_RECURSE LIBC_SOURCES "src/libc/*.*")
 
 add_executable(${PROJECT_NAME}.elf
         ${KERNEL_SOURCES}
