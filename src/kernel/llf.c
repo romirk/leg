@@ -65,7 +65,7 @@ bool llf_load(l1_entry *pgd, const void *buf, u32 buf_size, uptr *out_entry) {
         const llf_phdr_t ph = phdrs[i];
         if (ph.type == LLF_SEG_NULL) continue;
 
-        memset((void *) ph.vaddr, ph.memsz, 0);
+        memclr((void *) ph.vaddr, ph.memsz);
         if (ph.type == LLF_SEG_LOAD && ph.filesz > 0)
             memcpy((void *) ph.vaddr, (const u8 *) buf + ph.offset, ph.filesz);
     }

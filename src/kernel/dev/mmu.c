@@ -4,7 +4,6 @@
 #include "kernel/dev/memory.h"
 #include "kernel/linker.h"
 #include "kernel/mem/alloc.h"
-#include "kernel/process.h"
 #include "libc/builtins.h"
 
 [[gnu::section(".tt"), gnu::aligned(0x4000)]]

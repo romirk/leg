@@ -1,7 +1,7 @@
-.global context_switch
+.global context_switch_asm
 
 .section .text, "ax", %progbits
-.type context_switch, %function
+.type context_switch_asm, %function
 
 .equ PROC_CTX,       16   // offsetof(struct process, ctx)
 .equ CTX_SP,         52   // offsetof(cpu_ctx_t, sp)
@@ -11,7 +11,7 @@
 .equ PROC_SUSPENDED, 84   // offsetof(struct process, suspended)
 .equ PROC_PGD ,       4    // offsetof(struct process, pgd)
 
-context_switch:
+context_switch_asm:
     // r0 = next (process_t*)
 
     cpsid i                      // disable IRQs during switch

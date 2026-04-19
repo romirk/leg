@@ -3,13 +3,25 @@
 #include "kernel/scheduler.h"
 
 #include "kernel/cpu.h"
-#include "kernel/dev/mmu.h"
+#include "kernel/dev/memory.h"
 #include "kernel/logs.h"
 #include "kernel/process.h"
 
 static process_t *procs[MAX_PROCESSES];
 
 volatile process_t *current_proc = nullptr;
+
+extern void context_switch_asm(process_t *next);
+
+[[noreturn]]
+void context_switch(process_t *next) {
+    u32 pgd_phys = virt_to_phys(next->pgd);
+    if (pgd_phys < 0x1000u)
+        err("context_switch: pid=%d pgd=%p phys=%p — BAD", next->pid, (void *) next->pgd,
+            (void *) pgd_phys);
+    context_switch_asm(next);
+    __builtin_unreachable();
+}
 
 int sched_add(process_t *p) {
     for (u32 i = 0; i < MAX_PROCESSES; i++) {
@@ -99,14 +111,15 @@ void sched_tick(void) {
     }
     if (cur == MAX_PROCESSES) return;
 
-    // Round-robin: find the next runnable process, skipping current
-    for (u32 j = 1; j <= MAX_PROCESSES; j++) {
+    // Round-robin: find the next runnable process, skipping current.
+    // we are in IRQ context; the IRQ return path (.Lirq_restore_user) will install
+    // current_proc->pgd.
+    for (u32 j = 1; j < MAX_PROCESSES; j++) {
         u32        idx = (cur + j) % MAX_PROCESSES;
         process_t *p   = procs[idx];
         if (p && !p->suspended) {
-            // current_proc->suspended = 1;
-            current_proc = p;
-            mmu_set_proc_table(p->pgd);
+            ((process_t *) current_proc)->suspended = 1;
+            current_proc                            = p;
             return;
         }
     }

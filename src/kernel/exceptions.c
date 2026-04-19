@@ -21,6 +21,18 @@ void handle_boot_exception(void) {
 }
 
 [[gnu::interrupt("ABORT")]]
+void handle_prefetch_abort(void) {
+    u32 ifar, ifsr, pc, dacr, ttbr0;
+    asm volatile("mrc p15, 0, %0, c6, c0, 2" : "=r"(ifar));  // IFAR
+    asm volatile("mrc p15, 0, %0, c5, c0, 1" : "=r"(ifsr));  // IFSR
+    asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(dacr));  // DACR
+    asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(ttbr0)); // TTBR0
+    asm volatile("mov %0, lr" : "=r"(pc));                   // lr_abt = faulting PC + 4
+    panic("prefetch abort: fa=%p fs=%p pc=%p dacr=%p ttbr0=%p l1=%u", (void *) ifar, (void *) ifsr,
+          (void *) (pc - 4), (void *) dacr, (void *) ttbr0, ifar >> 20);
+}
+
+[[gnu::interrupt("ABORT")]]
 void handle_data_abort(void) {
     u32 dfar, dfsr, pc;
     asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(dfar));

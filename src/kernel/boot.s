@@ -40,7 +40,7 @@ vtable:
     b handle_svc
 
     // external/internal prefetch abort
-    b handle_data_abort
+    b handle_prefetch_abort
 
     // external/internal data abort
     b handle_data_abort

@@ -55,15 +55,21 @@ handle_irq:
 
     mov   r0, r13                 // r0 = &ctx (non-banked, survives mode switch)
 
+    // Restore sp_irq to its proper kernel stack now that we no longer need it
+    // as a base register.  Without this, any subsequent kernel-mode IRQ (e.g.
+    // timer ticks while the process sleeps in .Lsvc_no_next) would use
+    // current_proc+16 as its stack and corrupt the first 16 bytes of the struct.
+    ldr   r13, =(STACK_BOTTOM - 0x400)
+
     // Save user SP/LR via System mode
     cps   #0x1F
     str   sp, [r0, #CTX_SP]
     str   lr, [r0, #CTX_LR]
     cps   #0x12                   // back to IRQ mode
 
-    str   lr, [r13, #CTX_PC]      // ctx.pc = lr_irq (already adjusted)
-    mrs   r0, spsr
-    str   r0, [r13, #CTX_CPSR]
+    str   lr, [r0, #CTX_PC]       // ctx.pc = lr_irq (already adjusted); r0 = &ctx
+    mrs   r1, spsr
+    str   r1, [r0, #CTX_CPSR]
 
     // Call irq_dispatch from SVC mode
     cps   #0x13
@@ -79,6 +85,11 @@ handle_irq:
     // ── Restore user context ─────────────────────────────────────────────────
 .Lirq_restore_user:
     // Entry: SVC mode, IRQs disabled.
+    // Install current_proc->pgd as TTBR0 (sched_tick may have changed current_proc).
+    ldr   r1, =current_proc
+    ldr   r1, [r1]
+    ldr   r0, [r1, #4]            // r0 = current_proc->pgd (PROC_PGD offset=4)
+    bl    mmu_set_proc_table
     ldr   r1, =current_proc
     ldr   r1, [r1]
     add   r1, r1, #PROC_CTX       // r1 = &ctx
@@ -193,7 +204,7 @@ handle_svc:
     bl    sched_pick_next           // r0 = next or nullptr
     cmp   r0, #0
     beq   .Lsvc_no_next
-    bl    context_switch            // jumps to next; never returns here
+    bl    context_switch                // jumps to next; never returns here
 
     // No other runnable process: spin in SVC mode until woken by sched_tick
 .Lsvc_no_next:
@@ -208,4 +219,4 @@ handle_svc:
     cpsid i
     ldr   r0, =current_proc
     ldr   r0, [r0]
-    bl    context_switch            // restore our own (or newly-current) context
+    bl    context_switch                // restore our own (or newly-current) context

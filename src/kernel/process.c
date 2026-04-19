@@ -5,7 +5,6 @@
 #include "kernel/cpu.h"
 #include "kernel/dev/memory.h"
 #include "kernel/dev/mmu.h"
-#include "kernel/exceptions.h"
 #include "kernel/fs.h"
 #include "kernel/llf.h"
 #include "kernel/logs.h"
@@ -309,7 +308,7 @@ void process_replace(pid_t pid, char *name) {
     p->stack_pages    = tmp.stack_pages;
 
     // Set ctx for a clean entry: argc=0, argv=null, fresh sp.
-    memset(&p->ctx, sizeof(p->ctx), 0);
+    memclr(&p->ctx, sizeof(p->ctx));
     p->ctx.sp   = p->sp;
     p->ctx.pc   = entry;
     p->ctx.cpsr = 0x10u; // USR mode, IRQs enabled
