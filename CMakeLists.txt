@@ -12,10 +12,10 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
 set(USER_LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/src/usr/linker_user.ld)
 
-add_compile_options(-mfloat-abi=hard -mfpu=vfpv4)
+add_compile_options(-mfloat-abi=hard -mfpu=neon-vfpv4)
 add_compile_options(-mcpu=${MCPU} -Wall -Wextra --target=${TARGET_ARCH} -ffreestanding -fbuiltin -flto)
 # Link options shared by both targets (no linker script here — set per-target)
-add_link_options(-mfloat-abi=hard -mfpu=vfpv4 -flto -fuse-ld=lld --target=${TARGET_ARCH} -mcpu=${MCPU} -nostdlib)
+add_link_options(-mfloat-abi=hard -mfpu=neon-vfpv4 -flto -fuse-ld=lld --target=${TARGET_ARCH} -mcpu=${MCPU} -nostdlib)
 
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wno-unused-command-line-argument")
 
@@ -29,7 +29,7 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     message(STATUS "Maximum optimization for size")
 else ()
     message(STATUS "Minimal optimization, debug info included")
-    add_compile_options(-Og -fno-slp-vectorize)
+    add_compile_options(-Og)
     add_compile_definitions(LOG_DEBUG)
 endif ()
 

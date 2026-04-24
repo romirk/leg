@@ -21,14 +21,18 @@
 //   +72  ctx.lr
 //   +76  ctx.pc
 //   +80  ctx.cpsr
-//   +84  suspended
+//   +84  ctx.fpscr
+//   +88  ctx.vfp[0..63]  (256 bytes, 8-byte aligned)
+//   +344 suspended
 //
-.equ PROC_CTX,       16   // offsetof(struct process, ctx)
-.equ CTX_SP,         52   // offsetof(cpu_ctx_t, sp)
-.equ CTX_LR,         56   // offsetof(cpu_ctx_t, lr)
-.equ CTX_PC,         60   // offsetof(cpu_ctx_t, pc)
-.equ CTX_CPSR,       64   // offsetof(cpu_ctx_t, cpsr)
-.equ PROC_SUSPENDED, 84   // offsetof(struct process, suspended)
+.equ PROC_CTX,        16   // offsetof(struct process, ctx)
+.equ CTX_SP,          52   // offsetof(cpu_ctx_t, sp)
+.equ CTX_LR,          56   // offsetof(cpu_ctx_t, lr)
+.equ CTX_PC,          60   // offsetof(cpu_ctx_t, pc)
+.equ CTX_CPSR,        64   // offsetof(cpu_ctx_t, cpsr)
+.equ CTX_FPSCR,       68   // offsetof(cpu_ctx_t, fpscr)
+.equ CTX_VFP,         72   // offsetof(cpu_ctx_t, vfp)
+.equ PROC_SUSPENDED,  344  // offsetof(struct process, suspended)
 
 .global handle_irq
 handle_irq:
@@ -71,6 +75,13 @@ handle_irq:
     mrs   r1, spsr
     str   r1, [r0, #CTX_CPSR]
 
+    // Save VFP/NEON state (r1 is free scratch; r0 = &ctx throughout)
+    vmrs  r1, fpscr
+    str   r1, [r0, #CTX_FPSCR]
+    add   r1, r0, #CTX_VFP
+    vstmia r1!, {d0-d15}
+    vstmia r1, {d16-d31}
+
     // Call irq_dispatch from SVC mode
     cps   #0x13
     bl    irq_dispatch
@@ -93,6 +104,13 @@ handle_irq:
     ldr   r1, =current_proc
     ldr   r1, [r1]
     add   r1, r1, #PROC_CTX       // r1 = &ctx
+
+    // Restore VFP/NEON state (r2 is free scratch; r1 = &ctx preserved)
+    ldr   r2, [r1, #CTX_FPSCR]
+    vmsr  fpscr, r2
+    add   r2, r1, #CTX_VFP
+    vldmia r2!, {d0-d15}
+    vldmia r2, {d16-d31}
 
     ldr   r2, [r1, #CTX_CPSR]
     msr   spsr_cxsf, r2           // spsr_svc = user CPSR (for movs return)
@@ -189,6 +207,13 @@ handle_svc:
     // Save user CPSR (= spsr_svc)
     mrs   r0, spsr
     str   r0, [r2, #CTX_CPSR]
+
+    // Save VFP/NEON state (r0 is free scratch; r2 = &ctx preserved)
+    vmrs  r0, fpscr
+    str   r0, [r2, #CTX_FPSCR]
+    add   r0, r2, #CTX_VFP
+    vstmia r0!, {d0-d15}
+    vstmia r0, {d16-d31}
 
     // Bulk-load saved r1-r12 from stack (skipping r2=ctx ptr) then stm into ctx.r[1..12].
     // ldm: r0←sp+0(r1), r3←sp+4(r2), r4←sp+8(r3), …, lr←sp+44(r12)

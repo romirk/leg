@@ -8,3 +8,4 @@ build/
 *.pf
 /compile_commands.json
 .venv/
+__pycache__

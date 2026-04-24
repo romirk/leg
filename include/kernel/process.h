@@ -25,13 +25,15 @@ constexpr u32 PROC_HEAP_START = (PROC_CODE_VA + PROC_CODE_MAX);
 typedef u32 pid_t;
 
 // Saved user-mode register context (captured on IRQ preemption).
-// Layout is mirrored in boot.s — offsets must stay in sync.
+// Layout is mirrored in trampolines.s / context_switch.s — offsets must stay in sync.
 typedef struct {
-    u32 r[13]; // r0–r12                                    (ctx+0..+51)
-    u32 sp;    // user SP                                   (ctx+52)
-    u32 lr;    // user LR                                   (ctx+56)
-    u32 pc;    // user PC (lr_irq - 4 at preemption)        (ctx+60)
-    u32 cpsr;  // user CPSR (spsr_irq at preemption)        (ctx+64)
+    u32 r[13];   // r0–r12                                    (ctx+0..+51)
+    u32 sp;      // user SP                                   (ctx+52)
+    u32 lr;      // user LR                                   (ctx+56)
+    u32 pc;      // user PC (lr_irq - 4 at preemption)        (ctx+60)
+    u32 cpsr;    // user CPSR (spsr_irq at preemption)        (ctx+64)
+    u32 fpscr;   // VFP/NEON status-control register          (ctx+68)
+    u32 vfp[64]; // d0–d31 as u32 pairs (lo, hi), 8-byte aligned at ctx+72  (ctx+72..+327)
 } cpu_ctx_t;
 
 typedef struct process {

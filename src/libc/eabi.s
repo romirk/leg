@@ -1,10 +1,23 @@
 // eabi.s — ARM EABI compiler runtime stubs
 //
+// __aeabi_memcpy{,4,8}(void *dst, const void *src, size_t len)  →  memcpy(dst, src, len)
 // __aeabi_memclr{,4,8}(void *dst, size_t len)  →  memclr(dst, len)
 // __aeabi_memset{,4,8}(void *dst, size_t len, int c)  →  memset(dst, c, len)
 
 
 .text
+
+.global __aeabi_memcpy
+.global __aeabi_memcpy4
+.global __aeabi_memcpy8
+.type   __aeabi_memcpy,  %function
+.type   __aeabi_memcpy4, %function
+.type   __aeabi_memcpy8, %function
+
+__aeabi_memcpy:
+__aeabi_memcpy4:
+__aeabi_memcpy8:
+    b memcpy
 
 .global __aeabi_memclr
 .global __aeabi_memclr4

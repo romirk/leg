@@ -17,11 +17,12 @@
 #define FAINT_GREEN  0x00003300u
 
 static struct {
-    u8   y;      // current head row
-    u8   len;    // trail length
-    bool active; // whether the drop is on-screen
-    u32  speed;  // frames between advances
-    u32  tick;   // frame counter
+    u32  speed;   // frames between advances                (+0)
+    u32  tick;    // frame counter                          (+4)
+    u8   y;       // current head row                       (+8)
+    u8   len;     // trail length                           (+9)
+    bool active;  // whether the drop is on-screen          (+10)
+    u8   _pad[5]; // pad to 16 bytes (power-of-2 stride)  (+11)
 } drops[FB_COLS];
 
 static char grid[FB_COLS][FB_ROWS];
