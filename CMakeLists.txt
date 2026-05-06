@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/linker_arm32.ld)
 set(USER_LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/src/usr/linker_user.ld)
 
 add_compile_options(-mfloat-abi=hard -mfpu=neon-vfpv4)
