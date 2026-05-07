@@ -2,6 +2,7 @@
 
 #include "kernel/scheduler.h"
 
+#include "kernel/arch_proc.h"
 #include "kernel/cpu.h"
 #include "kernel/dev/memory.h"
 #include "kernel/logs.h"
@@ -58,7 +59,7 @@ void sched_wake_joiners(pid_t pid, int exit_code) {
     for (u32 i = 0; i < MAX_PROCESSES; i++) {
         process_t *p = procs[i];
         if (p && p->join_target == pid) {
-            p->ctx.r[0]    = (u32) exit_code;
+            arch_ctx_set_syscall_return(&p->ctx, exit_code);
             p->join_target = 0;
             p->suspended   = 0;
         }

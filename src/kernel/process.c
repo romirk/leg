@@ -2,8 +2,7 @@
 
 #include "kernel/process.h"
 
-#include "kernel/cpu.h"
-#include "kernel/dev/memory.h"
+#include "kernel/arch_proc.h"
 #include "kernel/dev/mmu.h"
 #include "kernel/fs.h"
 #include "kernel/llf.h"
@@ -11,7 +10,6 @@
 #include "kernel/mem/alloc.h"
 #include "kernel/pgd.h"
 #include "kernel/scheduler.h"
-#include "libc/builtins.h"
 #include "libc/cstring.h"
 #include "utils.h"
 
@@ -81,6 +79,7 @@ struct process *process_create(const char *name) {
     p->pid      = next_pid++;
     p->sp       = PROC_STACK_TOP - 16;
     p->heap_end = PROC_HEAP_START;
+    arch_ctx_init_fresh(&p->ctx, p->entry, p->sp);
 
     info("process: pid=%d entry=0x%x stack_top=0x%x (%u stack pages)", p->pid, p->entry,
          PROC_STACK_TOP, p->stack_pages);
@@ -125,7 +124,7 @@ void process_exit(pid_t pid, const int code) {
     limbo;
 }
 
-process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
+process_t *process_fork(const uptr lr_svc, const uptr sp_usr, const uptr state) {
     process_t *parent = (process_t *) current_proc;
 
     process_t *child = kmalloc_aligned(sizeof(*child), 0x4000);
@@ -143,11 +142,7 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
     }
 
     // Clone context; child returns 0 from fork, resumes at the SVC return address
-    child->ctx      = parent->ctx;
-    child->ctx.r[0] = 0;      // child's sys_fork() returns 0
-    child->ctx.pc   = lr_svc; // resume at instruction after svc
-    child->ctx.sp   = sp_usr;
-    child->ctx.cpsr = cpsr;
+    arch_ctx_init_fork(&child->ctx, &parent->ctx, lr_svc, sp_usr, state);
 
     child->pid         = next_pid++;
     child->entry       = parent->entry;
@@ -169,26 +164,9 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
 [[noreturn]]
 void process_exec(struct process *p) {
     mmu_set_proc_table(p->pgd);
-
-    psr_t s = {
-        .M = usr,
-        .I = false,
-    };
-    write_spsr(s);
-
     current_proc = p;
     sched_add(p);
-
-    asm volatile("cps #31          \n\t" // System Mode
-                 "mov sp, %0       \n\t" // Set sp_usr
-                 "cps #19          \n\t" // Back to SVC Mode
-                 "mov lr, %1       \n\t" // entry point
-                 "movs pc, lr      \n\t" // Mode switch
-                 :
-                 : "r"(p->sp), "r"(p->entry)
-                 : "memory");
-
-    __builtin_unreachable();
+    arch_eret_to_user(&p->ctx);
 }
 
 void process_replace(pid_t pid, char *name) {
@@ -234,10 +212,7 @@ void process_replace(pid_t pid, char *name) {
     p->stack_pages    = tmp.stack_pages;
 
     // Set ctx for a clean entry: argc=0, argv=null, fresh sp.
-    memclr(&p->ctx, sizeof(p->ctx));
-    p->ctx.sp   = p->sp;
-    p->ctx.pc   = entry;
-    p->ctx.cpsr = 0x10u; // USR mode, IRQs enabled
+    arch_ctx_init_fresh(&p->ctx, entry, p->sp);
 
     info("process_replace: pid=%d → '%s' entry=%p", pid, kname, (void *) entry);
 

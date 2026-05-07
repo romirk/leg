@@ -1,5 +1,6 @@
 #include "syscall.h"
 
+#include "kernel/arch_proc.h"
 #include "kernel/cpu.h"
 #include "kernel/dev/blk.h"
 #include "kernel/dev/fb.h"
@@ -12,7 +13,6 @@
 #include "kernel/process.h"
 #include "kernel/scheduler.h"
 #include "kernel/tty.h"
-#include "libc/cstring.h"
 #include "types.h"
 
 typedef u32 (*svc_handler_t)(u32 r0, u32 r1, u32 r2, u32 r3);
@@ -27,15 +27,9 @@ static u32 svc_exit(u32 r0, u32, u32, u32) {
 }
 
 static u32 svc_fork(u32, u32, u32, u32) {
-    u32 sp_usr, cpsr;
-    asm volatile("cps #0x1F \n\t" // System mode — shares user register bank
-                 "mov %0, sp \n\t"
-                 "cps #0x13 \n\t" // back to SVC mode
-                 "mrs %1, spsr"   // spsr_svc = user CPSR
-                 : "=r"(sp_usr), "=r"(cpsr)
-                 :
-                 : "lr"); // lr is banked across cps; clobber so compiler picks r0-r12 for outputs
-    process_t *child = process_fork(svc_saved_lr, sp_usr, cpsr);
+    uptr sp_usr, state;
+    arch_get_user_fork_state(&sp_usr, &state);
+    const process_t *child = process_fork(svc_saved_lr, sp_usr, state);
     return child ? child->pid : (u32) -1;
 }
 

@@ -26,7 +26,7 @@ typedef u32 pid_t;
 
 // Saved user-mode register context (captured on IRQ preemption).
 // Layout is mirrored in trampolines.s / context_switch.s — offsets must stay in sync.
-typedef struct {
+typedef struct cpu_ctx {
     u32 r[13];   // r0–r12                                    (ctx+0..+51)
     u32 sp;      // user SP                                   (ctx+52)
     u32 lr;      // user LR                                   (ctx+56)
@@ -62,7 +62,7 @@ void process_exit(pid_t pid, int code);
 
 // Clone the current process. The child is added to the scheduler (suspended) and
 // will return 0 from fork; the parent receives the child's PID. Returns nullptr on OOM.
-process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr);
+process_t *process_fork(uptr lr_svc, uptr sp_usr, uptr state);
 
 // Map one additional 4KB page onto the bottom of the process stack.
 // Returns false on OOM.
