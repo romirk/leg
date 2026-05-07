@@ -116,6 +116,7 @@ void *pgd_map_user_page(pgd_t *pgd, void *va) {
 }
 
 void pgd_free(pgd_t *pgd) {
+    if (!pgd) return;
     // for every megabyte in user space
     for (u32 mb = 0; mb < PROC_VA_MB; ++mb) {
         if (pgd[mb].type != L1_PAGE_TABLE) continue;
