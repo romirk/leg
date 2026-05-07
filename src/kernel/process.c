@@ -134,13 +134,6 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
         return nullptr;
     }
 
-    child->pgd = pgd_new();
-    if (!child->pgd) {
-        err("fork: OOM for L1 table");
-        kfree(child);
-        return nullptr;
-    }
-
     // Deep-copy all mapped user pages
     child->pgd = pgd_clone(parent->pgd);
     if (!child->pgd) {

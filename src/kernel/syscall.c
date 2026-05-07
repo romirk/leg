@@ -32,7 +32,9 @@ static u32 svc_fork(u32, u32, u32, u32) {
                  "mov %0, sp \n\t"
                  "cps #0x13 \n\t" // back to SVC mode
                  "mrs %1, spsr"   // spsr_svc = user CPSR
-                 : "=r"(sp_usr), "=r"(cpsr));
+                 : "=r"(sp_usr), "=r"(cpsr)
+                 :
+                 : "lr"); // lr is banked across cps; clobber so compiler picks r0-r12 for outputs
     process_t *child = process_fork(svc_saved_lr, sp_usr, cpsr);
     return child ? child->pid : (u32) -1;
 }

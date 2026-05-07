@@ -159,6 +159,19 @@ handle_irq:
 // C signature:  u32 svc_dispatch(u32 r0, u32 r1, u32 r2, u32 r3, u32 svc_num);
 .global handle_svc
 handle_svc:
+    // Mirror user r0-r12 into current_proc->ctx.r[] so svc_fork sees live state.
+    // lr is currently lr_svc (set by the SVC entry); save it on the SVC stack so
+    // we can use it as a scratch register without losing the return address.
+    push {lr}
+    ldr  lr, =current_proc
+    ldr  lr, [lr]
+    cmp  lr, #0
+    beq  .Lsvc_no_mirror
+    add  lr, lr, #PROC_CTX
+    stm  lr, {r0-r12}              // ctx.r[0..12] = user r0..r12
+.Lsvc_no_mirror:
+    pop  {lr}                      // restore lr_svc
+
     push {r1-r12, lr}              // lr = lr_svc (return address in user code)
     ldr  r12, [lr, #-4]           // r12 = SVC instruction word; lr still = lr_svc
     and  r12, r12, #0xFFFFFF      // r12 = SVC number
