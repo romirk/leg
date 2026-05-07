@@ -9,6 +9,7 @@
 #include "kernel/llf.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
+#include "kernel/pgd.h"
 #include "kernel/scheduler.h"
 #include "libc/builtins.h"
 #include "libc/cstring.h"
@@ -18,26 +19,8 @@ static pid_t next_pid = 1;
 
 // Walk the process L1 table and free every mapped page and L2 table.
 static void process_free(struct process *p) {
-    for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
-        if (p->pgd[mb].type != L1_PAGE_TABLE) continue;
-        l2_entry *pt = phys_to_virt((uptr) p->pgd[mb].page_table.address << 10);
-        for (u32 i = 0; i < 256; i++) {
-            if (pt[i].type == L2_SMALL_PAGE)
-                mm_page_free((uptr) pt[i].small_page.address << PAGE_SHIFT);
-        }
-        mmu_free_l2_table(pt);
-    }
-    mmu_free_proc_table(p->pgd);
+    pgd_free(p->pgd);
     kfree(p);
-}
-
-// Get or create the L2 table for a given 1MB VA slot.
-static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
-    if (pgd[va_mb].type == L1_PAGE_TABLE)
-        return phys_to_virt((uptr) pgd[va_mb].page_table.address << 10);
-    l2_entry *pt = mmu_alloc_l2_table();
-    if (pt) mmu_attach_l2(pgd, va_mb, pt);
-    return pt;
 }
 
 // Load an executable from the filesystem into pgd
@@ -61,11 +44,6 @@ static bool load_user_image(l1_entry *pgd, const char *name, uptr *out_entry) {
 // Allocate PROC_STACK_INIT_PAGES stack pages into p->pgd
 // sets p->stack_pt and p->stack_pages
 static bool setup_initial_stack(struct process *p) {
-    p->stack_pt = get_or_alloc_l2(p->pgd, PROC_STACK_TOP >> 20);
-    if (!p->stack_pt) {
-        err("setup_initial_stack: OOM for stack L2 table");
-        return false;
-    }
     p->stack_pages = 0;
     for (u32 i = 0; i < PROC_STACK_INIT_PAGES; i++) {
         if (!process_add_page(p)) {
@@ -83,7 +61,7 @@ struct process *process_create(const char *name) {
         return nullptr;
     }
 
-    p->pgd = mmu_alloc_proc_table();
+    p->pgd = pgd_new();
     if (!p->pgd) {
         err("process: OOM for L1 table");
         kfree(p);
@@ -111,27 +89,11 @@ struct process *process_create(const char *name) {
 }
 
 bool process_add_page(struct process *p) {
-    const u32 va    = PROC_STACK_TOP - (p->stack_pages + 1) * PAGE_SIZE;
-    const u32 va_mb = va >> 20;
-
-    // If the stack has crossed into a new 1MB slot, attach a fresh L2 table.
-    if (p->stack_pages > 0 && va_mb != (PROC_STACK_TOP - p->stack_pages * PAGE_SIZE) >> 20) {
-        l2_entry *pt = mmu_alloc_l2_table();
-        if (!pt) {
-            err("process: OOM for stack L2 table");
-            return false;
-        }
-        mmu_attach_l2(p->pgd, va_mb, pt);
-        p->stack_pt = pt;
-    }
-
-    uptr pa = mm_page_alloc();
-    if (!pa) {
+    const uptr va = PROC_STACK_TOP - (p->stack_pages + 1) * PAGE_SIZE;
+    if (!pgd_map_user_page(p->pgd, (void *) va)) {
         err("process: OOM growing stack (page %u)", p->stack_pages);
         return false;
     }
-
-    mmu_map_page(p->stack_pt, va, pa);
     p->stack_pages++;
     return true;
 }
@@ -172,7 +134,7 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
         return nullptr;
     }
 
-    child->pgd = mmu_alloc_proc_table();
+    child->pgd = pgd_new();
     if (!child->pgd) {
         err("fork: OOM for L1 table");
         kfree(child);
@@ -180,28 +142,11 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
     }
 
     // Deep-copy all mapped user pages
-    for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
-        if (parent->pgd[mb].type != L1_PAGE_TABLE) continue;
-        l2_entry *src_pt = phys_to_virt((uptr) parent->pgd[mb].page_table.address << 10);
-        l2_entry *dst_pt = mmu_alloc_l2_table();
-        if (!dst_pt) {
-            err("fork: OOM for L2 table");
-            process_free(child);
-            return nullptr;
-        }
-        mmu_attach_l2(child->pgd, mb, dst_pt);
-        for (u32 i = 0; i < 256; i++) {
-            if (src_pt[i].type != L2_SMALL_PAGE) continue;
-            uptr src_pa = (uptr) src_pt[i].small_page.address << PAGE_SHIFT;
-            uptr dst_pa = mm_page_alloc();
-            if (!dst_pa) {
-                err("fork: OOM for page");
-                process_free(child);
-                return nullptr;
-            }
-            memcpy(phys_to_virt(dst_pa), phys_to_virt(src_pa), PAGE_SIZE);
-            mmu_map_page(dst_pt, (mb << 20) | (i << PAGE_SHIFT), dst_pa);
-        }
+    child->pgd = pgd_clone(parent->pgd);
+    if (!child->pgd) {
+        err("fork: OOM for child PGD");
+        process_free(child);
+        return nullptr;
     }
 
     // Clone context; child returns 0 from fork, resumes at the SVC return address
@@ -216,7 +161,6 @@ process_t *process_fork(u32 lr_svc, u32 sp_usr, u32 cpsr) {
     child->sp          = sp_usr;
     child->heap_end    = parent->heap_end;
     child->stack_pages = parent->stack_pages;
-    child->stack_pt    = nullptr; // not used post-fork
     child->wake_tick   = 0;
     child->suspended   = 0;
 
@@ -266,7 +210,7 @@ void process_replace(pid_t pid, char *name) {
     strcpy(kname, name);
 
     // Load the new binary into a fresh address space.
-    l1_entry *new_pgd = mmu_alloc_proc_table();
+    l1_entry *new_pgd = pgd_new();
     if (!new_pgd) {
         err("process_replace: OOM for pgd");
         return;
@@ -275,26 +219,16 @@ void process_replace(pid_t pid, char *name) {
     uptr entry = 0;
     if (!load_user_image(new_pgd, kname, &entry)) {
         err("process_replace: failed to load '%s'", kname);
-        mmu_free_proc_table(new_pgd);
+        pgd_free(new_pgd);
         return;
     }
 
     // Map initial stack pages into the new address space using a temporary
     // process_t shell so process_add_page can drive the allocation loop.
-    process_t tmp = {.pgd = new_pgd, .stack_pt = nullptr, .stack_pages = 0};
+    process_t tmp = {.pgd = new_pgd, .stack_pages = 0};
     if (!setup_initial_stack(&tmp)) {
         err("process_replace: OOM for stack");
-        // Free pages already mapped into new_pgd before bailing.
-        for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
-            if (new_pgd[mb].type != L1_PAGE_TABLE) continue;
-            l2_entry *pt = phys_to_virt((uptr) new_pgd[mb].page_table.address << 10);
-            for (u32 i = 0; i < 256; i++) {
-                if (pt[i].type == L2_SMALL_PAGE)
-                    mm_page_free((uptr) pt[i].small_page.address << PAGE_SHIFT);
-            }
-            mmu_free_l2_table(pt);
-        }
-        mmu_free_proc_table(new_pgd);
+        pgd_free(new_pgd);
         return;
     }
 
@@ -304,7 +238,6 @@ void process_replace(pid_t pid, char *name) {
     p->entry          = entry;
     p->sp             = PROC_STACK_TOP - 16;
     p->heap_end       = PROC_HEAP_START;
-    p->stack_pt       = tmp.stack_pt;
     p->stack_pages    = tmp.stack_pages;
 
     // Set ctx for a clean entry: argc=0, argv=null, fresh sp.
@@ -316,16 +249,7 @@ void process_replace(pid_t pid, char *name) {
     info("process_replace: pid=%d → '%s' entry=%p", pid, kname, (void *) entry);
 
     // Free old address space AFTER installing the new one.
-    for (u32 mb = 0; mb < PROC_VA_MB; mb++) {
-        if (old_pgd[mb].type != L1_PAGE_TABLE) continue;
-        l2_entry *pt = phys_to_virt((uptr) old_pgd[mb].page_table.address << 10);
-        for (u32 i = 0; i < 256; i++) {
-            if (pt[i].type == L2_SMALL_PAGE)
-                mm_page_free((uptr) pt[i].small_page.address << PAGE_SHIFT);
-        }
-        mmu_free_l2_table(pt);
-    }
-    mmu_free_proc_table(old_pgd);
+    pgd_free(old_pgd);
 
     if (p == current_proc) {
         context_switch(p);

@@ -117,6 +117,9 @@ typedef l1_entry translation_table[0x1000];
 // L2 translation table
 typedef l2_entry page_table[0x100];
 
+// PGD (Process Global Directory)
+typedef l1_entry pgd_t;
+
 // TTBCR.N (3-bit field, range [0..7]): VA[31:32-N] == 0 → TTBR0 (user); else → TTBR1 (kernel).
 // Kernel at 0xC0000000 and devices at 0xCF000000 are in TTBR1 range.
 #define TTBCR_N 7u
@@ -135,24 +138,6 @@ void init_mmu(void *dtb);
 
 // Map a 1MB physical section as identity (VA == PA). Flushes TLB.
 void mmu_map_identity(u32 phys_mb, bool device);
-
-// Allocate a process L1 table (PROC_VA_MB entries, zero-initialized).
-l1_entry *mmu_alloc_proc_table(void);
-
-void mmu_free_proc_table(l1_entry *tt);
-
-// Map a 1MB section at va_mb into an L1 table.
-void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device);
-
-// Allocate a zeroed L2 page table (256 × 4KB small-page entries, 1KB-aligned).
-l2_entry *mmu_alloc_l2_table(void);
-void      mmu_free_l2_table(l2_entry *pt);
-
-// Install an L2 table into the L1 entry for va_mb.
-void mmu_attach_l2(l1_entry *tt, u32 va_mb, l2_entry *pt);
-
-// Map one 4KB page: va and pa must be PAGE_SIZE-aligned.
-void mmu_map_page(l2_entry *pt, u32 va, u32 pa);
 
 // Switch TTBR0 to a process table (virtual address, converted to physical). Flushes TLB.
 void mmu_set_proc_table(l1_entry *tt);

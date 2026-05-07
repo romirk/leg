@@ -1,35 +1,18 @@
 #include "kernel/llf.h"
 
-#include "kernel/dev/memory.h"
 #include "kernel/dev/mmu.h"
 #include "kernel/logs.h"
 #include "kernel/mem/alloc.h"
+#include "kernel/pgd.h"
 #include "libc/builtins.h"
-
-#define L2_IDX(va) (((va) >> 12) & 0xFF)
-
-// Get or create the L2 table for a given 1MB VA slot, attaching it to the L1 table.
-static l2_entry *get_or_alloc_l2(l1_entry *pgd, u32 va_mb) {
-    if (pgd[va_mb].type == L1_PAGE_TABLE)
-        return phys_to_virt((uptr) pgd[va_mb].page_table.address << 10);
-    l2_entry *pt = mmu_alloc_l2_table();
-    if (pt) mmu_attach_l2(pgd, va_mb, pt);
-    return pt;
-}
 
 // Allocate and map pages covering [va, va+memsz) into pgd.
 // va need not be page-aligned; already-mapped pages (e.g. code/BSS overlap) are skipped.
-static bool map_pages(l1_entry *pgd, u32 va, u32 memsz) {
-    const u32 page_base = va & ~(PAGE_SIZE - 1u);
-    const u32 pages     = (va - page_base + memsz + PAGE_SIZE - 1) / PAGE_SIZE;
+static bool map_pages(l1_entry *pgd, uptr va, uptr memsz) {
+    const uptr page_base = va & ~(PAGE_SIZE - 1u);
+    const uptr pages     = (va - page_base + memsz + PAGE_SIZE - 1) / PAGE_SIZE;
     for (u32 i = 0; i < pages; i++) {
-        u32       page_va = page_base + i * PAGE_SIZE;
-        l2_entry *pt      = get_or_alloc_l2(pgd, page_va >> 20);
-        if (!pt) return false;
-        if (pt[L2_IDX(page_va)].type != L2_INVALID) continue; // already mapped
-        uptr pa = mm_page_alloc();
-        if (!pa) return false;
-        mmu_map_page(pt, page_va, pa);
+        pgd_map_user_page(pgd, (void *) page_base + i * PAGE_SIZE);
     }
     return true;
 }

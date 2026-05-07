@@ -4,7 +4,6 @@
 #include "kernel/dev/memory.h"
 #include "kernel/linker.h"
 #include "kernel/mem/alloc.h"
-#include "libc/builtins.h"
 
 [[gnu::section(".tt"), gnu::aligned(0x4000)]]
 translation_table kernel_translation_table;
@@ -128,57 +127,6 @@ void mmu_map_identity(u32 phys_mb, bool device) {
                  "dsb\n\t"
                  "mcr p15, 0, %0, c8, c7,  0\n\t" // TLBIALL: invalidate unified TLB
                  "dsb\n\tisb" ::"r"(entry_va));
-}
-
-l1_entry *mmu_alloc_proc_table(void) {
-    l1_entry *tt = kmalloc_aligned(PROC_TABLE_SIZE, PROC_TABLE_ALIGN);
-    if (tt) memset(tt, 0, PROC_TABLE_SIZE);
-    return tt;
-}
-
-void mmu_free_proc_table(l1_entry *tt) {
-    kfree(tt);
-}
-
-void mmu_map_section(l1_entry *tt, u32 va_mb, u32 pa_mb, bool device) {
-    tt[va_mb] = (l1_entry) {.section = {
-                                .type       = L1_SECTION,
-                                .address    = pa_mb,
-                                .ap_low     = 0b11, // RW kernel+user
-                                .type_ext   = device ? 0b000 : 0b001,
-                                .bufferable = true,
-                                .cacheable  = !device,
-                            }};
-}
-
-l2_entry *mmu_alloc_l2_table(void) {
-    l2_entry *pt = kmalloc_aligned(sizeof(page_table), 0x400); // 1KB-aligned
-    if (pt) memset(pt, 0, sizeof(page_table));
-    return pt;
-}
-
-void mmu_free_l2_table(l2_entry *pt) {
-    kfree(pt);
-}
-
-void mmu_attach_l2(l1_entry *tt, u32 va_mb, l2_entry *pt) {
-    u32 phys  = virt_to_phys(pt);
-    tt[va_mb] = (l1_entry) {.page_table = {
-                                .type    = L1_PAGE_TABLE,
-                                .address = phys >> 10,
-                                .domain  = 0,
-                            }};
-}
-
-void mmu_map_page(l2_entry *pt, u32 va, u32 pa) {
-    pt[L2_IDX(va)] = (l2_entry) {.small_page = {
-                                     .type       = L2_SMALL_PAGE,
-                                     .address    = pa >> 12,
-                                     .ap_low     = 0b11, // RW kernel+user
-                                     .type_ext   = 0b001,
-                                     .bufferable = true,
-                                     .cacheable  = true,
-                                 }};
 }
 
 void mmu_set_proc_table(l1_entry *tt) {

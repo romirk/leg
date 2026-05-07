@@ -39,15 +39,15 @@ extern u32 kernel_phys_base;
 // Convert a virtual address to physical.
 // Kernel VA (>= KERNEL_VA) uses kernel_phys_base offset; otherwise identity-mapped.
 [[gnu::pure]]
-static inline u32 virt_to_phys(const void *va) {
-    const u32 v = (u32) va;
+static inline uptr virt_to_phys(const void *va) {
+    const auto v = (uptr) va;
     if (v >= KERNEL_VA) return kernel_phys_base + (v - KERNEL_VA);
     return v;
 }
 
 // Convert a kernel-heap physical address back to its virtual address.
 [[gnu::pure]]
-static inline void *phys_to_virt(u32 pa) {
+static inline void *phys_to_virt(uptr pa) {
     return (void *) (pa - kernel_phys_base + KERNEL_VA);
 }
 
