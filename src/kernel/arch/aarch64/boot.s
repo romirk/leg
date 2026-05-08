@@ -6,6 +6,7 @@
 .equ UARTDR, 0x09000000
 
 _start:
+    mov x19, x0
     mrs  x2, CurrentEL
     lsr  x2, x2, #2          // bits [3:2] → [1:0]
     cmp  x2, #2
@@ -34,6 +35,10 @@ el1_main:
     strb w1, [x0]
     mov  w1, #'\n'
     strb w1, [x0]
+
+    mov x0, x19
+    bl  kboot
+
 1:
     wfi
     b 1b
