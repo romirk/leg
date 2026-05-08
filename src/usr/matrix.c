@@ -121,4 +121,5 @@ int main(int, char **) {
         if (getchar_nb() == 'q') break;
         sys_sleep(50000);
     }
+    return 0;
 }
