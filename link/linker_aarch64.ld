@@ -1,6 +1,6 @@
 ENTRY(_start)
 
-KERNEL_PA = 0x40000000;
+KERNEL_PA = 0x40100000;
 KERNEL_VA = 0xFFFFFFFFC0000000;
 
 MEMORY {
@@ -9,7 +9,9 @@ MEMORY {
 }
 
 SECTIONS {
-    __kernel_load_beg = LOADADDR(.text);
+    .boot : ALIGN(0x1000) { *( .boot .boot.* ) } > phy AT > phy
+    __kernel_load_beg = LOADADDR(.boot);
+
     .text   : ALIGN(0x1000) { *( .text   .text.*   ) } > vir AT > phy
     .rodata : ALIGN(0x1000) { *( .rodata .rodata.* ) } > vir AT > phy
     .data   : ALIGN(0x1000) { *( .data   .data.*   ) } > vir AT > phy
