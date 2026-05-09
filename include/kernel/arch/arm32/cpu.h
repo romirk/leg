@@ -1,8 +1,19 @@
 // cpu.h — ARMv7 CP15 system register layouts and accessors
 
-#ifndef CPU_H
-#define CPU_H
+#pragma once
 #include "types.h"
+
+// Saved user-mode register context (captured on IRQ preemption).
+// Layout is mirrored in trampolines.s / context_switch.s — offsets must stay in sync.
+typedef struct cpu_ctx {
+    u32 r[13];   // r0–r12                                    (ctx+0..+51)
+    u32 sp;      // user SP                                   (ctx+52)
+    u32 lr;      // user LR                                   (ctx+56)
+    u32 pc;      // user PC (lr_irq - 4 at preemption)        (ctx+60)
+    u32 cpsr;    // user CPSR (spsr_irq at preemption)        (ctx+64)
+    u32 fpscr;   // VFP/NEON status-control register          (ctx+68)
+    u32 vfp[64]; // d0–d31 as u32 pairs (lo, hi), 8-byte aligned at ctx+72  (ctx+72..+327)
+} cpu_ctx_t;
 
 // Configuration Base Address Register (CBAR) — GIC/peripheral base
 struct [[gnu::packed]] cbar {
@@ -203,5 +214,3 @@ static struct vbar read_vbar() {
 static void write_vbar(struct vbar vbar) {
     asm("mcr p15, 0, %0, c12, c0, 0" ::"r"(vbar));
 }
-
-#endif // CPU_H

@@ -1,9 +1,8 @@
 CompileFlags:
   Add:
     - --target=arm-none-eabi
-    - -mcpu=cortex-a15
+    - -mcpu=cortex-a72
     - -ffreestanding
-    - -std=gnu2x
 
 Diagnostics:
   UnusedIncludes: Strict

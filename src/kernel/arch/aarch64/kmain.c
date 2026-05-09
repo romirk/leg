@@ -2,8 +2,8 @@
 // Created by Romir Kulshrestha on 09/05/2026.
 //
 
-#include "kernel/arch/aarch64/exceptions.h"
 #include "kernel/arch/aarch64/tt.h"
+#include "kernel/exceptions.h"
 #include "types.h"
 
 #define UARTDR (volatile u8 *) 0x09000000
