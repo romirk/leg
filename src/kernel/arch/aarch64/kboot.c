@@ -2,8 +2,8 @@
 // Created by Romir Kulshrestha on 08/05/2026.
 //
 
-#include "types.h"
 #include "kernel/arch/aarch64/tt.h"
+#include "types.h"
 
 #define UARTDR (volatile u8 *) 0x09000000
 
@@ -29,7 +29,7 @@
 // Index 0: 0xFF Normal cacheable (0xFF) — for kernel + user code/data
 // Index 1: 0x00 Device-nGnRnE (0x00) — for UART, GIC, etc.
 constexpr u64 MAIR_EL1 = 0x00000000000000FF;
-constexpr u64 TCR_EL1  = TCR_T0SZ(25) | TCR_T1SZ(25) | TCR_TG0_4K | TCR_TG1_4K | TCR_IRGN0_WBWA |
+constexpr u64 TCR_EL1 = TCR_T0SZ(25) | TCR_T1SZ(25) | TCR_TG0_4K | TCR_TG1_4K | TCR_IRGN0_WBWA |
                         TCR_ORGN0_WBWA | TCR_SH0_IS | TCR_IRGN1_WBWA | TCR_ORGN1_WBWA | TCR_SH1_IS |
                         TCR_IPS_48;
 
