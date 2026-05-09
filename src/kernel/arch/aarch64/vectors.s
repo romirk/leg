@@ -1,6 +1,5 @@
 #include "kernel/arch/aarch64/cpu.h"
 
-.global default_handler
 .global vectors
 
 .section .text
@@ -15,11 +14,7 @@
     b \label
 .endm
 
-default_handler:
-    wfi
-    b default_handler
-
-el1_sync:
+.macro sync, handler
     sub sp, sp, #FRAME_SIZE
 
     // general pupose registers
@@ -49,7 +44,7 @@ el1_sync:
     str x2, [sp, #264]
 
     mov x0, sp
-    bl el1_sync_handler
+    bl \handler
 
     ldr x2, [sp, #264]
     ldr x1, [sp, #256]
@@ -76,6 +71,17 @@ el1_sync:
     ldr x30,      [sp, #240]
     add sp, sp, #FRAME_SIZE
     eret
+.endm
+
+el1_sync:
+    sync el1_sync_handler
+
+el0_sync:
+    sync el0_sync_handler
+
+default_handler:
+    wfi
+    b default_handler
 
 .align 11
 vectors:
@@ -89,7 +95,7 @@ vectors:
     default_vector
     default_vector
 
-    default_vector
+    vector el0_sync
     default_vector
     default_vector
     default_vector

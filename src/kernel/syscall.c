@@ -194,7 +194,7 @@ static const svc_handler_t svc_handlers[] = {
 };
 #define SVC_COUNT (sizeof(svc_handlers) / sizeof(*svc_handlers))
 
-u32 svc_dispatch(u32 r0, u32 r1, u32 r2, u32 r3, u32 svc_num) {
+uptr svc_dispatch(uptr r0, uptr r1, uptr r2, uptr r3, uptr svc_num) {
     if (svc_num < SVC_COUNT && svc_handlers[svc_num]) return svc_handlers[svc_num](r0, r1, r2, r3);
     warn("unhandled SVC #%d", svc_num);
     return 0;

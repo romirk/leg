@@ -5,6 +5,7 @@
 #include "kernel/arch/aarch64/tt.h"
 #include "kernel/exceptions.h"
 #include "types.h"
+#include "utils.h"
 
 #define UARTDR (volatile u8 *) 0x09000000
 
@@ -17,11 +18,7 @@ void kmain() {
         *UARTDR = *c;
     }
 
-    asm volatile("brk #0");
     unmap_identity();
 
-    // ReSharper disable once CppDFAEndlessLoop
-    for (;;) {
-        asm volatile("wfi");
-    }
+    limbo;
 }

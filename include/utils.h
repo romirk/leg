@@ -5,8 +5,8 @@
 #define loop  for (;;)
 #define limbo loop asm("wfi")
 
-#define get_bits(data, high, low)   (((u32) (data) & ~(0xffffffffu << ((high) + 1))) >> (low))
-#define get_high_bits(data, n_bits) ((u32) (data) >> (32 - (n_bits)))
+#define get_bits(data, high, low)   (((uptr) (data) & ~(0xffffffffu << ((high) + 1))) >> (low))
+#define get_high_bits(data, n_bits) ((uptr) (data) >> (sizeof(uptr) - (n_bits)))
 
 [[maybe_unused]]
 static void swap(char *a, char *b) {
@@ -17,7 +17,7 @@ static void swap(char *a, char *b) {
 
 [[gnu::const, maybe_unused]]
 static void *align(void *ptr, const u8 alignment) {
-    return (void *) (-alignment & (u32) ptr + alignment - 1);
+    return (void *) (-alignment & (uptr) ptr + alignment - 1);
 }
 
 [[gnu::const, maybe_unused]]
@@ -29,7 +29,7 @@ static uptr align_down(uptr x, uptr align) {
     return x & ~(align - 1u);
 }
 [[gnu::const, maybe_unused]]
-static u32 div_round_up(u32 a, u32 b) {
+static uptr div_round_up(uptr a, uptr b) {
     return (a + b - 1u) / b;
 }
 
