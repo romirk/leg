@@ -2,7 +2,7 @@
 
 .section .boot, "ax"
 
-.equ STACK_TOP, 0x40400000
+.equ STACK_TOP, 0x401F0000
 .equ UARTDR, 0x09000000
 
 _start:

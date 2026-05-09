@@ -4,6 +4,7 @@
 
 #ifndef LEG_TT_H
 #define LEG_TT_H
+
 #include "types.h"
 
 typedef enum : u8 {

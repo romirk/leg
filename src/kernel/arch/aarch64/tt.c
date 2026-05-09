@@ -12,7 +12,7 @@ l1_descriptor ttbr0_l1[512] = {
 
 [[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
 l2_descriptor ttbr0_l2_dev[512] = {
-    [8] =
+    [72] =
         {
             .fields =
                 {
@@ -46,7 +46,7 @@ l2_descriptor ttbr0_l2_ram[512] = {
 
 [[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
 l1_descriptor ttbr1_l1[512] = {
-    [0] = {.fields = {.descriptor = PTE_DESC_TABLE}},
+    [511] = {.fields = {.descriptor = PTE_DESC_TABLE}},
 };
 
 [[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
@@ -68,8 +68,7 @@ l2_descriptor ttbr1_l2[512] = {
 
 [[gnu::section(".boot")]]
 void init_pgtables() {
-    ttbr0_l1[0].fields.addr = (u64) ttbr0_l2_dev;
-    ttbr0_l1[1].fields.addr = (u64) ttbr0_l2_ram;
-
-    ttbr1_l1[0].fields.addr = (u64) ttbr1_l2;
+    ttbr0_l1[0].raw   = PTE_DESC_TABLE | (u64) ttbr0_l2_dev;
+    ttbr0_l1[1].raw   = PTE_DESC_TABLE | (u64) ttbr0_l2_ram;
+    ttbr1_l1[511].raw = PTE_DESC_TABLE | (u64) ttbr1_l2;
 }
