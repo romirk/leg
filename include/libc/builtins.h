@@ -1,5 +1,4 @@
-#ifndef BUILTINS_H
-#define BUILTINS_H
+#pragma once
 
 #include "types.h"
 
@@ -22,5 +21,3 @@ void *memset(void *dst, int c, size_t len);
  * Set len bytes in dst to 0.
  */
 void *memclr(void *dst, size_t len);
-
-#endif // BUILTINS_H

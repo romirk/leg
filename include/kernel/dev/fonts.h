@@ -1,7 +1,4 @@
-#ifndef LEG_FONTS_H
-#define LEG_FONTS_H
+#pragma once
 
 extern const unsigned char sans_data[2048];
 extern const unsigned char serif_data[2048];
-
-#endif // LEG_FONTS_H

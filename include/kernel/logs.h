@@ -1,5 +1,4 @@
-#ifndef LOGS_H
-#define LOGS_H
+#pragma once
 
 #include <stdarg.h>
 
@@ -45,5 +44,3 @@ void vkprintf(const char *fmt, va_list args);
 #else
 #define err(...)
 #endif
-
-#endif // LOGS_H

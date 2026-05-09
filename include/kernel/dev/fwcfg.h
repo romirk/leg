@@ -1,7 +1,6 @@
 // fwcfg.h — QEMU firmware configuration interface (MMIO)
 
-#ifndef LEG_FWCFG_H
-#define LEG_FWCFG_H
+#pragma once
 
 #include "memory.h"
 #include "types.h"
@@ -24,5 +23,3 @@ i32 fwcfg_find(const char *name);
 // Write `len` bytes from `buf` to the fw-cfg file at `selector` via DMA.
 // `buf` must be in identity-mapped or kernel-mapped memory.
 void fwcfg_dma_write(u16 selector, const void *buf, u32 len);
-
-#endif // LEG_FWCFG_H

@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 10/04/2026.
 //
 
-#ifndef LEG_MEMORY_H
-#define LEG_MEMORY_H
+#pragma once
 
 // Kermel address
 #define KERNEL_VA    0xC0000000u // kernel virtual base address
@@ -50,5 +49,3 @@ static inline uptr virt_to_phys(const void *va) {
 static inline void *phys_to_virt(uptr pa) {
     return (void *) (pa - kernel_phys_base + KERNEL_VA);
 }
-
-#endif // LEG_MEMORY_H

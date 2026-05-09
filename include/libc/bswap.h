@@ -1,7 +1,6 @@
 // bswap.h — byte-swap and big-endian read utilities
 
-#ifndef LEG_BSWAP_H
-#define LEG_BSWAP_H
+#pragma once
 
 #include "types.h"
 
@@ -44,5 +43,3 @@ static u64 be64_read(const void *p) {
     const u64 lo = be32_read((const u8 *) p + 4);
     return hi | lo;
 }
-
-#endif // LEG_BSWAP_H

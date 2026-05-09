@@ -1,5 +1,4 @@
-#ifndef STRING_H
-#define STRING_H
+#pragma once
 
 #include "types.h"
 
@@ -35,5 +34,3 @@ int str_split(char *line, char **argv, int max_argc);
 // Null-terminates after the last non-whitespace character.
 // Returns a pointer to the first non-whitespace character.
 char *trim(char *s);
-
-#endif // STRING_H

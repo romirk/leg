@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 07/05/2026.
 //
 
-#ifndef LEG_PGD_H
-#define LEG_PGD_H
+#pragma once
 
 #include "dev/mmu.h"
 
@@ -18,5 +17,3 @@ void *pgd_map_user_page(pgd_t *pgd, void *va);
 
 // PGD destructor
 void pgd_free(pgd_t *pgd);
-
-#endif // LEG_PGD_H

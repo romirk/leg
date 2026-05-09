@@ -1,5 +1,4 @@
-#ifndef STDLIB_H
-#define STDLIB_H
+#pragma once
 
 #include "syscall.h"
 #include "types.h"
@@ -54,5 +53,3 @@ static inline u32 rand_below(u32 bound) {
 static inline void rng_seed(u32 seed) {
     sys_rand_seed(seed);
 }
-
-#endif // STDLIB_H

@@ -1,7 +1,6 @@
 // uart.h — PL011 UART driver
 
-#ifndef UART_H
-#define UART_H
+#pragma once
 
 #include "memory.h"
 
@@ -54,5 +53,3 @@ void uart_putchar(char c);
 char uart_getchar(void);
 
 int uart_puts(const char *s);
-
-#endif // UART_H

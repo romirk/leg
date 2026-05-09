@@ -1,7 +1,6 @@
 // scheduler.h — round-robin process scheduler
 
-#ifndef LEG_SCHEDULER_H
-#define LEG_SCHEDULER_H
+#pragma once
 #include "process.h"
 
 #define MAX_PROCESSES 8
@@ -26,5 +25,3 @@ void sched_tick(void);
 
 // assembly routine
 void context_switch(process_t *next);
-
-#endif // LEG_SCHEDULER_H

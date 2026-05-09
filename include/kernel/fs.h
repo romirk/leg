@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 13/04/2026.
 //
 
-#ifndef LEG_FS_H
-#define LEG_FS_H
+#pragma once
 
 #include "types.h"
 
@@ -51,5 +50,3 @@ const fs_blob_t *fs_blob_at(u32 i);
 // Returns the null-terminated name of a blob.
 [[gnu::pure]]
 const char *fs_blob_name(const fs_blob_t *blob);
-
-#endif // LEG_FS_H

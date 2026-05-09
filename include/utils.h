@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include "types.h"
 
@@ -51,5 +50,3 @@ static void poweroff(void) {
     asm volatile("mov r0, %0\n\thvc #0" ::"r"(PSCI_SYSTEM_OFF) : "r0");
     __builtin_unreachable();
 }
-
-#endif // UTILS_H

@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 14/04/2026.
 //
 
-#ifndef LEG_STRING_H
-#define LEG_STRING_H
+#pragma once
 
 #include "types.h"
 
@@ -22,5 +21,3 @@ u32 str_cat(str_t *dest, const str_t *src);
 u32 str_cmp(const str_t *, const str_t *);
 
 u32 str_trim(str_t *);
-
-#endif // LEG_STRING_H

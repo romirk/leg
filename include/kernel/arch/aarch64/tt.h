@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 08/05/2026.
 //
 
-#ifndef LEG_TT_H
-#define LEG_TT_H
+#pragma once
 
 #include "types.h"
 
@@ -48,5 +47,3 @@ extern l2_descriptor ttbr1_l2[512];
 
 void init_pgtables();
 void unmap_identity();
-
-#endif // LEG_TT_H

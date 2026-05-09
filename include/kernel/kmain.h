@@ -1,8 +1,5 @@
-#ifndef KMAIN_H
-#define KMAIN_H
+#pragma once
 
 typedef int(main_fn)(void);
 
 void kmain(void *dtb);
-
-#endif // KMAIN_H

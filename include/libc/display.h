@@ -3,8 +3,7 @@
 // Inline wrappers around the sys_fb_* SVCs. Mirrors the constants in
 // kernel/dev/fb.h so that usr/ code never needs to include kernel headers.
 
-#ifndef LEG_DISPLAY_H
-#define LEG_DISPLAY_H
+#pragma once
 
 #include "syscall.h"
 #include "types.h"
@@ -47,5 +46,3 @@ static inline void fb_putpixel(u32 x, u32 y, u32 color) {
 static inline void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg) {
     sys_fb_putc((col << 16) | row, c, fg, bg);
 }
-
-#endif // LEG_DISPLAY_H

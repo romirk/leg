@@ -1,5 +1,4 @@
-#ifndef LINKER_H
-#define LINKER_H
+#pragma once
 
 extern unsigned char STACK_BOTTOM[];
 
@@ -14,5 +13,3 @@ extern unsigned char bss_beg[];
 extern unsigned char bss_end[];
 
 extern unsigned char tt_l1_base[];
-
-#endif // LINKER_H

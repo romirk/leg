@@ -4,8 +4,7 @@
 // Arguments follow the ARM EABI register convention (r0–r3); the return value is in r0.
 // SVCs are safe to call from any context where interrupts are otherwise valid.
 
-#ifndef SYSCALL_H
-#define SYSCALL_H
+#pragma once
 
 #include "types.h"
 
@@ -226,5 +225,3 @@ static inline u32 sys_fs_blob_count(void) {
 static inline u32 sys_fs_blob_info(u32 index, char *name_buf, u32 name_buf_size, u32 *size_out) {
     return SVC4(SVC_FS_BLOB_INFO, index, name_buf, name_buf_size, size_out);
 }
-
-#endif // SYSCALL_H

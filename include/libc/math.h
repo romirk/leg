@@ -1,5 +1,4 @@
-#ifndef MATH_H
-#define MATH_H
+#pragma once
 #include "types.h"
 
 #define log2(X) ((unsigned) (8 * sizeof(u64) - __builtin_clzll(X) - 1))
@@ -13,5 +12,3 @@ static u32 log(u32 value, const u8 base) {
     }
     return n;
 }
-
-#endif // MATH_H

@@ -1,5 +1,4 @@
-#ifndef GIC_H
-#define GIC_H
+#pragma once
 
 #include "memory.h"
 #include "types.h"
@@ -35,5 +34,3 @@ void timer_set_oneshot_us(u32 usec);
 void timer_advance_cval(u32 usec);
 
 void timer_disable(void);
-
-#endif // GIC_H

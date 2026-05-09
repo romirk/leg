@@ -1,6 +1,3 @@
-#ifndef BOOT_H
-#define BOOT_H
+#pragma once
 
 void kboot(void *dtb);
-
-#endif // BOOT_H

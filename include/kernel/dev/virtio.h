@@ -2,8 +2,7 @@
 // Created by Romir Kulshrestha on 10/04/2026.
 //
 
-#ifndef LEG_VIRTIO_H
-#define LEG_VIRTIO_H
+#pragma once
 
 #include "types.h"
 
@@ -77,5 +76,3 @@ typedef struct {
 // sets *out_irq to its GIC IRQ number, or returns 0 if not found.
 u32  virtio_find_device(u32 device_id, u32 *out_irq);
 void virtio_init(void);
-
-#endif // LEG_VIRTIO_H

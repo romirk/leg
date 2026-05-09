@@ -1,5 +1,4 @@
-#ifndef STDIO_H
-#define STDIO_H
+#pragma once
 
 #include "types.h"
 
@@ -23,5 +22,3 @@ void printf(const char *, ...);
 void pprintf(const char *, ...);
 
 void hexdump(const void *, u32);
-
-#endif // STDIO_H

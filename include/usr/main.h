@@ -1,6 +1,3 @@
-#ifndef LEG_MAIN_H
-#define LEG_MAIN_H
+#pragma once
 
 int main();
-
-#endif // LEG_MAIN_H

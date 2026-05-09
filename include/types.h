@@ -1,5 +1,4 @@
-#ifndef TYPES_H
-#define TYPES_H
+#pragma once
 
 typedef long long unsigned int u64;
 typedef unsigned int           u32, uptr, size_t;
@@ -14,5 +13,3 @@ typedef signed char            i8;
 #define U64_MAX ((u64) ~0)
 
 #define loop for (;;)
-
-#endif // TYPES_H

@@ -1,7 +1,6 @@
 // fb.h — ramfb framebuffer (QEMU paravirtual display)
 
-#ifndef LEG_FB_H
-#define LEG_FB_H
+#pragma once
 
 #include "types.h"
 
@@ -41,5 +40,3 @@ void fb_putc(char c, u32 fg, u32 bg);
 void fb_putc_at(u32 col, u32 row, char c, u32 fg, u32 bg);
 
 void fb_print(const char *s, u32 fg, u32 bg);
-
-#endif // LEG_FB_H

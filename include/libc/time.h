@@ -1,7 +1,6 @@
 // time.h — userspace timing API
 
-#ifndef LEG_TIME_H
-#define LEG_TIME_H
+#pragma once
 
 #include "syscall.h"
 #include "types.h"
@@ -17,5 +16,3 @@ static inline u64 get_ticks(void) {
 static inline u32 cntfrq(void) {
     return sys_cntfrq();
 }
-
-#endif // LEG_TIME_H

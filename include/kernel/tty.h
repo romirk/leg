@@ -1,5 +1,4 @@
-#ifndef TTY_H
-#define TTY_H
+#pragma once
 
 #include "types.h"
 
@@ -14,5 +13,3 @@ void tty_putchar(char c);
 u32  tty_readline(char *buf, u32 max);
 char tty_getchar(void);
 char tty_getchar_nb(void);
-
-#endif // TTY_H

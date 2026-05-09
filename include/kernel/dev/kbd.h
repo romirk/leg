@@ -2,8 +2,7 @@
 //   UART path:   QEMU -serial stdio forwards stdin to PL011; kbd_handle_char() called per byte
 //   Virtio path: virtio-input device in QEMU graphical window
 
-#ifndef KBD_H
-#define KBD_H
+#pragma once
 
 #include "types.h"
 #include "virtio.h"
@@ -15,5 +14,3 @@ void kbd_init(void);
 void kbd_irq_handler(void);
 void kbd_handle_char(char c);
 void handle_kbd_event(const virtio_input_event_t *ev);
-
-#endif // KBD_H

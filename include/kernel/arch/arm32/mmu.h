@@ -1,7 +1,6 @@
 // mmu.h — ARMv7 MMU and L1 translation table management
 
-#ifndef MEMORY_H
-#define MEMORY_H
+#pragma once
 
 #include "types.h"
 
@@ -141,5 +140,3 @@ void mmu_map_identity(u32 phys_mb, bool device);
 
 // Switch TTBR0 to a process table (virtual address, converted to physical). Flushes TLB.
 void mmu_set_proc_table(l1_entry *tt);
-
-#endif // MEMORY_H
