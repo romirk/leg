@@ -17,6 +17,7 @@ void kmain() {
         *UARTDR = *c;
     }
 
+    asm volatile("brk #0");
     unmap_identity();
 
     // ReSharper disable once CppDFAEndlessLoop

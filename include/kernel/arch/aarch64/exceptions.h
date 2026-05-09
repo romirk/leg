@@ -7,4 +7,6 @@
 
 void install_vtable();
 
+void el1_sync_handler();
+
 #endif // LEG_EXCEPTIONS_H
