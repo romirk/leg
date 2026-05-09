@@ -37,6 +37,7 @@ constexpr char msg[] = "hello world!\n";
 
 [[gnu::section(".boot")]]
 void init_mmu() {
+    init_pgtables();
     asm volatile("msr mair_el1, %0" ::"r"(MAIR_EL1));
     asm volatile("msr tcr_el1, %0" ::"r"(TCR_EL1));
     asm volatile("isb");
