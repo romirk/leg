@@ -61,10 +61,6 @@ void kboot(uptr) {
         *UARTDR = *c;
     }
 
-    u64 mair, tcr;
-    asm volatile("mrs %0, mair_el1" : "=r"(mair));
-    asm volatile("mrs %0, tcr_el1" : "=r"(tcr));
-
     extern void kmain(void);
     asm volatile("br %0" ::"r"(kmain));
     __builtin_unreachable();

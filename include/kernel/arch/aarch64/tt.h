@@ -47,5 +47,6 @@ extern l1_descriptor ttbr1_l1[512];
 extern l2_descriptor ttbr1_l2[512];
 
 void init_pgtables();
+void unmap_identity();
 
 #endif // LEG_TT_H

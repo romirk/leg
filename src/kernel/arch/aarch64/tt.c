@@ -72,3 +72,13 @@ void init_pgtables() {
     ttbr0_l1[1].raw   = PTE_DESC_TABLE | (u64) ttbr0_l2_ram;
     ttbr1_l1[511].raw = PTE_DESC_TABLE | (u64) ttbr1_l2;
 }
+
+void unmap_identity() {
+    ttbr0_l1[0].raw = 0;
+    ttbr0_l1[1].raw = 0;
+    asm volatile("dsb sy\n"
+                 "tlbi vmalle1is\n"
+                 "dsb sy\n"
+                 "isb" ::
+                     : "memory");
+}

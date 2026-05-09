@@ -3,6 +3,8 @@
 //
 
 #include "types.h"
+#include "kernel/arch/aarch64/tt.h"
+
 #define UARTDR (volatile u8 *) 0x09000000
 
 [[noreturn]]
@@ -11,6 +13,8 @@ void kmain() {
     for (const char *c = msg; *c; c++) {
         *UARTDR = *c;
     }
+
+    unmap_identity();
 
     // ReSharper disable once CppDFAEndlessLoop
     for (;;) {
