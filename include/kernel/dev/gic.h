@@ -6,7 +6,7 @@
 #define GICD_CTLR          (*(volatile u32 *) (GICD_BASE + 0x000))
 #define GICD_ISENABLER(n)  (*(volatile u32 *) (GICD_BASE + 0x100 + ((n) * 4)))
 #define GICD_ITARGETSR(i)  (*(volatile u32 *) (GICD_BASE + 0x800 + ((i) & ~3)))
-#define GICD_IPRIORITYR(i) (*(volatile u32 *) (GICD_BASE + 0x400 + (i)))
+#define GICD_IPRIORITYR(i) (*(volatile u8 *)  (GICD_BASE + 0x400 + (i)))
 
 #define GICC_CTLR (*(volatile u32 *) (GICC_BASE + 0x00))
 #define GICC_PMR  (*(volatile u32 *) (GICC_BASE + 0x04))
@@ -28,9 +28,3 @@ static void gic_dist_init(void) {
 }
 
 void gic_enable_irq(u32 irq);
-
-void timer_set_oneshot_us(u32 usec);
-
-void timer_advance_cval(u32 usec);
-
-void timer_disable(void);

@@ -1,5 +1,5 @@
 #include "kernel/dev/rtc.h"
-#include "kernel/dev/gic.h"
+#include "kernel/dev/timer.h"
 
 static void (*tick_fn)(void);
 

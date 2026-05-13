@@ -10,3 +10,4 @@ void install_vtable();
 
 void el1_sync_handler(cpu_ctx_t *ctx);
 void el0_sync_handler(cpu_ctx_t *ctx);
+void el0_irq_handler(cpu_ctx_t *ctx);

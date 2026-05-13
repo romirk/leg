@@ -79,6 +79,9 @@ el1_sync:
 el0_sync:
     sync el0_sync_handler
 
+el0_irq:
+    sync el0_irq_handler
+
 default_handler:
     wfi
     b default_handler
@@ -96,7 +99,7 @@ vectors:
     default_vector
 
     vector el0_sync
-    default_vector
+    vector el0_irq
     default_vector
     default_vector
 

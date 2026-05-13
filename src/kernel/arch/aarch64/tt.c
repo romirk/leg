@@ -3,6 +3,7 @@
 //
 
 #include "kernel/arch/aarch64/tt.h"
+#include "kernel/arch/aarch64/memory.h"
 
 [[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
 l1_descriptor ttbr0_l1[512] = {
@@ -17,7 +18,7 @@ l2_descriptor ttbr0_l2_dev[512] = {
             .fields =
                 {
                     .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = 0x09000000 >> 21,
+                    .out_pa     = UART0_PHYSICAL >> 21,
                     .attr_indx  = 1,
                     .ap         = 0b00,
                     .sh         = 0b11,
@@ -64,6 +65,30 @@ l2_descriptor ttbr1_l2[512] = {
                     .ng         = 0,
                 },
         },
+    [128] =
+        {
+            .fields =
+                {
+                    .descriptor = PTE_DESC_BLOCK,
+                    .out_pa     = UART0_PHYSICAL >> 21,
+                    .attr_indx  = 1,
+                    .ap         = 0b00,
+                    .sh         = 0b11,
+                    .af         = 1,
+                },
+        }, // UART  → VA UART0_BASE
+    [129] =
+        {
+            .fields =
+                {
+                    .descriptor = PTE_DESC_BLOCK,
+                    .out_pa     = GICD_PHYSICAL >> 21,
+                    .attr_indx  = 1,
+                    .ap         = 0b00,
+                    .sh         = 0b11,
+                    .af         = 1,
+                },
+        }, // GIC   → VA GICD_BASE / GICC_BASE
 };
 
 [[gnu::section(".boot")]]

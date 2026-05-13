@@ -61,15 +61,17 @@ file(GLOB_RECURSE ARCH_SOURCES "src/kernel/arch/${CMAKE_SYSTEM_PROCESSOR}/*")
 file(GLOB_RECURSE LIBC_SOURCES "src/libc/*.*")
 
 add_executable(${PROJECT_NAME}.elf
-#        ${KERNEL_SOURCES}
+        #        ${KERNEL_SOURCES}
         ${ARCH_SOURCES}
-#        ${LIBC_SOURCES}
+        #        ${LIBC_SOURCES}
         ${LINKER_SCRIPT}
 )
 
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "arm32")
     target_sources(${PROJECT_NAME}.elf PRIVATE ${KERNEL_SOURCES} ${LIBC_SOURCES})
     add_dependencies(${PROJECT_NAME}.elf write_disk)
+else ()
+    target_sources(${PROJECT_NAME}.elf PRIVATE src/kernel/dev/gic.c)
 endif ()
 
 target_compile_definitions(${PROJECT_NAME}.elf PRIVATE KERNEL)
