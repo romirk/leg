@@ -1,0 +1,837 @@
+
+main.o:	file format elf64-littleaarch64
+architecture: aarch64
+start address: 0x0000000000000000
+
+Program Header:
+
+Dynamic Section:
+
+Sections:
+Idx Name                    Size     VMA              Type
+  0                         00000000 0000000000000000 
+  1 .strtab                 000000f8 0000000000000000 
+  2 .text                   0000019c 0000000000000000 TEXT
+  3 .debug_loclists         000000f3 0000000000000000 DEBUG
+  4 .debug_abbrev           00000083 0000000000000000 DEBUG
+  5 .debug_info             000000ac 0000000000000000 DEBUG
+  6 .rela.debug_info        00000090 0000000000000000 
+  7 .debug_rnglists         00000046 0000000000000000 DEBUG
+  8 .debug_str_offsets      00000044 0000000000000000 DEBUG
+  9 .rela.debug_str_offsets 00000168 0000000000000000 
+ 10 .debug_str              0000005d 0000000000000000 DEBUG
+ 11 .debug_addr             00000010 0000000000000000 DEBUG
+ 12 .rela.debug_addr        00000018 0000000000000000 
+ 13 .comment                00000016 0000000000000000 
+ 14 .note.GNU-stack         00000000 0000000000000000 
+ 15 .debug_frame            00000040 0000000000000000 DEBUG
+ 16 .rela.debug_frame       00000030 0000000000000000 
+ 17 .debug_line             000000e4 0000000000000000 DEBUG
+ 18 .rela.debug_line        00000048 0000000000000000 
+ 19 .debug_line_str         00000025 0000000000000000 DEBUG
+ 20 .llvm_addrsig           00000000 0000000000000000 
+ 21 .symtab                 00000258 0000000000000000 
+
+SYMBOL TABLE:
+0000000000000000 l    df *ABS*	0000000000000000 main.c
+0000000000000000 l    d  .text	0000000000000000 .text
+0000000000000000 l       .text	0000000000000000 $x
+0000000000000000 l    d  .debug_loclists	0000000000000000 .debug_loclists
+0000000000000000 l       .debug_loclists	0000000000000000 $d
+0000000000000000 l    d  .debug_abbrev	0000000000000000 .debug_abbrev
+0000000000000000 l       .debug_abbrev	0000000000000000 $d
+0000000000000000 l       .debug_info	0000000000000000 $d
+0000000000000000 l    d  .debug_rnglists	0000000000000000 .debug_rnglists
+0000000000000000 l       .debug_rnglists	0000000000000000 $d
+0000000000000000 l    d  .debug_str_offsets	0000000000000000 .debug_str_offsets
+0000000000000000 l       .debug_str_offsets	0000000000000000 $d
+0000000000000000 l    d  .debug_str	0000000000000000 .debug_str
+0000000000000000 l       .debug_str	0000000000000000 $d
+0000000000000000 l    d  .debug_addr	0000000000000000 .debug_addr
+0000000000000000 l       .debug_addr	0000000000000000 $d
+0000000000000000 l       .comment	0000000000000000 $d
+0000000000000000 l    d  .debug_frame	0000000000000000 .debug_frame
+0000000000000000 l       .debug_frame	0000000000000000 $d
+0000000000000000 l    d  .debug_line	0000000000000000 .debug_line
+0000000000000000 l       .debug_line	0000000000000000 $d
+0000000000000000 l    d  .debug_line_str	0000000000000000 .debug_line_str
+0000000000000000 l       .debug_line_str	0000000000000000 $d
+0000000000000000 g     F .text	000000000000019c matmul
+
+Disassembly of section .strtab:
+
+0000000000000000 <.strtab>:
+       0: 00782400     	<unknown>
+       4: 6265642e     	<unknown>
+       8: 615f6775     	<unknown>
+       c: 65726262     	fnmls	z2.h, p0/m, z19.h, z18.h
+      10: 742e0076     	<unknown>
+      14: 00747865     	<unknown>
+      18: 6d6f632e     	ldp	d14, d24, [x25, #-0x110]
+      1c: 746e656d     	<unknown>
+      20: 65642e00     	fmls	z0.h, p3/m, z16.h, z4.h
+      24: 5f677562     	sqshl	d2, d11, #0x27
+      28: 6c676e72     	ldnp	d18, d27, [x19, #-0x190]
+      2c: 73747369     	<unknown>
+      30: 65642e00     	fmls	z0.h, p3/m, z16.h, z4.h
+      34: 5f677562     	sqshl	d2, d11, #0x27
+      38: 6c636f6c     	ldnp	d12, d27, [x27, #-0x1d0]
+      3c: 73747369     	<unknown>
+      40: 65722e00     	fmls	z0.h, p3/m, z16.h, z18.h
+      44: 642e616c     	<unknown>
+      48: 67756265     	<unknown>
+      4c: 7274735f     	<unknown>
+      50: 66666f5f     	<unknown>
+      54: 73746573     	<unknown>
+      58: 65642e00     	fmls	z0.h, p3/m, z16.h, z4.h
+      5c: 5f677562     	sqshl	d2, d11, #0x27
+      60: 00727473     	<unknown>
+      64: 6265642e     	<unknown>
+      68: 6c5f6775     	ldnp	d21, d25, [x27, #0x1f0]
+      6c: 5f656e69     	<unknown>
+      70: 00727473     	<unknown>
+      74: 6c65722e     	ldnp	d14, d28, [x17, #-0x1b0]
+      78: 65642e61     	fmls	z1.h, p3/m, z19.h, z4.h
+      7c: 5f677562     	sqshl	d2, d11, #0x27
+      80: 72646461     	<unknown>
+      84: 65722e00     	fmls	z0.h, p3/m, z16.h, z18.h
+      88: 642e616c     	<unknown>
+      8c: 67756265     	<unknown>
+      90: 666e695f     	<unknown>
+      94: 616d006f     	<unknown>
+      98: 6c756d74     	ldnp	d20, d27, [x11, #-0xb0]
+      9c: 6f6e2e00     	<unknown>
+      a0: 472e6574     	<unknown>
+      a4: 732d554e     	<unknown>
+      a8: 6b636174     	<unknown>
+      ac: 6c6c2e00     	ldnp	d0, d11, [x16, #-0x140]
+      b0: 615f6d76     	<unknown>
+      b4: 73726464     	<unknown>
+      b8: 2e006769     	<unknown>
+      bc: 616c6572     	<unknown>
+      c0: 6265642e     	<unknown>
+      c4: 6c5f6775     	ldnp	d21, d25, [x27, #0x1f0]
+      c8: 00656e69     	<unknown>
+      cc: 6c65722e     	ldnp	d14, d28, [x17, #-0x1b0]
+      d0: 65642e61     	fmls	z1.h, p3/m, z19.h, z4.h
+      d4: 5f677562     	sqshl	d2, d11, #0x27
+      d8: 6d617266     	ldp	d6, d28, [x19, #-0x1f0]
+      dc: 64240065     	fmla	z5.h, z3.h, z4.h[0]
+      e0: 69616d00     	ldpsw	x0, x27, [x8, #-0xf8]
+      e4: 00632e6e     	<unknown>
+      e8: 7274732e     	<unknown>
+      ec: 00626174     	<unknown>
+      f0: 6d79732e     	ldp	d14, d28, [x25, #-0x70]
+      f4: 00626174     	<unknown>
+
+Disassembly of section .text:
+
+0000000000000000 <matmul>:
+       0: 7100045f     	cmp	w2, #0x1
+       4: 54000cab     	b.lt	0x198 <matmul+0x198>
+       8: 7100049f     	cmp	w4, #0x1
+       c: 54000c6b     	b.lt	0x198 <matmul+0x198>
+      10: a9be57f6     	stp	x22, x21, [sp, #-0x20]!
+      14: a9014ff4     	stp	x20, x19, [sp, #0x10]
+      18: 7100007f     	cmp	w3, #0x0
+      1c: 2a0403e8     	mov	w8, w4
+      20: 2a0203e9     	mov	w9, w2
+      24: aa1f03ea     	mov	x10, xzr
+      28: 540007ad     	b.le	0x11c <matmul+0x11c>
+      2c: 71001c7f     	cmp	w3, #0x7
+      30: 2a0303eb     	mov	w11, w3
+      34: d37ef52c     	lsl	x12, x9, #2
+      38: 7a418880     	ccmp	w4, #0x1, #0x0, hi
+      3c: d37ef50d     	lsl	x13, x8, #2
+      40: 927d6d6f     	and	x15, x11, #0x7ffffff8
+      44: 1a9f17ee     	cset	w14, eq
+      48: 91004010     	add	x16, x0, #0x10
+      4c: 91004031     	add	x17, x1, #0x10
+      50: 14000006     	b	0x68 <matmul+0x68>
+      54: 9100054a     	add	x10, x10, #0x1
+      58: 8b0c0210     	add	x16, x16, x12
+      5c: 8b0c0000     	add	x0, x0, x12
+      60: eb09015f     	cmp	x10, x9
+      64: 54000960     	b.eq	0x190 <matmul+0x190>
+      68: 9b087d42     	mul	x2, x10, x8
+      6c: aa1f03f2     	mov	x18, xzr
+      70: aa0103e3     	mov	x3, x1
+      74: aa1103e4     	mov	x4, x17
+      78: 8b0208a2     	add	x2, x5, x2, lsl #2
+      7c: 14000007     	b	0x98 <matmul+0x98>
+      80: b8327846     	str	w6, [x2, x18, lsl #2]
+      84: 91000652     	add	x18, x18, #0x1
+      88: 91001084     	add	x4, x4, #0x4
+      8c: eb08025f     	cmp	x18, x8
+      90: 91001063     	add	x3, x3, #0x4
+      94: 54fffe00     	b.eq	0x54 <matmul+0x54>
+      98: 340002ae     	cbz	w14, 0xec <matmul+0xec>
+      9c: 6f00e400     	movi	v0.2d, #0000000000000000
+      a0: 6f00e401     	movi	v1.2d, #0000000000000000
+      a4: aa0f03e6     	mov	x6, x15
+      a8: aa0403e7     	mov	x7, x4
+      ac: aa1003f3     	mov	x19, x16
+      b0: ad7f8e62     	ldp	q2, q3, [x19, #-0x10]
+      b4: f10020c6     	subs	x6, x6, #0x8
+      b8: ad7f94e4     	ldp	q4, q5, [x7, #-0x10]
+      bc: 91008273     	add	x19, x19, #0x20
+      c0: 910080e7     	add	x7, x7, #0x20
+      c4: 4ea29480     	mla	v0.4s, v4.4s, v2.4s
+      c8: 4ea394a1     	mla	v1.4s, v5.4s, v3.4s
+      cc: 54ffff21     	b.ne	0xb0 <matmul+0xb0>
+      d0: 4ea08420     	add	v0.4s, v1.4s, v0.4s
+      d4: eb0b01ff     	cmp	x15, x11
+      d8: aa0f03f4     	mov	x20, x15
+      dc: 4eb1b800     	addv	s0, v0.4s
+      e0: 1e260006     	fmov	w6, s0
+      e4: 54fffce0     	b.eq	0x80 <matmul+0x80>
+      e8: 14000003     	b	0xf4 <matmul+0xf4>
+      ec: aa1f03f4     	mov	x20, xzr
+      f0: 2a1f03e6     	mov	w6, wzr
+      f4: 9b140da7     	madd	x7, x13, x20, x3
+      f8: 8b140813     	add	x19, x0, x20, lsl #2
+      fc: cb140174     	sub	x20, x11, x20
+     100: b8404675     	ldr	w21, [x19], #0x4
+     104: b94000f6     	ldr	w22, [x7]
+     108: f1000694     	subs	x20, x20, #0x1
+     10c: 8b0d00e7     	add	x7, x7, x13
+     110: 1b151ac6     	madd	w6, w22, w21, w6
+     114: 54ffff61     	b.ne	0x100 <matmul+0x100>
+     118: 17ffffda     	b	0x80 <matmul+0x80>
+     11c: 6f00e400     	movi	v0.2d, #0000000000000000
+     120: d37ef50b     	lsl	x11, x8, #2
+     124: 927d6d0c     	and	x12, x8, #0x7ffffff8
+     128: 910040ad     	add	x13, x5, #0x10
+     12c: 14000006     	b	0x144 <matmul+0x144>
+     130: 9100054a     	add	x10, x10, #0x1
+     134: 8b0b01ad     	add	x13, x13, x11
+     138: 8b0b00a5     	add	x5, x5, x11
+     13c: eb09015f     	cmp	x10, x9
+     140: 54000280     	b.eq	0x190 <matmul+0x190>
+     144: 7100209f     	cmp	w4, #0x8
+     148: 54000062     	b.hs	0x154 <matmul+0x154>
+     14c: aa1f03ef     	mov	x15, xzr
+     150: 1400000a     	b	0x178 <matmul+0x178>
+     154: aa0c03ee     	mov	x14, x12
+     158: aa0d03ef     	mov	x15, x13
+     15c: f10021ce     	subs	x14, x14, #0x8
+     160: ad3f81e0     	stp	q0, q0, [x15, #-0x10]
+     164: 910081ef     	add	x15, x15, #0x20
+     168: 54ffffa1     	b.ne	0x15c <matmul+0x15c>
+     16c: eb08019f     	cmp	x12, x8
+     170: aa0c03ef     	mov	x15, x12
+     174: 54fffde0     	b.eq	0x130 <matmul+0x130>
+     178: 8b0f08ae     	add	x14, x5, x15, lsl #2
+     17c: cb0f010f     	sub	x15, x8, x15
+     180: f10005ef     	subs	x15, x15, #0x1
+     184: b80045df     	str	wzr, [x14], #0x4
+     188: 54ffffc1     	b.ne	0x180 <matmul+0x180>
+     18c: 17ffffe9     	b	0x130 <matmul+0x130>
+     190: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+     194: a8c257f6     	ldp	x22, x21, [sp], #0x20
+     198: d65f03c0     	ret
+
+Disassembly of section .debug_loclists:
+
+0000000000000000 <.debug_loclists>:
+       0: ef 00 00 00  	.word	0x000000ef
+       4: 05 00 08 00  	.word	0x00080005
+       8: 09 00 00 00  	.word	0x00000009
+       c: 24 00 00 00  	.word	0x00000024
+      10: 39 00 00 00  	.word	0x00000039
+      14: 4f 00 00 00  	.word	0x0000004f
+      18: 65 00 00 00  	.word	0x00000065
+      1c: 7b 00 00 00  	.word	0x0000007b
+      20: 8c 00 00 00  	.word	0x0000008c
+      24: aa 00 00 00  	.word	0x000000aa
+      28: c3 00 00 00  	.word	0x000000c3
+      2c: cd 00 00 00  	.word	0x000000cd
+      30: 04 00 54 01  	.word	0x01540004
+      34: 50 04 60 68  	.word	0x68600450
+      38: 04 a3 01 50  	.word	0x5001a304
+      3c: 9f 04 9c 02  	.word	0x029c049f
+      40: 90 03 01 50  	.word	0x50010390
+      44: 00 04 00 54  	.word	0x54000400
+      48: 01 52 04 6c  	.word	0x6c045201
+      4c: 80 01 04 a3  	.word	0xa3040180
+      50: 01 52 9f 04  	.word	0x049f5201
+      54: 9c 02 90 03  	.word	0x0390029c
+      58: 01 52 00 04  	.word	0x04005201
+      5c: 00 54 01 53  	.word	0x53015400
+      60: 04 74 80 01  	.word	0x01807404
+      64: 04 a3 01 53  	.word	0x5301a304
+      68: 9f 04 9c 02  	.word	0x029c049f
+      6c: 90 03 01 53  	.word	0x53010390
+      70: 00 04 00 54  	.word	0x54000400
+      74: 01 54 04 78  	.word	0x78045401
+      78: 80 01 04 a3  	.word	0xa3040180
+      7c: 01 54 9f 04  	.word	0x049f5401
+      80: 9c 02 90 03  	.word	0x0390029c
+      84: 01 54 00 04  	.word	0x04005401
+      88: 00 b0 02 01  	.word	0x0102b000
+      8c: 55 04 bc 02  	.word	0x02bc0455
+      90: c4 02 04 a3  	.word	0xa30402c4
+      94: 01 55 9f 00  	.word	0x009f5501
+      98: 04 04 54 03  	.word	0x03540404
+      9c: 11 00 9f 04  	.word	0x049f0011
+      a0: 54 9c 02 01  	.word	0x01029c54
+      a4: 5a 04 9c 02  	.word	0x029c045a
+      a8: b0 02 03 11  	.word	0x110302b0
+      ac: 00 9f 04 b0  	.word	0xb0049f00
+      b0: 02 90 03 01  	.word	0x01039002
+      b4: 5a 00 04 68  	.word	0x6804005a
+      b8: 80 01 03 11  	.word	0x11030180
+      bc: 00 9f 04 80  	.word	0x80049f00
+      c0: 01 9c 02 01  	.word	0x01029c01
+      c4: 62 04 c4 02  	.word	0x02c40462
+      c8: 80 03 03 11  	.word	0x11030380
+      cc: 00 9f 00 04  	.word	0x04009f00
+      d0: 98 01 80 02  	.word	0x02800198
+      d4: 03 11 00 9f  	.word	0x9f001103
+      d8: 00 04 98 01  	.word	0x01980400
+      dc: 80 02 03 11  	.word	0x11030280
+      e0: 00 9f 04 80  	.word	0x80049f00
+      e4: 02 9c 02 01  	.word	0x01029c02
+      e8: 56 04 80 03  	.word	0x03800456
+      ec: 90 03 03 11  	.word	0x11030390
+      f0: 00 9f        	.short	0x9f00
+      f2: 00           	.byte	0x00
+
+Disassembly of section .debug_abbrev:
+
+0000000000000000 <.debug_abbrev>:
+       0: 01 11 01 25  	.word	0x25011101
+       4: 25 13 05 03  	.word	0x03051325
+       8: 25 72 17 10  	.word	0x10177225
+       c: 17 1b 25 11  	.word	0x11251b17
+      10: 1b 12 06 73  	.word	0x7306121b
+      14: 17 74 17 8c  	.word	0x8c177417
+      18: 01 17 00 00  	.word	0x00001701
+      1c: 02 2e 01 11  	.word	0x11012e02
+      20: 1b 12 06 40  	.word	0x4006121b
+      24: 18 7a 19 03  	.word	0x03197a18
+      28: 25 3a 0b 3b  	.word	0x3b0b3a25
+      2c: 0b 27 19 3f  	.word	0x3f19270b
+      30: 19 00 00 03  	.word	0x03000019
+      34: 05 00 02 22  	.word	0x22020005
+      38: 03 25 3a 0b  	.word	0x0b3a2503
+      3c: 3b 0b 49 13  	.word	0x13490b3b
+      40: 00 00 04 05  	.word	0x05040000
+      44: 00 02 18 03  	.word	0x03180200
+      48: 25 3a 0b 3b  	.word	0x3b0b3a25
+      4c: 0b 49 13 00  	.word	0x0013490b
+      50: 00 05 0b 01  	.word	0x010b0500
+      54: 11 1b 12 06  	.word	0x06121b11
+      58: 00 00 06 34  	.word	0x34060000
+      5c: 00 02 22 03  	.word	0x03220200
+      60: 25 3a 0b 3b  	.word	0x3b0b3a25
+      64: 0b 49 13 00  	.word	0x0013490b
+      68: 00 07 0b 01  	.word	0x010b0700
+      6c: 55 23 00 00  	.word	0x00002355
+      70: 08 0f 00 49  	.word	0x49000f08
+      74: 13 00 00 09  	.word	0x09000013
+      78: 24 00 03 25  	.word	0x25030024
+      7c: 3e 0b 0b 0b  	.word	0x0b0b0b3e
+      80: 00 00        	.short	0x0000
+      82: 00           	.byte	0x00
+
+Disassembly of section .debug_info:
+
+0000000000000000 <.debug_info>:
+       0: a8 00 00 00  	.word	0x000000a8
+       4: 05 00 01 08  	.word	0x08010005
+       8: 00 00 00 00  	.word	0x00000000
+		0000000000000008:  R_AARCH64_ABS32	.debug_abbrev
+       c: 01 00 1d 00  	.word	0x001d0001
+      10: 01 00 00 00  	.word	0x00000001
+		0000000000000011:  R_AARCH64_ABS32	.debug_str_offsets+0x8
+      14: 00 00 00 00  	.word	0x00000000
+		0000000000000015:  R_AARCH64_ABS32	.debug_line
+      18: 00 02 00 9c  	.word	0x9c000200
+      1c: 01 00 00 00  	.word	0x00000001
+		000000000000001f:  R_AARCH64_ABS32	.debug_addr+0x8
+      20: 00 00 00 00  	.word	0x00000000
+		0000000000000023:  R_AARCH64_ABS32	.debug_rnglists+0xc
+      24: 00 00 00 00  	.word	0x00000000
+		0000000000000027:  R_AARCH64_ABS32	.debug_loclists+0xc
+      28: 00 00 00 02  	.word	0x02000000
+      2c: 00 9c 01 00  	.word	0x00019c00
+      30: 00 01 6f 03  	.word	0x036f0100
+      34: 00 01 03 00  	.word	0x00030100
+      38: 04 00 01 a2  	.word	0xa2010004
+      3c: 00 00 00 04  	.word	0x04000000
+      40: 01 51 06 00  	.word	0x00065101
+      44: 01 a2 00 00  	.word	0x0000a201
+      48: 00 03 01 07  	.word	0x07010300
+      4c: 00 01 a7 00  	.word	0x00a70100
+      50: 00 00 03 02  	.word	0x02030000
+      54: 08 00 01 a7  	.word	0xa7010008
+      58: 00 00 00 03  	.word	0x03000000
+      5c: 03 09 00 01  	.word	0x01000903
+      60: a7 00 00 00  	.word	0x000000a7
+      64: 03 04 0a 00  	.word	0x000a0403
+      68: 01 a2 00 00  	.word	0x0000a201
+      6c: 00 05 00 90  	.word	0x90000500
+      70: 01 00 00 06  	.word	0x06000001
+      74: 05 0b 00 02  	.word	0x02000b05
+      78: a7 00 00 00  	.word	0x000000a7
+      7c: 07 00 06 06  	.word	0x06060007
+      80: 0c 00 03 a7  	.word	0xa703000c
+      84: 00 00 00 07  	.word	0x07000000
+      88: 01 06 08 0e  	.word	0x0e080601
+      8c: 00 04 a7 00  	.word	0x00a70400
+      90: 00 00 07 02  	.word	0x02070000
+      94: 06 07 0d 00  	.word	0x000d0706
+      98: 05 a7 00 00  	.word	0x0000a705
+      9c: 00 00 00 00  	.word	0x00000000
+      a0: 00 00 08 a7  	.word	0xa7080000
+      a4: 00 00 00 09  	.word	0x09000000
+      a8: 05 05 04 00  	.word	0x00040505
+
+Disassembly of section .rela.debug_info:
+
+0000000000000000 <.rela.debug_info>:
+       0: 00000008     	udf	#0x8
+       4: 00000000     	udf	#0x0
+       8: 00000102     	udf	#0x102
+       c: 00000006     	udf	#0x6
+		...
+      18: 00000011     	udf	#0x11
+      1c: 00000000     	udf	#0x0
+      20: 00000102     	udf	#0x102
+      24: 0000000b     	udf	#0xb
+      28: 00000008     	udf	#0x8
+      2c: 00000000     	udf	#0x0
+      30: 00000015     	udf	#0x15
+      34: 00000000     	udf	#0x0
+      38: 00000102     	udf	#0x102
+      3c: 00000014     	udf	#0x14
+		...
+      48: 0000001f     	udf	#0x1f
+      4c: 00000000     	udf	#0x0
+      50: 00000102     	udf	#0x102
+      54: 0000000f     	udf	#0xf
+      58: 00000008     	udf	#0x8
+      5c: 00000000     	udf	#0x0
+      60: 00000023     	udf	#0x23
+      64: 00000000     	udf	#0x0
+      68: 00000102     	udf	#0x102
+      6c: 00000009     	udf	#0x9
+      70: 0000000c     	udf	#0xc
+      74: 00000000     	udf	#0x0
+      78: 00000027     	udf	#0x27
+      7c: 00000000     	udf	#0x0
+      80: 00000102     	udf	#0x102
+      84: 00000004     	udf	#0x4
+      88: 0000000c     	udf	#0xc
+      8c: 00000000     	udf	#0x0
+
+Disassembly of section .debug_rnglists:
+
+0000000000000000 <.debug_rnglists>:
+       0: 42 00 00 00  	.word	0x00000042
+       4: 05 00 08 00  	.word	0x00080005
+       8: 03 00 00 00  	.word	0x00000003
+       c: 0c 00 00 00  	.word	0x0000000c
+      10: 19 00 00 00  	.word	0x00000019
+      14: 31 00 00 00  	.word	0x00000031
+      18: 04 3c 48 04  	.word	0x04483c04
+      1c: 78 9c 02 04  	.word	0x04029c78
+      20: c4 02 90 03  	.word	0x039002c4
+      24: 00 04 3c 48  	.word	0x483c0400
+      28: 04 80 01 84  	.word	0x84018004
+      2c: 01 04 98 01  	.word	0x01980401
+      30: 9c 02 04 e0  	.word	0xe004029c
+      34: 02 e4 02 04  	.word	0x0402e402
+      38: 84 03 88 03  	.word	0x03880384
+      3c: 00 04 3c 48  	.word	0x483c0400
+      40: 04 98 01 9c  	.word	0x9c019804
+      44: 02 00        	.short	0x0002
+
+Disassembly of section .debug_str_offsets:
+
+0000000000000000 <.debug_str_offsets>:
+       0: 40 00 00 00  	.word	0x00000040
+       4: 05 00 00 00  	.word	0x00000005
+       8: 00 00 00 00  	.word	0x00000000
+		0000000000000008:  R_AARCH64_ABS32	.debug_str
+       c: 00 00 00 00  	.word	0x00000000
+		000000000000000c:  R_AARCH64_ABS32	.debug_str+0x15
+      10: 00 00 00 00  	.word	0x00000000
+		0000000000000010:  R_AARCH64_ABS32	.debug_str+0x1c
+      14: 00 00 00 00  	.word	0x00000000
+		0000000000000014:  R_AARCH64_ABS32	.debug_str+0x3a
+      18: 00 00 00 00  	.word	0x00000000
+		0000000000000018:  R_AARCH64_ABS32	.debug_str+0x41
+      1c: 00 00 00 00  	.word	0x00000000
+		000000000000001c:  R_AARCH64_ABS32	.debug_str+0x43
+      20: 00 00 00 00  	.word	0x00000000
+		0000000000000020:  R_AARCH64_ABS32	.debug_str+0x47
+      24: 00 00 00 00  	.word	0x00000000
+		0000000000000024:  R_AARCH64_ABS32	.debug_str+0x49
+      28: 00 00 00 00  	.word	0x00000000
+		0000000000000028:  R_AARCH64_ABS32	.debug_str+0x4b
+      2c: 00 00 00 00  	.word	0x00000000
+		000000000000002c:  R_AARCH64_ABS32	.debug_str+0x4d
+      30: 00 00 00 00  	.word	0x00000000
+		0000000000000030:  R_AARCH64_ABS32	.debug_str+0x4f
+      34: 00 00 00 00  	.word	0x00000000
+		0000000000000034:  R_AARCH64_ABS32	.debug_str+0x53
+      38: 00 00 00 00  	.word	0x00000000
+		0000000000000038:  R_AARCH64_ABS32	.debug_str+0x55
+      3c: 00 00 00 00  	.word	0x00000000
+		000000000000003c:  R_AARCH64_ABS32	.debug_str+0x57
+      40: 00 00 00 00  	.word	0x00000000
+		0000000000000040:  R_AARCH64_ABS32	.debug_str+0x59
+
+Disassembly of section .rela.debug_str_offsets:
+
+0000000000000000 <.rela.debug_str_offsets>:
+       0: 00000008     	udf	#0x8
+       4: 00000000     	udf	#0x0
+       8: 00000102     	udf	#0x102
+       c: 0000000d     	udf	#0xd
+		...
+      18: 0000000c     	udf	#0xc
+      1c: 00000000     	udf	#0x0
+      20: 00000102     	udf	#0x102
+      24: 0000000d     	udf	#0xd
+      28: 00000015     	udf	#0x15
+      2c: 00000000     	udf	#0x0
+      30: 00000010     	udf	#0x10
+      34: 00000000     	udf	#0x0
+      38: 00000102     	udf	#0x102
+      3c: 0000000d     	udf	#0xd
+      40: 0000001c     	udf	#0x1c
+      44: 00000000     	udf	#0x0
+      48: 00000014     	udf	#0x14
+      4c: 00000000     	udf	#0x0
+      50: 00000102     	udf	#0x102
+      54: 0000000d     	udf	#0xd
+      58: 0000003a     	udf	#0x3a
+      5c: 00000000     	udf	#0x0
+      60: 00000018     	udf	#0x18
+      64: 00000000     	udf	#0x0
+      68: 00000102     	udf	#0x102
+      6c: 0000000d     	udf	#0xd
+      70: 00000041     	udf	#0x41
+      74: 00000000     	udf	#0x0
+      78: 0000001c     	udf	#0x1c
+      7c: 00000000     	udf	#0x0
+      80: 00000102     	udf	#0x102
+      84: 0000000d     	udf	#0xd
+      88: 00000043     	udf	#0x43
+      8c: 00000000     	udf	#0x0
+      90: 00000020     	udf	#0x20
+      94: 00000000     	udf	#0x0
+      98: 00000102     	udf	#0x102
+      9c: 0000000d     	udf	#0xd
+      a0: 00000047     	udf	#0x47
+      a4: 00000000     	udf	#0x0
+      a8: 00000024     	udf	#0x24
+      ac: 00000000     	udf	#0x0
+      b0: 00000102     	udf	#0x102
+      b4: 0000000d     	udf	#0xd
+      b8: 00000049     	udf	#0x49
+      bc: 00000000     	udf	#0x0
+      c0: 00000028     	udf	#0x28
+      c4: 00000000     	udf	#0x0
+      c8: 00000102     	udf	#0x102
+      cc: 0000000d     	udf	#0xd
+      d0: 0000004b     	udf	#0x4b
+      d4: 00000000     	udf	#0x0
+      d8: 0000002c     	udf	#0x2c
+      dc: 00000000     	udf	#0x0
+      e0: 00000102     	udf	#0x102
+      e4: 0000000d     	udf	#0xd
+      e8: 0000004d     	udf	#0x4d
+      ec: 00000000     	udf	#0x0
+      f0: 00000030     	udf	#0x30
+      f4: 00000000     	udf	#0x0
+      f8: 00000102     	udf	#0x102
+      fc: 0000000d     	udf	#0xd
+     100: 0000004f     	udf	#0x4f
+     104: 00000000     	udf	#0x0
+     108: 00000034     	udf	#0x34
+     10c: 00000000     	udf	#0x0
+     110: 00000102     	udf	#0x102
+     114: 0000000d     	udf	#0xd
+     118: 00000053     	udf	#0x53
+     11c: 00000000     	udf	#0x0
+     120: 00000038     	udf	#0x38
+     124: 00000000     	udf	#0x0
+     128: 00000102     	udf	#0x102
+     12c: 0000000d     	udf	#0xd
+     130: 00000055     	udf	#0x55
+     134: 00000000     	udf	#0x0
+     138: 0000003c     	udf	#0x3c
+     13c: 00000000     	udf	#0x0
+     140: 00000102     	udf	#0x102
+     144: 0000000d     	udf	#0xd
+     148: 00000057     	udf	#0x57
+     14c: 00000000     	udf	#0x0
+     150: 00000040     	udf	#0x40
+     154: 00000000     	udf	#0x0
+     158: 00000102     	udf	#0x102
+     15c: 0000000d     	udf	#0xd
+     160: 00000059     	udf	#0x59
+     164: 00000000     	udf	#0x0
+
+Disassembly of section .debug_str:
+
+0000000000000000 <.debug_str>:
+       0: 63 6c 61 6e  	.word	0x6e616c63
+       4: 67 20 76 65  	.word	0x65762067
+       8: 72 73 69 6f  	.word	0x6f697372
+       c: 6e 20 31 39  	.word	0x3931206e
+      10: 2e 31 2e 37  	.word	0x372e312e
+      14: 00 6d 61 69  	.word	0x69616d00
+      18: 6e 2e 63 00  	.word	0x00632e6e
+      1c: 2f 68 6f 6d  	.word	0x6d6f682f
+      20: 65 2f 69 6d  	.word	0x6d692f65
+      24: 61 67 69 66  	.word	0x66696761
+      28: 69 67 68 74  	.word	0x74686769
+      2c: 2f 72 2f 72  	.word	0x722f722f
+      30: 6f 6d 69 72  	.word	0x72696d6f
+      34: 6b 2f 6c 65  	.word	0x656c2f6b
+      38: 67 00 6d 61  	.word	0x616d0067
+      3c: 74 6d 75 6c  	.word	0x6c756d74
+      40: 00 61 00 69  	.word	0x69006100
+      44: 6e 74 00 62  	.word	0x6200746e
+      48: 00 70 00 71  	.word	0x71007000
+      4c: 00 72 00 72  	.word	0x72007200
+      50: 65 74 00 69  	.word	0x69007465
+      54: 00 6a 00 6b  	.word	0x6b006a00
+      58: 00 73 75 6d  	.word	0x6d757300
+      5c: 00           	.byte	0x00
+
+Disassembly of section .debug_addr:
+
+0000000000000000 <.debug_addr>:
+       0: 0c 00 00 00  	.word	0x0000000c
+       4: 05 00 08 00  	.word	0x00080005
+       8: 00 00 00 00  	.word	0x00000000
+		0000000000000008:  R_AARCH64_ABS64	.text
+       c: 00 00 00 00  	.word	0x00000000
+
+Disassembly of section .rela.debug_addr:
+
+0000000000000000 <.rela.debug_addr>:
+       0: 00000008     	udf	#0x8
+       4: 00000000     	udf	#0x0
+       8: 00000101     	udf	#0x101
+       c: 00000002     	udf	#0x2
+		...
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+       0: 00 63 6c 61  	.word	0x616c6300
+       4: 6e 67 20 76  	.word	0x7620676e
+       8: 65 72 73 69  	.word	0x69737265
+       c: 6f 6e 20 31  	.word	0x31206e6f
+      10: 39 2e 31 2e  	.word	0x2e312e39
+      14: 37 00        	.short	0x0037
+
+Disassembly of section .debug_frame:
+
+0000000000000000 <.debug_frame>:
+       0: 14 00 00 00  	.word	0x00000014
+       4: ff ff ff ff  	.word	0xffffffff
+       8: 04 00 08 00  	.word	0x00080004
+       c: 01 7c 1e 0c  	.word	0x0c1e7c01
+      10: 1f 00 00 00  	.word	0x0000001f
+      14: 00 00 00 00  	.word	0x00000000
+      18: 24 00 00 00  	.word	0x00000024
+      1c: 00 00 00 00  	.word	0x00000000
+		000000000000001c:  R_AARCH64_ABS32	.debug_frame
+      20: 00 00 00 00  	.word	0x00000000
+		0000000000000020:  R_AARCH64_ABS64	.text
+      24: 00 00 00 00  	.word	0x00000000
+      28: 9c 01 00 00  	.word	0x0000019c
+      2c: 00 00 00 00  	.word	0x00000000
+      30: 58 0e 20 93  	.word	0x93200e58
+      34: 02 94 04 95  	.word	0x95049402
+      38: 06 96 08 00  	.word	0x00089606
+      3c: 00 00 00 00  	.word	0x00000000
+
+Disassembly of section .rela.debug_frame:
+
+0000000000000000 <.rela.debug_frame>:
+       0: 0000001c     	udf	#0x1c
+       4: 00000000     	udf	#0x0
+       8: 00000102     	udf	#0x102
+       c: 00000012     	udf	#0x12
+		...
+      18: 00000020     	udf	#0x20
+      1c: 00000000     	udf	#0x0
+      20: 00000101     	udf	#0x101
+      24: 00000002     	udf	#0x2
+		...
+
+Disassembly of section .debug_line:
+
+0000000000000000 <.debug_line>:
+       0: e0 00 00 00  	.word	0x000000e0
+       4: 05 00 08 00  	.word	0x00080005
+       8: 37 00 00 00  	.word	0x00000037
+       c: 01 01 01 fb  	.word	0xfb010101
+      10: 0e 0d 00 01  	.word	0x01000d0e
+      14: 01 01 01 00  	.word	0x00010101
+      18: 00 00 01 00  	.word	0x00010000
+      1c: 00 01 01 01  	.word	0x01010100
+      20: 1f 01 00 00  	.word	0x0000011f
+		0000000000000022:  R_AARCH64_ABS32	.debug_line_str
+      24: 00 00 03 01  	.word	0x01030000
+      28: 1f 02 0f 05  	.word	0x050f021f
+      2c: 1e 01 00 00  	.word	0x0000011e
+		000000000000002e:  R_AARCH64_ABS32	.debug_line_str+0x1e
+      30: 00 00 00 66  	.word	0x66000000
+      34: 4e ae 04 4d  	.word	0x4d04ae4e
+      38: 51 42 49 03  	.word	0x03494251
+      3c: 2c 37 2c 03  	.word	0x032c372c
+      40: f9 7c 38 04  	.word	0x04387cf9
+      44: 00 05 03 0a  	.word	0x0a030500
+      48: 00 09 02 00  	.word	0x00020900
+		000000000000004b:  R_AARCH64_ABS64	.text
+      4c: 00 00 00 00  	.word	0x00000000
+      50: 00 00 00 13  	.word	0x13000000
+      54: 05 00 06 08  	.word	0x08060005
+      58: e4 b8 05 03  	.word	0x0305b8e4
+      5c: 84 05 07 06  	.word	0x06070584
+      60: 85 05 03 b7  	.word	0xb7030585
+      64: 05 1b 06 ba  	.word	0xba061b05
+      68: 05 03 4a f0  	.word	0xf04a0305
+      6c: 05 05 06 f5  	.word	0xf5060505
+      70: 05 16 86 05  	.word	0x05861605
+      74: 1d 46 05 05  	.word	0x0505461d
+      78: 06 4a 05 07  	.word	0x07054a06
+      7c: 06 f4 06 45  	.word	0x4506f406
+      80: 05 10 06 08  	.word	0x08061005
+      84: 42 05 1f 49  	.word	0x491f0542
+      88: 4b 49 05 0d  	.word	0x0d05494b
+      8c: 83 05 1f 81  	.word	0x811f0583
+      90: 05 07 06 4a  	.word	0x4a060705
+      94: 08 a7 87 05  	.word	0x0587a708
+      98: 10 06 bb 05  	.word	0x05bb0610
+      9c: 1f 06 4a 05  	.word	0x054a061f
+      a0: 19 06 49 05  	.word	0x05490619
+      a4: 0d 83 05 07  	.word	0x0705830d
+      a8: 49 06 7d 05  	.word	0x057d0649
+      ac: 03 06 4c 05  	.word	0x054c0603
+      b0: 1b 06 f2 05  	.word	0x05f2061b
+      b4: 03 4a 05 05  	.word	0x05054a03
+      b8: 06 f3 06 7f  	.word	0x7f06f306
+      bc: 4d 47 05 1d  	.word	0x1d05474d
+      c0: 85 05 16 06  	.word	0x06160585
+      c4: 4e 05 1d 46  	.word	0x461d054e
+      c8: 05 05 06 82  	.word	0x82060505
+      cc: 05 17 08 3c  	.word	0x3c081705
+      d0: 05 16 06 4e  	.word	0x4e061605
+      d4: 05 05 46 06  	.word	0x06460505
+      d8: 7f 05 01 06  	.word	0x0601057f
+      dc: 03 0a 82 02  	.word	0x02820a03
+      e0: 04 00 01 01  	.word	0x01010004
+
+Disassembly of section .rela.debug_line:
+
+0000000000000000 <.rela.debug_line>:
+       0: 00000022     	udf	#0x22
+       4: 00000000     	udf	#0x0
+       8: 00000102     	udf	#0x102
+       c: 00000016     	udf	#0x16
+		...
+      18: 0000002e     	udf	#0x2e
+      1c: 00000000     	udf	#0x0
+      20: 00000102     	udf	#0x102
+      24: 00000016     	udf	#0x16
+      28: 0000001e     	udf	#0x1e
+      2c: 00000000     	udf	#0x0
+      30: 0000004b     	udf	#0x4b
+      34: 00000000     	udf	#0x0
+      38: 00000101     	udf	#0x101
+      3c: 00000002     	udf	#0x2
+		...
+
+Disassembly of section .debug_line_str:
+
+0000000000000000 <.debug_line_str>:
+       0: 2f 68 6f 6d  	.word	0x6d6f682f
+       4: 65 2f 69 6d  	.word	0x6d692f65
+       8: 61 67 69 66  	.word	0x66696761
+       c: 69 67 68 74  	.word	0x74686769
+      10: 2f 72 2f 72  	.word	0x722f722f
+      14: 6f 6d 69 72  	.word	0x72696d6f
+      18: 6b 2f 6c 65  	.word	0x656c2f6b
+      1c: 67 00 6d 61  	.word	0x616d0067
+      20: 69 6e 2e 63  	.word	0x632e6e69
+      24: 00           	.byte	0x00
+
+Disassembly of section .symtab:
+
+0000000000000000 <.symtab>:
+		...
+      18: 000000e1     	udf	#0xe1
+      1c: fff10004     	<unknown>
+		...
+      34: 00020003     	<unknown>
+		...
+      48: 00000001     	udf	#0x1
+      4c: 00020000     	<unknown>
+		...
+      64: 00030003     	<unknown>
+		...
+      78: 000000de     	udf	#0xde
+      7c: 00030000     	<unknown>
+		...
+      94: 00040003     	<unknown>
+		...
+      a8: 000000de     	udf	#0xde
+      ac: 00040000     	<unknown>
+		...
+      c0: 000000de     	udf	#0xde
+      c4: 00050000     	<unknown>
+		...
+      dc: 00070003     	<unknown>
+		...
+      f0: 000000de     	udf	#0xde
+      f4: 00070000     	<unknown>
+		...
+     10c: 00080003     	<unknown>
+		...
+     120: 000000de     	udf	#0xde
+     124: 00080000     	<unknown>
+		...
+     13c: 000a0003     	<unknown>
+		...
+     150: 000000de     	udf	#0xde
+     154: 000a0000     	<unknown>
+		...
+     16c: 000b0003     	<unknown>
+		...
+     180: 000000de     	udf	#0xde
+     184: 000b0000     	<unknown>
+		...
+     198: 000000de     	udf	#0xde
+     19c: 000d0000     	<unknown>
+		...
+     1b4: 000f0003     	<unknown>
+		...
+     1c8: 000000de     	udf	#0xde
+     1cc: 000f0000     	<unknown>
+		...
+     1e4: 00110003     	<unknown>
+		...
+     1f8: 000000de     	udf	#0xde
+     1fc: 00110000     	<unknown>
+		...
+     214: 00130003     	<unknown>
+		...
+     228: 000000de     	udf	#0xde
+     22c: 00130000     	<unknown>
+		...
+     240: 00000096     	udf	#0x96
+     244: 00020012     	<unknown>
+		...
+     250: 0000019c     	udf	#0x19c
+     254: 00000000     	udf	#0x0
