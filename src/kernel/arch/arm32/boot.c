@@ -2,7 +2,7 @@
 
 #include "kernel/dev/memory.h"
 #include "kernel/dev/mmu.h"
-#include "kernel/linker.h"
+#include "kernel/arch/arm32/linker.h"
 #include "types.h"
 
 [[gnu::section(".startup.boot")]] [[noreturn]]

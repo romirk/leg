@@ -1,0 +1,55 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-${presetName}"
+    },
+    {
+      "name": "arm32",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/arm32-toolchain.cmake"
+    },
+    {
+      "name": "aarch64",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/aarch64-toolchain.cmake"
+    },
+    {
+      "name": "debug-arm32",
+      "displayName": "Debug-Arm32",
+      "inherits": "arm32",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-arm32",
+      "displayName": "Release-Arm32",
+      "inherits": "arm32",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "debug-aarch64",
+      "displayName": "Debug-AArch64",
+      "inherits": "aarch64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-aarch64",
+      "displayName": "Release-AArch64",
+      "inherits": "aarch64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}

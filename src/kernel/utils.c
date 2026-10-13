@@ -1,6 +1,6 @@
 #include "utils.h"
 
-#include "kernel/linker.h"
+#include "kernel/arch/arm32/linker.h"
 #include "kernel/logs.h"
 #include "libc/stdio.h"
 
