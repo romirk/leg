@@ -1,4 +1,4 @@
-#include "kernel/arch/aarch64/cpu.h"
+#include "kernel/arch/aarch64/boot.h"
 
 .global vectors
 

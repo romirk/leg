@@ -63,11 +63,3 @@ void init_pgtables() {
                                            }};
     }
 }
-
-void unmap_identity() {
-    asm volatile("dsb sy\n"
-                 "tlbi vmalle1is\n"
-                 "dsb sy\n"
-                 "isb" ::
-                     : "memory");
-}

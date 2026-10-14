@@ -5,13 +5,14 @@
 #pragma once
 
 #include "types.h"
+#include "kernel/arch/aarch64/boot.h"
 
 constexpr uptr  MB = 0x00100000; // one megabyte
 constexpr u8 AS_MB = 20;
 
 constexpr uptr RAM_BASE       = 0x00000000'40000000;
 constexpr uptr KERNEL_PA      = 0x00000000'40200000;
-constexpr uptr PAGE_OFFSET    = 0xFFFFFF80'00000000;
+constexpr uptr PAGE_OFFSET    = PAGE_OFFSET_;
 
 // Physical addresses (used by tt.c to populate page table entries)
 constexpr uptr UART0_PHYSICAL = 0x09000000u;

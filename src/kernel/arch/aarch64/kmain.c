@@ -2,12 +2,10 @@
 // Created by Romir Kulshrestha on 09/05/2026.
 //
 
-#include "kernel/arch/aarch64/tt.h"
-#include "kernel/dev/gic.h"
 #include "types.h"
 #include "utils.h"
-
-#define UARTDR ((volatile u8 *) UART0_BASE)
+#include "kernel/dev/gic.h"
+#include "kernel/dev/uart.h"
 
 [[noreturn]]
 void kmain() {
@@ -15,8 +13,6 @@ void kmain() {
     for (const char *c = msg; *c; c++) {
         *UARTDR = *c;
     }
-
-    unmap_identity();
 
     gic_dist_init();
     gic_cpu_init();

@@ -4,19 +4,11 @@
 
 #include "kernel/exceptions.h"
 
-#include "kernel/dev/gic.h"
 #include "syscall.h"
 #include "types.h"
 #include "utils.h"
-
-#define UARTDR ((volatile u8 *) UART0_BASE)
-
-extern byte vectors[];
-static volatile uptr vaddr = (uptr) vectors;
-
-void install_vtable() {
-    asm volatile("msr vbar_el1, %0" ::"r"(vaddr));
-}
+#include "kernel/dev/gic.h"
+#include "kernel/dev/uart.h"
 
 static void uart_hex64(u64 val) {
     for (int i = 60; i >= 0; i -= 4)
@@ -24,7 +16,7 @@ static void uart_hex64(u64 val) {
 }
 
 // DEBUG: remove once exceptions are stable
-static void dump_el1_sync(u64 esr, u64 far, u64 elr) {
+static void dump_el1_sync(const u64 esr, const u64 far, const u64 elr) {
     const u8 ec = (esr >> 26) & 0x3F;
     *UARTDR     = 'E';
     *UARTDR     = '1';
@@ -38,7 +30,7 @@ static void dump_el1_sync(u64 esr, u64 far, u64 elr) {
     *UARTDR = '\n';
 }
 
-void el1_sync_handler(cpu_ctx_t *ctx) {
+void el1_sync_handler(cpu_ctx_t *) {
     u64 esr, far, elr;
     asm volatile("mrs %0, esr_el1" : "=r"(esr));
     asm volatile("mrs %0, far_el1" : "=r"(far));
@@ -58,7 +50,7 @@ void el0_sync_handler(cpu_ctx_t *ctx) {
     ctx->x[0]     = svc_dispatch(ctx->x[0], ctx->x[1], ctx->x[2], ctx->x[3], iss);
 }
 
-void el0_irq_handler(cpu_ctx_t *ctx) {
+void el0_irq_handler(cpu_ctx_t *) {
     const u32 irq_id = GICC_IAR;
     *UARTDR          = 'I';
     *UARTDR          = irq_id;
