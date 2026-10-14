@@ -5,6 +5,7 @@
 #include "kernel/arch/aarch64/mmu.h"
 
 #include "types.h"
+#include "kernel/arch/aarch64/memory.h"
 #include "kernel/arch/aarch64/tt.h"
 
 // TTBR0 and TTBR1 input address size (granule size)
@@ -29,19 +30,18 @@
 // Index 0: 0xFF Normal cacheable (0xFF) — for kernel + user code/data
 // Index 1: 0x00 Device-nGnRnE (0x00) — for UART, GIC, etc.
 constexpr u64 MAIR_EL1 = 0x00000000'000000FF;
-constexpr u64 TCR_EL1 = TCR_T0SZ(25) | TCR_T1SZ(25) | TCR_TG0_4K | TCR_TG1_4K | TCR_IRGN0_WBWA |
+constexpr u64 TCR_EL1  = TCR_T0SZ(25) | TCR_T1SZ(25) | TCR_TG0_4K | TCR_TG1_4K | TCR_IRGN0_WBWA |
                         TCR_ORGN0_WBWA | TCR_SH0_IS | TCR_IRGN1_WBWA | TCR_ORGN1_WBWA | TCR_SH1_IS |
                         TCR_IPS_48;
 
-[[gnu::section(".boot")]]
 void init_mmu() {
     init_pgtables();
     asm volatile("msr mair_el1, %0" ::"r"(MAIR_EL1));
     asm volatile("msr tcr_el1, %0" ::"r"(TCR_EL1));
     asm volatile("isb");
 
-    asm volatile("msr ttbr0_el1, %0" ::"r"(&ttbr0_l1));
-    asm volatile("msr ttbr1_el1, %0" ::"r"(&ttbr1_l1));
+    asm volatile("msr ttbr0_el1, %0" ::"r"(&tt_l1));
+    asm volatile("msr ttbr1_el1, %0" ::"r"(&tt_l1));
     asm volatile("dsb sy");
 
     u64 sctlr;

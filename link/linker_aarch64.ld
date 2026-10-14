@@ -1,24 +1,31 @@
-ENTRY(_start)
+KERNEL_PA   = 0x0000000040200000;
+PAGE_OFFSET = 0xFFFFFF8000000000;
 
-KERNEL_PA = 0x40100000;
-KERNEL_VA = 0xFFFFFFFFC0100000;
-
-MEMORY {
-    phy       : o = KERNEL_PA , l = 0x40000000
-    vir       : o = KERNEL_VA , l = 0x3FEFFFFF
-    btm       : o = 0x40180000, l = 0x00080000
-}
+_start_phy  = ABSOLUTE(_start - PAGE_OFFSET);
+ENTRY(_start_phy)
 
 SECTIONS {
-    .text   : ALIGN(0x1000) { *( .text   .text.*   ) } > vir AT > phy
-    __kernel_load_beg = LOADADDR(.text);
-    .rodata : ALIGN(0x1000) { *( .rodata .rodata.* ) } > vir AT > phy
-    .data   : ALIGN(0x1000) { *( .data   .data.*   ) } > vir AT > phy
-    __kernel_load_end = LOADADDR(.data) + SIZEOF(.data);
+    . = KERNEL_PA + PAGE_OFFSET;
+    .text   : AT(ADDR(.text) - PAGE_OFFSET) ALIGN(0x1000)
+                            { *( .text   .text.*   ) }
+    .rodata : ALIGN(0x1000) { *( .rodata .rodata.* ) }
+    .data   : ALIGN(0x1000) { *( .data   .data.*   ) }
+
+    .tt     : ALIGN(0x1000) { *( .tt     .tt.*     ) }
     .bss    : ALIGN(0x1000) {
         __bss_start = .;
         *( .bss  .bss.* )
         __bss_end = .;
-    } > vir
-    .boot : ALIGN(0x1000) { *( .boot .boot.* ) } > btm AT > btm
+    }
+
+    __kernel_load_beg = LOADADDR(.text);
+    __kernel_load_end = LOADADDR(.tt) + SIZEOF(.tt);
+    __kernel_phys_end = LOADADDR(.bss) + SIZEOF(.bss);
 }
+
+/* Must match memory.h and the direct map built in tt.c (L1[1] → 512 × 2 MB). */
+RAM_BASE = 0x0000000040000000;
+RAM_SIZE = 0x0000000040000000;
+
+ASSERT(KERNEL_PA % 0x200000 == 0, "KERNEL_PA must be 2 MB aligned")
+ASSERT(__kernel_phys_end <= RAM_BASE + RAM_SIZE, "kernel image (incl. .bss) runs past mapped RAM")

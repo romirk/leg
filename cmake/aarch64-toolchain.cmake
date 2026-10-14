@@ -13,5 +13,5 @@ set(CMAKE_OBJDUMP ${TARGET_ARCH}-objdump)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-add_compile_options(-mcpu=${CPU} --target=aarch64-elf -ffreestanding -fbuiltin -flto -Wall -Wextra)
+add_compile_options(-mcpu=${CPU} -mgeneral-regs-only --target=aarch64-elf -ffreestanding -fbuiltin -flto -Wall -Wextra)
 add_link_options(-flto -fuse-ld=lld --target=${TARGET_ARCH} -mcpu=${CPU} -nostdlib)

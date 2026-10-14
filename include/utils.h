@@ -46,7 +46,7 @@ void panic(const char *fmt, ...);
 #define PSCI_SYSTEM_RESET 0x84000009u
 
 [[noreturn, maybe_unused]]
-static void poweroff(void) {
+static void poweroff() {
     asm volatile("mov r0, %0\n\thvc #0" ::"r"(PSCI_SYSTEM_OFF) : "r0");
     __builtin_unreachable();
 }

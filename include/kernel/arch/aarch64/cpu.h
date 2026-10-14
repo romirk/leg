@@ -4,7 +4,8 @@
 
 #pragma once
 
-#define FRAME_SIZE 272 // usable from both C and .S
+#define FRAME_SIZE      272 // usable from both C and .S
+#define BOOT_STACK_SIZE 0x1000
 
 #ifndef __ASSEMBLER__
 

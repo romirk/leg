@@ -39,9 +39,9 @@ typedef union {
     } fields;
 } l2_descriptor;
 
-extern l1_descriptor ttbr0_l1[512];
-extern l2_descriptor ttbr0_l2_dev[512];
-extern l2_descriptor ttbr0_l2_ram[512];
+extern l1_descriptor tt_l1[512];
+extern l2_descriptor tt_l2_dev[512];
+extern l2_descriptor tt_l2_ram[512];
 extern l1_descriptor ttbr1_l1[512];
 extern l2_descriptor ttbr1_l2[512];
 

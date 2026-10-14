@@ -5,5 +5,5 @@
 #pragma once
 #include "types.h"
 
-// extern byte KERNEL_VA[];
 // extern byte KERNEL_PA[];
+// extern byte PAGE_OFFSET[];

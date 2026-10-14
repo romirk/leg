@@ -12,9 +12,10 @@
 #define UARTDR ((volatile u8 *) UART0_BASE)
 
 extern byte vectors[];
+static volatile uptr vaddr = (uptr) vectors;
 
 void install_vtable() {
-    asm volatile("msr vbar_el1, %0" ::"r"(vectors));
+    asm volatile("msr vbar_el1, %0" ::"r"(vaddr));
 }
 
 static void uart_hex64(u64 val) {

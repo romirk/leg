@@ -76,6 +76,7 @@ endif ()
 
 target_compile_definitions(${PROJECT_NAME}.elf PRIVATE KERNEL)
 target_link_options(${PROJECT_NAME}.elf PRIVATE -Wl,-T,${LINKER_SCRIPT})
+set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
 
 find_program(CLANG_FORMAT clang-format)
 if (CLANG_FORMAT)

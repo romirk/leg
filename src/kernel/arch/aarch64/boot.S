@@ -1,9 +1,8 @@
+#include "kernel/arch/aarch64/cpu.h"
+
 .global _start
 
-.section .boot, "ax"
-
-.equ STACK_TOP, 0x401F0000
-.equ UARTDR, 0x09000000
+.section .text, "ax"
 
 _start:
     mov x19, x0
@@ -27,14 +26,9 @@ _start:
     eret
 
 el1_main:
-    ldr  x1, =STACK_TOP
+    adrp x1, BOOT_STACK
+    add  x1, x1, #(BOOT_STACK_SIZE)
     mov  sp, x1
-
-    mov  x0, #UARTDR
-    mov  w1, #'C'
-    strb w1, [x0]
-    mov  w1, #'\n'
-    strb w1, [x0]
 
     mov x0, x19
     bl  kboot

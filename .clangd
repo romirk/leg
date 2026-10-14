@@ -1,8 +1,24 @@
 CompileFlags:
   Add:
-    - --target=arm-none-eabi
     - -mcpu=cortex-a72
     - -ffreestanding
 
 Diagnostics:
   UnusedIncludes: Strict
+
+---
+# AArch64-only sources and headers.
+If:
+  PathMatch: (src|include)/kernel/arch/aarch64/.*
+CompileFlags:
+  # compile_commands.json points at the arm32 build, so these files get
+  # inferred arm32 flags; strip the ones aarch64 rejects.
+  Remove: [-mfloat-abi=*, -mfpu=*]
+  Add: [--target=aarch64-elf, -mgeneral-regs-only]
+
+---
+# Everything else (shared code + ARM32) defaults to ARM32, the full build.
+If:
+  PathExclude: (src|include)/kernel/arch/aarch64/.*
+CompileFlags:
+  Add: [--target=arm-none-eabi]

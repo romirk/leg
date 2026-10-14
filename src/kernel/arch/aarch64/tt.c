@@ -5,20 +5,36 @@
 #include "kernel/arch/aarch64/tt.h"
 #include "kernel/arch/aarch64/memory.h"
 
-[[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
-l1_descriptor ttbr0_l1[512] = {
+#define MB2    (2 * MB)
+#define AS_2MB (AS_MB + 1)
+
+[[gnu::section(".tt"), gnu::aligned(0x1000)]]
+l1_descriptor tt_l1[512] = {
     [0] = {.fields = {.descriptor = PTE_DESC_TABLE}},
     [1] = {.fields = {.descriptor = PTE_DESC_TABLE}},
 };
 
-[[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
-l2_descriptor ttbr0_l2_dev[512] = {
+[[gnu::section(".tt"), gnu::aligned(0x1000)]]
+l2_descriptor tt_l2_dev[512] = {
+    [64] =
+        {
+            .fields =
+                {
+                    .descriptor = PTE_DESC_BLOCK,
+                    .out_pa     = GICD_PHYSICAL >> AS_2MB,
+                    .attr_indx  = 1,
+                    .ap         = 0b00,
+                    .sh         = 0b11,
+                    .af         = 1,
+                    .ng         = 0,
+                },
+        },
     [72] =
         {
             .fields =
                 {
                     .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = UART0_PHYSICAL >> 21,
+                    .out_pa     = UART0_PHYSICAL >> AS_2MB,
                     .attr_indx  = 1,
                     .ap         = 0b00,
                     .sh         = 0b11,
@@ -28,79 +44,27 @@ l2_descriptor ttbr0_l2_dev[512] = {
         },
 };
 
-[[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
-l2_descriptor ttbr0_l2_ram[512] = {
-    [0] =
-        {
-            .fields =
-                {
-                    .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = 0x40000000 >> 21,
-                    .attr_indx  = 0,
-                    .ap         = 0b00,
-                    .sh         = 0b11,
-                    .af         = 1,
-                    .ng         = 0,
-                },
-        },
-};
+[[gnu::section(".tt"), gnu::aligned(0x1000)]]
+l2_descriptor tt_l2_ram[512] = {0};
 
-[[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
-l1_descriptor ttbr1_l1[512] = {
-    [511] = {.fields = {.descriptor = PTE_DESC_TABLE}},
-};
-
-[[gnu::section(".boot.tables"), gnu::aligned(0x1000)]]
-l2_descriptor ttbr1_l2[512] = {
-    [0] =
-        {
-            .fields =
-                {
-                    .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = 0x40000000 >> 21,
-                    .attr_indx  = 0,
-                    .ap         = 0b00,
-                    .sh         = 0b11,
-                    .af         = 1,
-                    .ng         = 0,
-                },
-        },
-    [128] =
-        {
-            .fields =
-                {
-                    .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = UART0_PHYSICAL >> 21,
-                    .attr_indx  = 1,
-                    .ap         = 0b00,
-                    .sh         = 0b11,
-                    .af         = 1,
-                },
-        }, // UART  → VA UART0_BASE
-    [129] =
-        {
-            .fields =
-                {
-                    .descriptor = PTE_DESC_BLOCK,
-                    .out_pa     = GICD_PHYSICAL >> 21,
-                    .attr_indx  = 1,
-                    .ap         = 0b00,
-                    .sh         = 0b11,
-                    .af         = 1,
-                },
-        }, // GIC   → VA GICD_BASE / GICC_BASE
-};
-
-[[gnu::section(".boot")]]
 void init_pgtables() {
-    ttbr0_l1[0].raw   = PTE_DESC_TABLE | (u64) ttbr0_l2_dev;
-    ttbr0_l1[1].raw   = PTE_DESC_TABLE | (u64) ttbr0_l2_ram;
-    ttbr1_l1[511].raw = PTE_DESC_TABLE | (u64) ttbr1_l2;
+    tt_l1[0].raw = PTE_DESC_TABLE | (uptr) tt_l2_dev;
+    tt_l1[1].raw = PTE_DESC_TABLE | (uptr) tt_l2_ram;
+
+    for (int i = 0; i < 512; i++) {
+        tt_l2_ram[i] = (l2_descriptor) {.fields = {
+                                               .descriptor = PTE_DESC_BLOCK,
+                                               .out_pa     = (RAM_BASE + i * MB2) >> AS_2MB,
+                                               .attr_indx  = 0,
+                                               .ap         = 0b00,
+                                               .sh         = 0b11,
+                                               .af         = 1,
+                                               .ng         = 0,
+                                           }};
+    }
 }
 
 void unmap_identity() {
-    ttbr0_l1[0].raw = 0;
-    ttbr0_l1[1].raw = 0;
     asm volatile("dsb sy\n"
                  "tlbi vmalle1is\n"
                  "dsb sy\n"
