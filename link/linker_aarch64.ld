@@ -18,8 +18,17 @@ SECTIONS {
         __bss_end = .;
     }
 
-    __kernel_load_beg = LOADADDR(.text);
-    __kernel_load_end = LOADADDR(.tt) + SIZEOF(.tt);
+    SEC_RODATA_BEG = ADDR(.rodata);
+    SEC_RODATA_END = ADDR(.rodata) + SIZEOF(.rodata);
+    SEC_TEXT_BEG = ADDR(.text);
+    SEC_TEXT_END = ADDR(.text) + SIZEOF(.text);
+    SEC_DATA_BEG = ADDR(.data);
+    SEC_DATA_END = ADDR(.data) + SIZEOF(.data);
+    SEC_BSS_BEG = ADDR(.bss);
+    SEC_BSS_END = ADDR(.bss) + SIZEOF(.bss);
+    SEC_TT_BEG = ADDR(.tt);
+    SEC_TT_END = ADDR(.tt) + SIZEOF(.tt);
+
     __kernel_phys_end = LOADADDR(.bss) + SIZEOF(.bss);
 }
 

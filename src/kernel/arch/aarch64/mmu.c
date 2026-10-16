@@ -46,6 +46,8 @@ void init_mmu() {
 
     u64 sctlr;
     asm("mrs %0, sctlr_el1" : "=r"(sctlr));
+    // M only. WXN (bit 19) is left clear: it would apply to EL0 too and forbid any
+    // user W+X mapping (JITs). Kernel W^X is enforced by the page tables instead.
     sctlr |= 1;
     asm("msr sctlr_el1, %0" ::"r"(sctlr) : "memory");
     asm("isb");

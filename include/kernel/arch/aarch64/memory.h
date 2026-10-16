@@ -9,6 +9,8 @@
 
 constexpr uptr  MB = 0x00100000; // one megabyte
 constexpr u8 AS_MB = 20;
+constexpr uptr  KB = 0x400;
+constexpr u8 AS_KB = 10;
 
 constexpr uptr RAM_BASE       = 0x00000000'40000000;
 constexpr uptr KERNEL_PA      = 0x00000000'40200000;
